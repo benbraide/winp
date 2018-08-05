@@ -1,6 +1,5 @@
-#include <windows.h>
-
 #include "property/variant_property.h"
+#include "property/error_property.h"
 
 //ReSharper disable once CppInconsistentNaming
 int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_show){
@@ -47,6 +46,21 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_sh
 	vhdli.vp = false;
 	int vpi = vhdli.vp;
 	bool vpb = vhdli.vp;
+
+	struct erhdl{
+		winp::prop::error<erhdl> ep;
+	};
+
+	winp::prop::error<void> vep;
+	try{
+		vep = 45;
+	}
+	catch(const winp::prop::error<void> &e){
+		auto i = 0;
+		i += 9;
+		std::wstring s = e;
+		s += L"";
+	}
 
 	return 0;
 }

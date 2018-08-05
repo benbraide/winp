@@ -2,6 +2,7 @@
 
 #include <string>
 #include <variant>
+#include <unordered_map>
 
 #include <comdef.h>
 
@@ -31,13 +32,18 @@ namespace winp::prop{
 	};
 
 	class default_error_mapper{
-		enum class value_type{};
+	public:
+		enum class value_type{
+			nil,
+		};
 
-		static std::wstring map(value_type){
-			return L"";
-		}
+		static value_type value(const std::wstring &converted);
 
-		static value_type global_value = static_cast<value_type>(0);
+		static const std::wstring &map(value_type value);
+
+		static value_type global_value;
+		static std::unordered_map<value_type, std::wstring> mapped;
+		static std::wstring unmapped;
 	};
 
 	template <class in_owner_type, class error_mapper = default_error_mapper, class value_type = typename error_mapper::value_type>
@@ -45,6 +51,8 @@ namespace winp::prop{
 	public:
 		using m_error_mapper = error_mapper;
 		using m_value_holder_type = proxy_value<value_type, in_owner_type>;
+
+		using m_base_type = proxy_value<value_type, in_owner_type>;
 		using base_type = typename m_value_holder_type::base_type;
 		using owner_type = typename m_value_holder_type::owner_type;
 
@@ -87,6 +95,30 @@ namespace winp::prop{
 
 		operator DWORD() const{
 			return get_local_value_();
+		}
+
+		operator short() const{
+			return static_cast<short>(operator DWORD());
+		}
+
+		operator unsigned short() const{
+			return static_cast<unsigned short>(operator DWORD());
+		}
+
+		operator int() const{
+			return static_cast<int>(operator DWORD());
+		}
+
+		operator unsigned int() const{
+			return static_cast<unsigned int>(operator DWORD());
+		}
+
+		operator long long() const{
+			return static_cast<long long>(operator DWORD());
+		}
+
+		operator unsigned long long() const{
+			return static_cast<unsigned long long>(operator DWORD());
 		}
 
 		operator HRESULT() const{
@@ -167,6 +199,30 @@ namespace winp::prop{
 			return *this;
 		}
 
+		error &operator =(short value){
+			return operator =(static_cast<DWORD>(value));
+		}
+
+		error &operator =(unsigned short value){
+			return operator =(static_cast<DWORD>(value));
+		}
+
+		error &operator =(int value){
+			return operator =(static_cast<DWORD>(value));
+		}
+
+		error &operator =(unsigned int value){
+			return operator =(static_cast<DWORD>(value));
+		}
+
+		error &operator =(long long value){
+			return operator =(static_cast<DWORD>(value));
+		}
+
+		error &operator =(unsigned long long value){
+			return operator =(static_cast<DWORD>(value));
+		}
+
 		error &operator =(HRESULT value){
 			assign_(value);
 			return *this;
@@ -234,7 +290,9 @@ namespace winp::prop{
 		}
 
 		const std::wstring &get_converted_value_() const{
-			return (converted_ = m_error_mapper::map(std::get<base_value_type>(value_)));
+			if (m_base_type::getter_ != nullptr)
+				m_base_type::getter_(*this, &converted_, static_cast<int>(std::get<base_value_type>(value_)));
+			return (converted_.empty() ? (converted_ = m_error_mapper::map(std::get<base_value_type>(value_))) : converted_);
 		}
 
 		const std::wstring &get_converted_local_value_() const{
@@ -269,6 +327,15 @@ namespace winp::prop{
 		void assign_(target_type target, bool do_throw = true){
 			value_ = target;
 			converted_.clear();
+
+			if (do_throw && get_value_() != static_cast<base_value_type>(0)){
+				auto should_throw = (policy_ == error_throw_policy_type::enabled || policy_ == error_throw_policy_type::enabled_once);
+				if (policy_ == error_throw_policy_type::disabled_once || policy_ == error_throw_policy_type::enabled_once)
+					policy_ = previous_policy_;
+
+				if (should_throw)
+					throw *this;
+			}
 		}
 
 		error_throw_policy_type policy_ = error_throw_policy_type::enabled;

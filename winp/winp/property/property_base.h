@@ -41,8 +41,8 @@ namespace winp::prop{
 		using owner_type = void;
 		using callback_type = void;
 
-		using setter_type = std::function<void(base &, const void *, std::size_t)>;
-		using getter_type = std::function<void(base &, void *, std::size_t)>;
+		using setter_type = std::function<void(const base &, const void *, std::size_t)>;
+		using getter_type = std::function<void(const base &, void *, std::size_t)>;
 
 		virtual ~base() = default;
 
@@ -201,6 +201,54 @@ namespace winp::prop{
 		getter_type getter_;
 	};
 
+	template <class value_type>
+	class proxy_value<value_type, void> : public base<void>{
+	public:
+		using base_type = base<void>;
+		using owner_type = base_type::owner_type;
+		using callback_type = base_type::callback_type;
+
+		using m_value_type = value_type;
+		using base_value_type = std::conditional_t<!std::is_pointer_v<value_type>, std::remove_const_t<std::remove_reference_t<value_type>>, value_type>;
+		using const_ref_value_type = const base_value_type &;
+		using ref_value_type = base_value_type & ;
+		using ptr_value_type = std::remove_pointer_t<base_value_type> *;
+		using const_ptr_value_type = const std::remove_pointer_t<base_value_type> *;
+
+		using setter_type = base_type::setter_type;
+		using getter_type = base_type::getter_type;
+
+		proxy_value() = default;
+
+		virtual ~proxy_value() = default;
+
+	protected:
+		void changed_(std::size_t size = 0){}
+
+		void changed_(const void *value_ref, std::size_t size){
+			base_type::changed_(value_ref, size);
+		}
+
+		void change_(const_ref_value_type value, std::size_t size = 0){
+			base_type::changed_(nullptr, size);
+		}
+
+		void change_(const void *value, std::size_t size = 0){
+			change_(*static_cast<const_ptr_value_type>(value), size);
+		}
+
+		value_type value_(std::size_t size = 0) const{
+			return value_type();
+		}
+
+		void value_(void *buf, std::size_t size = 0) const{
+			*static_cast<ptr_value_type>(buf) = value_type();
+		}
+
+		setter_type setter_;
+		getter_type getter_;
+	};
+
 	template <class in_owner_type>
 	class proxy_value<void, in_owner_type> : public base<in_owner_type>{
 	public:
@@ -213,6 +261,9 @@ namespace winp::prop{
 		using ref_value_type = base_value_type & ;
 		using ptr_value_type = std::remove_pointer_t<base_value_type> *;
 		using const_ptr_value_type = const std::remove_pointer_t<base_value_type> *;
+
+		using setter_type = typename base_type::setter_type;
+		using getter_type = typename base_type::getter_type;
 
 		proxy_value() = default;
 
@@ -234,5 +285,8 @@ namespace winp::prop{
 		void change_(){}
 
 		void value_() const{}
+
+		setter_type setter_;
+		getter_type getter_;
 	};
 }
