@@ -2,7 +2,6 @@
 
 #include <string>
 #include <variant>
-#include <unordered_map>
 
 #include <comdef.h>
 
@@ -29,21 +28,6 @@ namespace winp::prop{
 		value,
 		local,
 		status,
-	};
-
-	class default_error_mapper{
-	public:
-		enum class value_type{
-			nil,
-		};
-
-		static value_type value(const std::wstring &converted);
-
-		static const std::wstring &map(value_type value);
-
-		static value_type global_value;
-		static std::unordered_map<value_type, std::wstring> mapped;
-		static std::wstring unmapped;
 	};
 
 	template <class in_owner_type, class error_mapper = default_error_mapper, class value_type = typename error_mapper::value_type>
@@ -237,6 +221,20 @@ namespace winp::prop{
 		error(error &&) = default;
 
 		error &operator =(error &&) = default;
+
+		virtual void change_(const void *value, std::size_t index) override{
+			switch (index){
+			case 1u:
+				assign_(*static_cast<const DWORD *>(value));
+				break;
+			case 2u:
+				assign_(*static_cast<const HRESULT *>(value));
+				break;
+			default:
+				assign_(*static_cast<const base_value_type *>(value));
+				break;
+			}
+		}
 
 		base_value_type get_value_() const{
 			if (std::holds_alternative<base_value_type>(value_))

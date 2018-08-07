@@ -365,8 +365,12 @@ namespace winp::prop{
 			explicit scalar(const target_type &target)
 				: m_value_holder_type(static_cast<m_value_type>(target)){}
 
-			operator ptr_value_type() const{
+			operator base_value_type() const{
 				return m_value_holder_type::value_();
+			}
+
+			operator std::remove_pointer_t<base_value_type> &() const{
+				return *base_value_type();
 			}
 
 			std::remove_pointer_t<base_value_type> &operator *() const{
@@ -376,6 +380,11 @@ namespace winp::prop{
 			template <typename target_type>
 			scalar &operator =(const target_type &target){
 				m_value_holder_type::change_(static_cast<base_value_type>(target));
+				return *this;
+			}
+
+			scalar &operator =(std::remove_pointer_t<base_value_type> &target){
+				m_value_holder_type::change_(&target);
 				return *this;
 			}
 
@@ -413,7 +422,7 @@ namespace winp::prop{
 				return !m_value_holder_type::value_();
 			}
 
-			const_ptr_value_type operator ->() const{
+			base_value_type operator ->() const{
 				return m_value_holder_type::value_();
 			}
 		};

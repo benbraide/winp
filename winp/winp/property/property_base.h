@@ -2,59 +2,86 @@
 
 #include <functional>
 
+#include "default_error_mapper.h"
+
 namespace winp::prop{
+	class untyped_base{
+	public:
+		using error_value_type = default_error_mapper::value_type;
+
+		virtual ~untyped_base() = default;
+
+	protected:
+		virtual void change_(const void *value, std::size_t size = 0){}
+
+		void throw_(error_value_type value = error_value_type::proper_does_not_support_action) const{
+			if (error_prop_ == nullptr)
+				throw value;
+			error_prop_->change_(&value, 0u);
+		}
+
+		untyped_base *error_prop_ = nullptr;
+	};
+
 	template <class in_owner_type>
-	class base{
+	class base : public untyped_base{
 	public:
 		using owner_type = in_owner_type;
-		typedef void (owner_type::*callback_type)(const base &, const void *, std::size_t);
 
+		using change_callback_type = std::function<bool(const base &, const void *, std::size_t)>;
 		using setter_type = std::function<void(const base &, const void *, std::size_t)>;
 		using getter_type = std::function<void(const base &, void *, std::size_t)>;
+
+		using error_value_type = default_error_mapper::value_type;
 
 		virtual ~base() = default;
 
 	protected:
 		friend owner_type;
 
-		virtual void init_(owner_type &owner, callback_type callback){
+		virtual void init_(owner_type &owner, change_callback_type changed_callback, untyped_base *error_prop = nullptr){
 			owner_ = &owner;
-			callback_ = callback;
+			changed_callback_ = changed_callback;
+			error_prop_ = error_prop;
 		}
 
-		virtual void init_(owner_type &owner, callback_type callback, setter_type setter, getter_type getter){
-			init_(owner, callback);
+		virtual void init_(owner_type &owner, change_callback_type callback, setter_type setter, getter_type getter, untyped_base *error_prop = nullptr){
+			init_(owner, callback, error_prop);
 		}
 
-		void changed_(const void *value_ref, std::size_t size){
-			if (owner_ != nullptr && callback_ != nullptr)
-				(owner_->*callback_)(*this, value_ref, size);
+		bool changed_(const void *value_ref, std::size_t size) const{
+			return ((changed_callback_ == nullptr) ? true : changed_callback_(*this, value_ref, size));
 		}
 
 		owner_type *owner_ = nullptr;
-		callback_type callback_ = nullptr;
+		change_callback_type changed_callback_ = nullptr;
 	};
 
 	template <>
 	class base<void>{
 	public:
 		using owner_type = void;
-		using callback_type = void;
 
+		using change_callback_type = std::function<bool(const base &, const void *, std::size_t)>;
 		using setter_type = std::function<void(const base &, const void *, std::size_t)>;
 		using getter_type = std::function<void(const base &, void *, std::size_t)>;
+
+		using error_value_type = default_error_mapper::value_type;
 
 		virtual ~base() = default;
 
 	protected:
 		void init_(){}
 
-		void changed_(){}
+		bool changed_(const void *, std::size_t) const{
+			return true;
+		}
 
-		template <typename value_type>
-		void changed_(value_type &){}
+		virtual void change_(const void *value, std::size_t size = 0){}
 
-		void changed_(const void *, std::size_t){}
+		void throw_(error_value_type value) const{
+			throw value;
+		}
 	};
 
 	template <class value_type, class in_owner_type>
@@ -64,7 +91,7 @@ namespace winp::prop{
 		using owner_type = typename base_type::owner_type;
 
 		using m_value_type = value_type;
-		using base_value_type = std::conditional_t<!std::is_pointer_v<value_type>, std::remove_const_t<std::remove_reference_t<value_type>>, value_type>;
+		using base_value_type = std::conditional_t<!std::is_pointer_v<value_type>, std::remove_const_t<std::remove_reference_t<value_type>>, std::remove_reference_t<value_type>>;
 		using const_ref_value_type = const base_value_type &;
 		using ref_value_type = base_value_type &;
 		using ptr_value_type = std::remove_pointer_t<base_value_type> *;
@@ -79,18 +106,21 @@ namespace winp::prop{
 	protected:
 		friend in_owner_type;
 
-		void changed_(std::size_t size = 0){
-			base_type::changed_(&m_value_, size);
+		using base_type::changed_;
+
+		bool changed_(std::size_t size = 0){
+			return base_type::changed_(&m_value_, size);
 		}
 
 		void change_(const_ref_value_type value, std::size_t size = 0){
-			base_type::changed_(nullptr, size);
-			m_value_ = value;
-			changed_(size);
+			if (base_type::changed_(nullptr, size)){
+				m_value_ = value;
+				changed_(size);
+			}
 		}
 
-		void change_(const void *value, std::size_t size = 0){
-			change_(*static_cast<const_ptr_value_type>(value), size);
+		virtual void change_(const void *value, std::size_t size = 0) override{
+			change_(*static_cast<const base_value_type *>(value), size);
 		}
 
 		ref_value_type value_(std::size_t size = 0){
@@ -122,13 +152,6 @@ namespace winp::prop{
 		using const_ptr_value_type = const std::remove_pointer_t<base_value_type> *;
 
 		virtual ~immediate_value() = default;
-
-	protected:
-		void changed_(){}
-
-		void change_(){}
-
-		void value_(){}
 	};
 
 	template <class value_type, class in_owner_type>
@@ -136,7 +159,7 @@ namespace winp::prop{
 		public:
 		using base_type = base<in_owner_type>;
 		using owner_type = typename base_type::owner_type;
-		using callback_type = typename base_type::callback_type;
+		using change_callback_type = typename base_type::change_callback_type;
 
 		using m_value_type = value_type;
 		using base_value_type = std::conditional_t<!std::is_pointer_v<value_type>, std::remove_const_t<std::remove_reference_t<value_type>>, value_type>;
@@ -150,6 +173,8 @@ namespace winp::prop{
 
 		proxy_value() = default;
 
+		explicit proxy_value(const value_type &){}
+
 		template <typename setter_type, typename getter_type>
 		proxy_value(setter_type setter, getter_type getter)
 			: setter_(setter), getter_(getter){}
@@ -159,46 +184,47 @@ namespace winp::prop{
 	protected:
 		friend in_owner_type;
 
-		virtual void init_(owner_type &owner, callback_type callback, setter_type setter, getter_type getter) override{
-			base_type::init_(owner, callback);
+		virtual void init_(owner_type &owner, change_callback_type callback, setter_type setter, getter_type getter, untyped_base *error_prop = nullptr) override{
+			base_type::init_(owner, callback, error_prop);
 			setter_ = setter;
 			getter_ = getter;
 		}
 
-		void changed_(std::size_t size = 0){}
-
-		void changed_(const void *value_ref, std::size_t size){
-			base_type::changed_(value_ref, size);
-		}
-
 		void change_(const_ref_value_type value, std::size_t size = 0){
-			base_type::changed_(nullptr, size);
-			if (setter_ != nullptr)
-				setter_(*this, const_cast<ptr_value_type *>(&value), size);
+			change_(&value, size);
+		}
+
+		virtual void change_(const void *value, std::size_t size = 0) override{
+			if (base_type::changed_(nullptr, size)){
+				if (setter_ != nullptr)
+					setter_(*this, value, size);
+				else
+					base_type::throw_();
+			}
+		}
+
+		ref_value_type value_(std::size_t size = 0){
+			return m_value_;
+		}
+
+		const_ref_value_type value_(std::size_t size = 0) const{
+			if (getter_ != nullptr)
+				getter_(*this, &m_value_, size);
 			else
-				throw 0;
-		}
-
-		void change_(const void *value, std::size_t size = 0){
-			change_(*static_cast<const_ptr_value_type>(value), size);
-		}
-
-		value_type value_(std::size_t size = 0) const{
-			if (getter_ == nullptr)
-				throw 0;
-
-			value_type value;
-			getter_(*this, &value, size);
-
-			return value;
+				base_type::throw_();
+			return m_value_;
 		}
 
 		void value_(void *buf, std::size_t size = 0) const{
-			*static_cast<ptr_value_type>(buf) = value_(size);
+			if (getter_ != nullptr)
+				getter_(*this, buf, size);
+			else
+				base_type::throw_(default_error_mapper::value_type::proper_has_no_getter);
 		}
 
 		setter_type setter_;
 		getter_type getter_;
+		mutable base_value_type m_value_ = base_value_type();
 	};
 
 	template <class value_type>
@@ -206,7 +232,7 @@ namespace winp::prop{
 	public:
 		using base_type = base<void>;
 		using owner_type = base_type::owner_type;
-		using callback_type = base_type::callback_type;
+		using change_callback_type = base_type::change_callback_type;
 
 		using m_value_type = value_type;
 		using base_value_type = std::conditional_t<!std::is_pointer_v<value_type>, std::remove_const_t<std::remove_reference_t<value_type>>, value_type>;
@@ -220,25 +246,13 @@ namespace winp::prop{
 
 		proxy_value() = default;
 
+		explicit proxy_value(const value_type &){}
+
 		virtual ~proxy_value() = default;
 
 	protected:
-		void changed_(std::size_t size = 0){}
-
-		void changed_(const void *value_ref, std::size_t size){
-			base_type::changed_(value_ref, size);
-		}
-
-		void change_(const_ref_value_type value, std::size_t size = 0){
-			base_type::changed_(nullptr, size);
-		}
-
-		void change_(const void *value, std::size_t size = 0){
-			change_(*static_cast<const_ptr_value_type>(value), size);
-		}
-
-		value_type value_(std::size_t size = 0) const{
-			return value_type();
+		base_value_type value_(std::size_t size = 0) const{
+			return base_value_type();
 		}
 
 		void value_(void *buf, std::size_t size = 0) const{
@@ -275,16 +289,10 @@ namespace winp::prop{
 	protected:
 		friend in_owner_type;
 
-		template <typename setter_type, typename getter_type, typename... arg_types>
-		void init_(setter_type, getter_type, arg_types &&... args){
+		template <typename... arg_types>
+		void init_(arg_types &&... args){
 			base_type::init_(std::forward<arg_types>(args)...);
 		}
-
-		void changed_(){}
-
-		void change_(){}
-
-		void value_() const{}
 
 		setter_type setter_;
 		getter_type getter_;

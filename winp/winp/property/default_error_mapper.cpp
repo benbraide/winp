@@ -1,4 +1,4 @@
-#include "error_property.h"
+#include "default_error_mapper.h"
 
 winp::prop::default_error_mapper::value_type winp::prop::default_error_mapper::value(const std::wstring &converted){
 	mapped[global_value] = converted;
@@ -10,10 +10,11 @@ const std::wstring &winp::prop::default_error_mapper::map(value_type value){
 	return ((entry == mapped.end()) ? (unmapped = (L"Unknown error: <" + std::to_wstring(static_cast<int>(value)) + L">")) : entry->second);
 }
 
-winp::prop::default_error_mapper::value_type winp::prop::default_error_mapper::global_value = static_cast<value_type>(1);
+winp::prop::default_error_mapper::value_type winp::prop::default_error_mapper::global_value = static_cast<value_type>(3);
 
 std::unordered_map<winp::prop::default_error_mapper::value_type, std::wstring> winp::prop::default_error_mapper::mapped{
-	{ static_cast<value_type>(0), L"Success" }
+	{ value_type::nil, L"Success." },
+	{ value_type::proper_does_not_support_action, L"Property does not support the requested action." },
 };
 
 std::wstring winp::prop::default_error_mapper::unmapped;
