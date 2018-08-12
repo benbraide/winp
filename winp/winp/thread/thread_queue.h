@@ -73,7 +73,7 @@ namespace winp::thread{
 		auto add(const function_type &task, int priority = 0){
 			using return_type = decltype(task());
 			if (is_inside_thread_context_()){
-				auto info = add_([=]{
+				auto info = add_([task]{
 					task();
 				}, priority);
 
@@ -87,6 +87,8 @@ namespace winp::thread{
 
 			return future<return_type>(*promise);
 		}
+
+		void post(const callback_type &task, int priority = 0);
 
 		prop::scalar<const object *, queue, prop::proxy_value> owner;
 

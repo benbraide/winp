@@ -3,8 +3,12 @@
 winp::thread::queue::queue(object &owner)
 	: owner_(&owner){
 	this->owner.init_(*this, nullptr, nullptr, [this](const prop::base<queue> &, void *buf, std::size_t){
-		*static_cast<object **>(buf) = owner_;
+		*static_cast<const object **>(buf) = owner_;
 	}, &owner_->error);
+}
+
+void winp::thread::queue::post(const callback_type &task, int priority){
+	add_(task, priority);
 }
 
 winp::thread::queue::added_info_type winp::thread::queue::add_(const callback_type &task, int priority){

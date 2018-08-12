@@ -1,26 +1,47 @@
-#include "thread_object.h"
+#include "../app/app_collection.h"
 
-winp::thread::object::object()
-	: queue(&queue_), queue_(*this), is_main_(false){
+winp::thread::object::object(m_app_type &owner)
+	: owner_(&owner), queue(&queue_), queue_(*this), is_main_(false){
 	init_();
 	std::thread([this]{
 		id_ = std::this_thread::get_id();
-		raw_id_ = GetCurrentThreadId();
+		local_id_ = GetCurrentThreadId();
 
 		run_();
 
 		id_ = std::thread::id();
-		raw_id_ = 0u;
+		local_id_ = 0u;
 	}).detach();
 }
 
 winp::thread::object::object(bool)
-	: queue(&queue_), queue_(*this), is_main_(true){
+	: owner_(nullptr), queue(&queue_), queue_(*this), is_main_(true){
+	owner_->main_ = this;
 	id_ = std::this_thread::get_id();
-	raw_id_ = GetCurrentThreadId();
+	local_id_ = GetCurrentThreadId();
 }
 
 winp::thread::object::~object() = default;
+
+void winp::thread::object::each(const std::function<bool(item &)> &callback) const{
+	auto list_copy = list_;
+	for (auto item : list_copy){
+		if (!callback(*item))
+			break;
+	}
+}
+
+void winp::thread::object::add_(item &target){
+	std::lock_guard<std::mutex> guard(lock_);
+	list_.push_back(&target);
+}
+
+void winp::thread::object::remove_(item *target){
+	std::lock_guard<std::mutex> guard(lock_);
+	auto it = std::find(list_.begin(), list_.end(), target);
+	if (it != list_.end())
+		list_.erase(it);
+}
 
 void winp::thread::object::init_(){
 	auto setter = [this](const prop::base<object> &prop, const void *value, std::size_t index){
@@ -48,19 +69,28 @@ void winp::thread::object::init_(){
 				*static_cast<std::thread::id *>(buf) = id_;
 				break;
 			default:
-				*static_cast<DWORD *>(buf) = raw_id_;
+				*static_cast<DWORD *>(buf) = local_id_;
 				break;
 			}
 		}
+		else if (&prop == &owner)
+			*static_cast<const m_app_type **>(buf) = ((owner_ == nullptr) ? app::collection::find_main() : owner_);
+		else if (&prop == &is_main)
+			*static_cast<bool *>(buf) = is_main_;
 		else if (&prop == &inside)
 			*static_cast<bool *>(buf) = (std::this_thread::get_id() == id_);
 		else if (&prop == &state)
 			*static_cast<state_type *>(buf) = state_;
 	};
 
-	id.init_(*this, nullptr, nullptr, getter);
-	state.init_(*this, nullptr, setter, getter);
-	inside.init_(*this, nullptr, nullptr, getter);
+	owner.init_(*this, nullptr, nullptr, getter, &error);
+	is_main.init_(*this, nullptr, nullptr, getter, &error);
+
+	id.init_(*this, nullptr, nullptr, getter, &error);
+	state.init_(*this, nullptr, setter, getter, &error);
+	inside.init_(*this, nullptr, nullptr, getter, &error);
+
+	owner_->add_(*this);
 }
 
 void winp::thread::object::run_(){
@@ -99,6 +129,22 @@ void winp::thread::object::before_task_(){}
 
 void winp::thread::object::after_task_(){}
 
-winp::prop::default_error_mapper::value_type winp::thread::object::thread_context_mismatch = prop::default_error_mapper::value(L"Action can only be performed inside originating thread context.");
+LRESULT winp::thread::object::do_send_(const item *receiver, unsigned int msg, WPARAM wparam, LPARAM lparam) const{
+	return 0;
+}
 
-const winp::thread::object *winp::thread::object::main_object = new winp::thread::object(true);
+const winp::thread::object::item_placeholders_type winp::thread::object::item_placeholders = item_placeholders_type{
+	std::make_shared<item>(),
+	std::make_shared<item>(),
+	std::make_shared<item>()
+};
+
+winp::thread::value_manager::managed_info_type winp::thread::object::pop_managed_(){
+	return value_manager_.pop_();
+}
+
+std::shared_ptr<winp::thread::value> winp::thread::object::pop_value_(unsigned __int64 key){
+	return value_manager_.pop_(key);
+}
+
+winp::prop::default_error_mapper::value_type winp::thread::object::thread_context_mismatch = prop::default_error_mapper::value(L"Action can only be performed inside originating thread context.");
