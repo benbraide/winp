@@ -28,7 +28,7 @@ namespace winp::utility{
 
 		template <typename target_type>
 		target_type operator ()(target_type from_min_to){
-			return base_type::operator ()(std::numeric_limits<target_type>::min(), from_zero_to);
+			return base_type::operator ()(std::numeric_limits<target_type>::min(), from_min_to);
 		}
 
 		template <typename target_type>

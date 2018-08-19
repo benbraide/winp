@@ -7,6 +7,7 @@
 
 #include "thread_queue.h"
 #include "thread_value_manager.h"
+#include "thread_item.h"
 
 namespace winp::app{
 	class object;

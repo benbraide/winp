@@ -9,7 +9,11 @@ namespace winp::thread{
 	public:
 		using m_message_type = message::object;
 
-		prop::scalar<const object *, item, prop::proxy_value> owner;
+		item();
+
+		virtual ~item();
+
+		prop::scalar<object *, item, prop::proxy_value> owner;
 		prop::scalar<HWND, item, prop::proxy_value> handle;
 
 		prop::error<item> error;
@@ -17,6 +21,9 @@ namespace winp::thread{
 	protected:
 		friend class object;
 
-		
+		virtual void change_owner_(object *value);
+
+		object *owner_;
+		HWND handle_;
 	};
 }

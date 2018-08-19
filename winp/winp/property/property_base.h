@@ -15,9 +15,10 @@ namespace winp::prop{
 		virtual void change_(const void *value, std::size_t size = 0){}
 
 		void throw_(error_value_type value = error_value_type::proper_does_not_support_action) const{
-			if (error_prop_ == nullptr)
+			if (error_prop_ != nullptr)
+				error_prop_->change_(&value, 0u);
+			else
 				throw value;
-			error_prop_->change_(&value, 0u);
 		}
 
 		untyped_base *error_prop_ = nullptr;
