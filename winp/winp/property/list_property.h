@@ -54,31 +54,30 @@ namespace winp::prop{
 			return operator +=(&target);
 		}
 
-		list &operator -=(const m_item_value_type &target){
+		bool operator -=(const m_item_value_type &target){
 			if (!m_base_type::changed_(&target, list_action::action_remove))
-				return *this;
+				return false;
 
 			auto it = std::find(m_base_type::m_value_.begin(), m_base_type::m_value_.end(), target);
-			if (it != m_base_type::m_value_.end())
-				m_base_type::m_value_.erase(it);
+			if (it == m_base_type::m_value_.end())
+				return false;
 
-			return *this;
+			m_base_type::m_value_.erase(it);
+			return true;
 		}
 
 		template <typename dummy_type = list_type>
-		std::enable_if_t<std::is_pointer_v<typename dummy_type::value_type>, list> operator -=(std::remove_pointer_t<m_item_value_type> &target){
+		std::enable_if_t<std::is_pointer_v<typename dummy_type::value_type>, bool> operator -=(std::remove_pointer_t<m_item_value_type> &target){
 			return operator -=(&target);
 		}
 
 		template <typename dummy_type = list_type>
-		std::enable_if_t<!std::is_same_v<typename dummy_type::value_type, std::size_t>, list> operator -=(std::size_t index){
-			if (!m_base_type::changed_(&index, list_action::action_remove_index))
-				return *this;
+		std::enable_if_t<!std::is_same_v<typename dummy_type::value_type, std::size_t>, bool> operator -=(std::size_t index){
+			if (index >= m_base_type::m_value_.size() || !m_base_type::changed_(&index, list_action::action_remove_index))
+				return false;
 
-			if (index < m_base_type::m_value_.size())
-				m_base_type::m_value_.erase(m_base_type::m_value_.begin(), std::next(index));
-
-			return *this;
+			m_base_type::m_value_.erase(std::next(m_base_type::m_value_.begin(), index));
+			return true;
 		}
 
 		m_item_value_type *operator [](std::size_t index) const{

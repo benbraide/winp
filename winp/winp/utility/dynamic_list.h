@@ -67,17 +67,35 @@ namespace winp::utility{
 	public:
 		using m_owner = owner;
 		using value_type = in_value_type;
-		using callback_type = std::function<value_type *()>;
 
 		using iterator = dynamic_iterator<value_type>;
 		using const_iterator = dynamic_iterator<const value_type>;
+
+		using callback_type = std::function<value_type *()>;
+		using push_back_callback_type = std::function<void(value_type *)>;
+		using erase_callback_type = std::function<void(const iterator &)>;
 
 		using next_callback_type = typename iterator::callback_type;
 
 		dynamic_list(){}
 
-		dynamic_list(const callback_type &begin, const next_callback_type &next, const callback_type &end = nullptr)
-			: begin_(begin), end_(end), next_(next){}
+		dynamic_list(const callback_type &begin, const next_callback_type &next, const callback_type &end = nullptr,
+			const push_back_callback_type &push_back = nullptr, const erase_callback_type &erase = nullptr)
+			: begin_(begin), end_(end), next_(next), push_back_(push_back), erase_(erase){}
+
+		void push_back(value_type *value){
+			if (push_back_ != nullptr)
+				push_back_(value);
+		}
+
+		void push_back(value_type &value){
+			push_back(&value);
+		}
+
+		void erase(const iterator &it){
+			if (erase_ != nullptr)
+				erase_(it);
+		}
 
 		iterator begin() const{
 			return iterator(begin_(), next_);
@@ -102,14 +120,19 @@ namespace winp::utility{
 	private:
 		friend owner;
 
-		void init_(const callback_type &begin, const next_callback_type &next, const callback_type &end = nullptr){
+		void init_(const callback_type &begin, const next_callback_type &next, const callback_type &end = nullptr,
+			const push_back_callback_type &push_back = nullptr, const erase_callback_type &erase = nullptr){
 			begin_ = begin;
 			end_ = end;
 			next_ = next;
+			push_back_ = push_back;
+			erase_ = erase;
 		}
 
 		callback_type begin_;
 		callback_type end_;
 		next_callback_type next_;
+		push_back_callback_type push_back_;
+		erase_callback_type erase_;
 	};
 }
