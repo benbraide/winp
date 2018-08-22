@@ -93,6 +93,9 @@ std::size_t winp::ui::object::change_parent_(tree *value, std::size_t index){
 }
 
 bool winp::ui::object::remove_parent_(){
+	if (parent_ == nullptr)
+		return true;
+
 	if (!validate_parent_change_(nullptr, static_cast<std::size_t>(-1)))
 		return false;
 
@@ -116,7 +119,10 @@ bool winp::ui::object::validate_index_change_(std::size_t value) const{
 
 std::size_t winp::ui::object::change_index_(std::size_t value){
 	auto previous_index = index_();
-	if (value == previous_index || !validate_index_change_(value))
+	if (value == previous_index)
+		return value;
+
+	if (!validate_index_change_(value))
 		return static_cast<std::size_t>(-1);
 
 	if (parent_ != nullptr){
