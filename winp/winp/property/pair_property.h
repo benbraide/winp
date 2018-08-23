@@ -49,10 +49,10 @@ public:\
 	m_property_type second_prop;\
 \
 protected:\
-	virtual void init_(owner_type &owner, change_callback_type callback, setter_type setter, getter_type getter, untyped_base *error_prop = nullptr) override{\
-		m_base_type::init_(owner, callback, setter, getter, error_prop);\
-		first_prop.init_(owner, callback, setter, getter, error_prop);\
-		second_prop.init_(owner, callback, setter, getter, error_prop);\
+	virtual void init_(owner_type &owner, change_callback_type callback, setter_type setter, getter_type getter) override{\
+		m_base_type::init_(owner, callback, setter, getter);\
+		first_prop.init_(owner, callback, setter, getter);\
+		second_prop.init_(owner, callback, setter, getter);\
 	}\
 };
 

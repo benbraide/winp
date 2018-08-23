@@ -1,41 +1,48 @@
 #pragma once
 
+#include <memory>
+
 #include "../thread/thread_object.h"
+#include "../property/list_property.h"
 
 namespace winp::app{
-	class collection;
-
 	class object{
 	public:
 		using m_thread_type = thread::object;
 
-		object();
+		static void init();
 
-		virtual ~object();
+		static void shut_down();
 
-		void each(const std::function<bool(m_thread_type &)> &callback) const;
+		static int run(bool shut_down_after = false);
 
-		m_thread_type *find(std::thread::id id) const;
+		static prop::list<std::list<m_thread_type *>, object, prop::proxy_value> threads;
+		static prop::scalar<m_thread_type *, object, prop::proxy_value> current_thread;
+		static prop::scalar<m_thread_type *, object, prop::proxy_value> main_thread;
 
-		m_thread_type *find(DWORD id) const;
-
-		static m_thread_type *find_main();
-
-		prop::scalar<bool, object, prop::proxy_value> is_main;
-		prop::error<object> error;
+		static prop::scalar<bool, object, prop::proxy_value> is_shut_down;
+		static prop::error<object> error;
 
 	protected:
-		friend class collection;
 		friend class thread::object;
 
-		void add_(m_thread_type &target);
+		static std::size_t add_thread_(m_thread_type &thread);
 
-		void remove_(m_thread_type *target);
+		static bool remove_thread_(m_thread_type &thread);
 
-		bool is_main_;
-		std::list<m_thread_type *> list_;
-		mutable std::mutex lock_;
+		static bool remove_thread_at_(std::size_t index);
 
-		static m_thread_type *main_;
+		static std::size_t find_thread_(const m_thread_type &thread);
+
+		static m_thread_type *get_thread_at_(std::size_t index);
+
+		static m_thread_type *get_current_thread_();
+
+		static std::list<m_thread_type *> threads_;
+		static std::mutex lock_;
+		static bool is_shut_down_;
+
+		static std::shared_ptr<thread::object> main_thread_;
+		static std::shared_ptr<object> dummy_app_;
 	};
 }

@@ -9,6 +9,7 @@ namespace winp::prop{
 		enum class value_type{
 			nil,
 			proper_does_not_support_action,
+			thread_context_mismatch,
 		};
 
 		static value_type value(const std::wstring &converted);

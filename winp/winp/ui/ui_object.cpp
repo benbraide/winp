@@ -1,8 +1,19 @@
+#include "../app/app_object.h"
 #include "ui_tree.h"
 
-winp::ui::object::object()
-	: parent_(nullptr), m_index_(static_cast<std::size_t>(-1)){
+winp::ui::object::object(thread::object &thread)
+	: item(thread), parent_(nullptr), m_index_(static_cast<std::size_t>(-1)){
+	init_();
+}
 
+winp::ui::object::object(tree &parent)
+	: item(*parent.owner_), parent_(&parent), m_index_(static_cast<std::size_t>(-1)){
+	init_();
+}
+
+winp::ui::object::~object() = default;
+
+void winp::ui::object::init_(){
 	ancestors.m_value_.init_([this]() -> tree *{//begin
 		return parent_;
 	}, [this](tree *current) -> tree *{//next
@@ -43,19 +54,23 @@ winp::ui::object::object()
 			*static_cast<object **>(buf) = get_next_sibling_();
 	};
 
-	parent.init_(*this, nullptr, setter, getter, &error);
-	index.init_(*this, nullptr, setter, getter, &error);
+	parent.init_(*this, nullptr, setter, getter);
+	index.init_(*this, nullptr, setter, getter);
 
-	previous_sibling.init_(*this, nullptr, setter, getter, &error);
-	next_sibling.init_(*this, nullptr, setter, getter, &error);
+	previous_sibling.init_(*this, nullptr, setter, getter);
+	next_sibling.init_(*this, nullptr, setter, getter);
 
-	ancestors.init_(*this, nullptr, nullptr, getter, &error);
-	siblings.init_(*this, nullptr, nullptr, getter, &error);
+	ancestors.init_(*this, nullptr, nullptr, getter);
+	siblings.init_(*this, nullptr, nullptr, getter);
 }
 
-winp::ui::object::~object() = default;
-
 bool winp::ui::object::validate_parent_change_(tree *value, std::size_t index) const{
+	app::object::error = prop::default_error_mapper::value_type::nil;
+	if (value != nullptr && value->owner_ != owner_){
+		app::object::error = prop::default_error_mapper::value_type::thread_context_mismatch;
+		return false;
+	}
+
 	return true;
 }
 

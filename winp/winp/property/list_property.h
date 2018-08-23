@@ -106,8 +106,8 @@ namespace winp::prop{
 	protected:
 		friend in_owner_type;
 
-		virtual void init_(owner_type &owner, change_callback_type callback, untyped_base *error_prop = nullptr) override{
-			m_base_type::init_(owner, callback, error_prop);
+		virtual void init_(owner_type &owner, change_callback_type callback) override{
+			m_base_type::init_(owner, callback);
 
 			auto getter = [this](const prop::base<list> &prop, void *buf, std::size_t index){
 				if (&prop == &last){
@@ -129,15 +129,15 @@ namespace winp::prop{
 					*static_cast<std::size_t *>(buf) = m_base_type::m_value_.size();
 			};
 
-			first.init_(*this, nullptr, nullptr, getter, error_prop);
-			last.init_(*this, nullptr, nullptr, getter, error_prop);
-			begin.init_(*this, nullptr, nullptr, getter, error_prop);
-			end.init_(*this, nullptr, nullptr, getter, error_prop);
-			size.init_(*this, nullptr, nullptr, getter, error_prop);
+			first.init_(*this, nullptr, nullptr, getter);
+			last.init_(*this, nullptr, nullptr, getter);
+			begin.init_(*this, nullptr, nullptr, getter);
+			end.init_(*this, nullptr, nullptr, getter);
+			size.init_(*this, nullptr, nullptr, getter);
 		}
 
-		virtual void init_(owner_type &owner, change_callback_type callback, setter_type setter, getter_type getter, untyped_base *error_prop = nullptr) override{
-			init_(owner, callback, error_prop);
+		virtual void init_(owner_type &owner, change_callback_type callback, setter_type setter, getter_type getter) override{
+			init_(owner, callback);
 		}
 	};
 
@@ -165,8 +165,8 @@ namespace winp::prop{
 		using m_iterator_type = typename list_type::iterator;
 		using m_const_iterator_type = typename list_type::const_iterator;
 
-		std::size_t operator +=(const m_item_value_type &target){
-			auto info = std::make_pair<std::size_t, m_item_value_type>(static_cast<std::size_t>(-1), target);
+		std::size_t operator +=(m_item_value_type target){
+			auto info = std::make_pair(static_cast<std::size_t>(-1), target);
 			m_base_type::change_(&info, list_action::action_add);
 			return info.first;
 		}
@@ -176,8 +176,8 @@ namespace winp::prop{
 			return operator +=(&target);
 		}
 
-		bool operator -=(const m_item_value_type &target){
-			auto info = std::make_pair<bool, m_item_value_type>(false, target);
+		bool operator -=(m_item_value_type target){
+			auto info = std::make_pair(false, target);
 			m_base_type::change_(&info, list_action::action_remove);
 			return info.first;
 		}
@@ -226,8 +226,8 @@ namespace winp::prop{
 	protected:
 		friend in_owner_type;
 
-		virtual void init_(owner_type &owner, change_callback_type callback, setter_type setter, getter_type getter, untyped_base *error_prop = nullptr) override{
-			m_base_type::init_(owner, callback, setter, getter, error_prop);
+		virtual void init_(owner_type &owner, change_callback_type callback, setter_type setter, getter_type getter) override{
+			m_base_type::init_(owner, callback, setter, getter);
 
 			auto this_getter = [this](const prop::base<list> &prop, void *buf, std::size_t index){
 				if (&prop == &first)
@@ -242,11 +242,11 @@ namespace winp::prop{
 					m_base_type::change_(buf, list_action::action_size);
 			};
 
-			first.init_(*this, nullptr, nullptr, this_getter, error_prop);
-			last.init_(*this, nullptr, nullptr, this_getter, error_prop);
-			begin.init_(*this, nullptr, nullptr, this_getter, error_prop);
-			end.init_(*this, nullptr, nullptr, this_getter, error_prop);
-			size.init_(*this, nullptr, nullptr, this_getter, error_prop);
+			first.init_(*this, nullptr, nullptr, this_getter);
+			last.init_(*this, nullptr, nullptr, this_getter);
+			begin.init_(*this, nullptr, nullptr, this_getter);
+			end.init_(*this, nullptr, nullptr, this_getter);
+			size.init_(*this, nullptr, nullptr, this_getter);
 		}
 	};
 }

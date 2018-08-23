@@ -15,6 +15,7 @@ winp::prop::default_error_mapper::value_type winp::prop::default_error_mapper::g
 std::unordered_map<winp::prop::default_error_mapper::value_type, std::wstring> winp::prop::default_error_mapper::mapped{
 	{ value_type::nil, L"Success." },
 	{ value_type::proper_does_not_support_action, L"Property does not support the requested action." },
+	{ value_type::thread_context_mismatch, L"Action can only be performed inside originating thread context." },
 };
 
 std::wstring winp::prop::default_error_mapper::unmapped;

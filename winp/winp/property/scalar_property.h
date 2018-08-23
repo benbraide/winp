@@ -386,11 +386,11 @@ namespace winp::prop{
 			}
 
 			operator std::remove_pointer_t<base_value_type> &() const{
-				return *base_value_type();
+				return *operator base_value_type();
 			}
 
 			std::remove_pointer_t<base_value_type> &operator *() const{
-				return *m_value_holder_type::value_();
+				return *operator base_value_type();
 			}
 
 			template <typename target_type>

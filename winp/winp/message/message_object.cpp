@@ -1,4 +1,4 @@
-#include "../thread/current_thread.h"
+#include "../app/app_object.h"
 
 winp::message::object::object(thread::object &thread_owner, m_item_type *target)
 	: thread_owner_(&thread_owner), owner_(target), target_(target), state_(state_type::nil){
@@ -22,14 +22,14 @@ winp::message::object::object(thread::object &thread_owner, m_item_type *target)
 			*static_cast<m_item_type **>(buf) = target_;
 	};
 
-	owner.init_(*this, nullptr, nullptr, getter, &error);
-	this->target.init_(*this, nullptr, nullptr, getter, &error);
+	owner.init_(*this, nullptr, nullptr, getter);
+	this->target.init_(*this, nullptr, nullptr, getter);
 
-	do_default.init_(*this, nullptr, setter, nullptr, &error);
-	prevent_default.init_(*this, nullptr, setter, nullptr, &error);
+	do_default.init_(*this, nullptr, setter, nullptr);
+	prevent_default.init_(*this, nullptr, setter, nullptr);
 
-	stop_propagation.init_(*this, nullptr, setter, nullptr, &error);
-	stop_event_propagation.init_(*this, nullptr, setter, nullptr, &error);
+	stop_propagation.init_(*this, nullptr, setter, nullptr);
+	stop_event_propagation.init_(*this, nullptr, setter, nullptr);
 }
 
 winp::message::object::~object() = default;

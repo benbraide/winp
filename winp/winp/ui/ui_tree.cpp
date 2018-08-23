@@ -1,6 +1,18 @@
 #include "ui_tree.h"
 
-winp::ui::tree::tree(){
+winp::ui::tree::tree(thread::object &thread)
+	: object(thread){
+	init_();
+}
+
+winp::ui::tree::tree(tree &parent)
+	: object(parent){
+	init_();
+}
+
+winp::ui::tree::~tree() = default;
+
+void winp::ui::tree::init_(){
 	auto setter = [this](const prop::base<tree> &prop, const void *value, std::size_t index){
 		auto nc_value = const_cast<void *>(value);
 		if (&prop == &children){
@@ -59,10 +71,8 @@ winp::ui::tree::tree(){
 		}
 	};
 
-	children.init_(*this, nullptr, setter, nullptr, &error);
+	children.init_(*this, nullptr, setter, nullptr);
 }
-
-winp::ui::tree::~tree() = default;
 
 bool winp::ui::tree::validate_child_insert_(object &child, std::size_t index) const{
 	return true;

@@ -9,19 +9,12 @@ namespace winp::prop{
 	public:
 		using error_value_type = default_error_mapper::value_type;
 
-		virtual ~untyped_base() = default;
+		virtual ~untyped_base();
 
 	protected:
-		virtual void change_(const void *value, std::size_t size = 0){}
+		virtual void change_(const void *value, std::size_t size = 0);
 
-		void throw_(error_value_type value = error_value_type::proper_does_not_support_action) const{
-			if (error_prop_ != nullptr)
-				error_prop_->change_(&value, 0u);
-			else
-				throw value;
-		}
-
-		untyped_base *error_prop_ = nullptr;
+		void throw_(error_value_type value = error_value_type::proper_does_not_support_action) const;
 	};
 
 	template <class in_owner_type>
@@ -40,14 +33,13 @@ namespace winp::prop{
 	protected:
 		friend owner_type;
 
-		virtual void init_(owner_type &owner, change_callback_type changed_callback, untyped_base *error_prop = nullptr){
+		virtual void init_(owner_type &owner, change_callback_type changed_callback){
 			owner_ = &owner;
 			changed_callback_ = changed_callback;
-			error_prop_ = error_prop;
 		}
 
-		virtual void init_(owner_type &owner, change_callback_type callback, setter_type setter, getter_type getter, untyped_base *error_prop = nullptr){
-			init_(owner, callback, error_prop);
+		virtual void init_(owner_type &owner, change_callback_type callback, setter_type setter, getter_type getter){
+			init_(owner, callback);
 		}
 
 		bool changed_(const void *value_ref, std::size_t size) const{
@@ -59,7 +51,7 @@ namespace winp::prop{
 	};
 
 	template <>
-	class base<void>{
+	class base<void> : public untyped_base{
 	public:
 		using owner_type = void;
 
@@ -76,12 +68,6 @@ namespace winp::prop{
 
 		bool changed_(const void *, std::size_t) const{
 			return true;
-		}
-
-		virtual void change_(const void *value, std::size_t size = 0){}
-
-		void throw_(error_value_type value) const{
-			throw value;
 		}
 	};
 
@@ -185,8 +171,8 @@ namespace winp::prop{
 	protected:
 		friend in_owner_type;
 
-		virtual void init_(owner_type &owner, change_callback_type callback, setter_type setter, getter_type getter, untyped_base *error_prop = nullptr) override{
-			base_type::init_(owner, callback, error_prop);
+		virtual void init_(owner_type &owner, change_callback_type callback, setter_type setter, getter_type getter) override{
+			base_type::init_(owner, callback);
 			setter_ = setter;
 			getter_ = getter;
 		}

@@ -38,21 +38,9 @@ namespace winp::message{
 		prop::scalar<bool, object, prop::proxy_value> stop_propagation;
 		prop::scalar<bool, object, prop::proxy_value> stop_event_propagation;
 
-		prop::error<object> error;
-
 	protected:
 		friend class thread::item;
 		friend class thread::object;
-
-		template <typename prop_type, typename changed_type, typename setter_type, typename getter_type>
-		void init_prop_(prop_type &prop, changed_type changed, setter_type setter, getter_type getter){
-			prop.init_(*this, changed, setter, getter, &error);
-		}
-
-		template <typename prop_type, typename value_type>
-		void set_prop_value_(prop_type &prop, const value_type &value){
-			prop.m_value_ = value;
-		}
 
 		virtual bool bubble_();
 

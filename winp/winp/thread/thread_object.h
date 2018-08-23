@@ -46,7 +46,7 @@ namespace winp::thread{
 			std::shared_ptr<item> allocated_both;
 		};
 
-		explicit object(m_app_type &owner);
+		object();
 
 		virtual ~object();
 
@@ -67,7 +67,6 @@ namespace winp::thread{
 
 		}
 
-		prop::scalar<const m_app_type *, object, prop::proxy_value> owner;
 		prop::scalar<bool, object, prop::proxy_value> is_main;
 
 		prop::variant<object, std::thread::id, DWORD> id;
@@ -75,11 +74,8 @@ namespace winp::thread{
 
 		prop::scalar<state_type, object, prop::proxy_value> state;
 		prop::scalar<bool, object, prop::proxy_value> inside;
-		prop::error<object> error;
 
 		static const item_placeholders_type item_placeholders;
-
-		static prop::default_error_mapper::value_type thread_context_mismatch;
 
 	protected:
 		friend class app::object;
@@ -94,7 +90,7 @@ namespace winp::thread{
 
 		void init_();
 
-		virtual void run_();
+		virtual int run_();
 
 		virtual bool run_state_() const;
 
@@ -170,9 +166,7 @@ namespace winp::thread{
 
 		std::shared_ptr<value> pop_value_(unsigned __int64 key);
 
-		m_app_type *owner_;
 		queue_type queue_;
-
 		std::thread::id id_;
 		DWORD local_id_ = 0;
 

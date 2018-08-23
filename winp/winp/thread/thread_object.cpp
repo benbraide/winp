@@ -1,7 +1,7 @@
-#include "../app/app_collection.h"
+#include "../app/app_object.h"
 
-winp::thread::object::object(m_app_type &owner)
-	: owner_(&owner), queue(&queue_), queue_(*this), is_main_(false){
+winp::thread::object::object()
+	: queue(&queue_), queue_(*this), is_main_(false){
 	init_();
 	std::thread([this]{
 		id_ = std::this_thread::get_id();
@@ -15,13 +15,15 @@ winp::thread::object::object(m_app_type &owner)
 }
 
 winp::thread::object::object(bool)
-	: owner_(nullptr), queue(&queue_), queue_(*this), is_main_(true){
-	owner_->main_ = this;
+	: queue(&queue_), queue_(*this), is_main_(true){
+	init_();
 	id_ = std::this_thread::get_id();
 	local_id_ = GetCurrentThreadId();
 }
 
-winp::thread::object::~object() = default;
+winp::thread::object::~object(){
+	app::object::threads -= this;
+}
 
 void winp::thread::object::each(const std::function<bool(item &)> &callback) const{
 	auto list_copy = list_;
@@ -73,9 +75,7 @@ void winp::thread::object::init_(){
 				break;
 			}
 		}
-		else if (&prop == &owner)
-			*static_cast<const m_app_type **>(buf) = ((owner_ == nullptr) ? app::collection::find_main() : owner_);
-		else if (&prop == &is_main)
+		if (&prop == &is_main)
 			*static_cast<bool *>(buf) = is_main_;
 		else if (&prop == &inside)
 			*static_cast<bool *>(buf) = (std::this_thread::get_id() == id_);
@@ -83,22 +83,22 @@ void winp::thread::object::init_(){
 			*static_cast<state_type *>(buf) = state_;
 	};
 
-	owner.init_(*this, nullptr, nullptr, getter, &error);
-	is_main.init_(*this, nullptr, nullptr, getter, &error);
+	is_main.init_(*this, nullptr, nullptr, getter);
+	id.init_(*this, nullptr, nullptr, getter);
 
-	id.init_(*this, nullptr, nullptr, getter, &error);
-	state.init_(*this, nullptr, setter, getter, &error);
-	inside.init_(*this, nullptr, nullptr, getter, &error);
+	state.init_(*this, nullptr, setter, getter);
+	inside.init_(*this, nullptr, nullptr, getter);
 
-	owner_->add_(*this);
+	app::object::threads += this;
 }
 
-void winp::thread::object::run_(){
+int winp::thread::object::run_(){
 	state_ = state_type::running;
 	while (run_state_())
 		run_task_();
 
 	state_ = state_type::stopped;
+	return 0;
 }
 
 bool winp::thread::object::run_state_() const{
@@ -133,12 +133,6 @@ LRESULT winp::thread::object::do_send_(const item *receiver, unsigned int msg, W
 	return 0;
 }
 
-const winp::thread::object::item_placeholders_type winp::thread::object::item_placeholders = item_placeholders_type{
-	std::make_shared<item>(),
-	std::make_shared<item>(),
-	std::make_shared<item>()
-};
-
 winp::thread::value_manager::managed_info_type winp::thread::object::pop_managed_(){
 	return value_manager_.pop_();
 }
@@ -147,4 +141,8 @@ std::shared_ptr<winp::thread::value> winp::thread::object::pop_value_(unsigned _
 	return value_manager_.pop_(key);
 }
 
-winp::prop::default_error_mapper::value_type winp::thread::object::thread_context_mismatch = prop::default_error_mapper::value(L"Action can only be performed inside originating thread context.");
+const winp::thread::object::item_placeholders_type winp::thread::object::item_placeholders = item_placeholders_type{
+	std::shared_ptr<item>(new item),
+	std::shared_ptr<item>(new item),
+	std::shared_ptr<item>(new item),
+};

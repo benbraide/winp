@@ -10,7 +10,9 @@ namespace winp::ui{
 
 	class object : public thread::item{
 	public:
-		object();
+		explicit object(thread::object &thread);
+
+		explicit object(tree &parent);
 
 		virtual ~object();
 
@@ -25,6 +27,8 @@ namespace winp::ui{
 
 	protected:
 		friend class tree;
+
+		void init_();
 
 		virtual bool validate_parent_change_(tree *value, std::size_t index) const;
 

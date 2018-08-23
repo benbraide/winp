@@ -2,6 +2,10 @@
 
 #include "../message/message_object.h"
 
+namespace winp::app{
+	class object;
+}
+
 namespace winp::thread{
 	class object;
 
@@ -9,19 +13,18 @@ namespace winp::thread{
 	public:
 		using m_message_type = message::object;
 
-		item();
+		explicit item(object &owner);
 
 		virtual ~item();
 
 		prop::scalar<object *, item, prop::proxy_value> owner;
 		prop::scalar<HWND, item, prop::proxy_value> handle;
 
-		prop::error<item> error;
-
 	protected:
 		friend class object;
+		friend class app::object;
 
-		virtual void change_owner_(object *value);
+		item();
 
 		object *owner_;
 		HWND handle_;

@@ -7,7 +7,9 @@
 namespace winp::ui{
 	class tree : public object{
 	public:
-		tree();
+		explicit tree(thread::object &thread);
+
+		explicit tree(tree &parent);
 
 		virtual ~tree();
 
@@ -15,6 +17,8 @@ namespace winp::ui{
 
 	protected:
 		friend class object;
+
+		void init_();
 
 		virtual bool validate_child_insert_(object &child, std::size_t index) const;
 
