@@ -53,7 +53,7 @@ namespace winp::prop{
 			base_type::changed_(&m_value_, context);
 		}
 
-		virtual void change_(const m_value_type &value){
+		virtual void typed_change_(const m_value_type &value){
 			change_(&value);
 		}
 
@@ -61,7 +61,7 @@ namespace winp::prop{
 			*static_cast<m_value_type *>(buf) = m_value_;
 		}
 
-		virtual const m_value_type &get_value_() const{
+		virtual const m_value_type &typed_get_value_() const{
 			return m_value_;
 		}
 
@@ -111,7 +111,7 @@ namespace winp::prop{
 				base_type::throw_();
 		}
 
-		virtual void change_(const m_value_type &value){
+		virtual void typed_change_(const m_value_type &value){
 			change_(&value);
 		}
 
@@ -122,7 +122,7 @@ namespace winp::prop{
 				base_type::throw_();
 		}
 
-		virtual m_value_type get_value_() const{
+		virtual m_value_type typed_get_value_() const{
 			auto value = m_value_type();
 			get_value_(&value);
 			return value;

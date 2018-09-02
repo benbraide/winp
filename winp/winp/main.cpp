@@ -12,6 +12,11 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_sh
 	int fv = sz.height;
 	int sv = sz.width;
 
+	auto ils = { 9, 18 };
+	std::tuple<int, int> tpl = { 9, 18 };
+	auto tpli1 = std::get<0>(tpl);
+	auto tpli2 = std::get<1>(tpl);
+
 	/*auto fut = winp::thread::object::main_->queue->add([]{
 		return 9;
 	});

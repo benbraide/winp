@@ -21,7 +21,7 @@ namespace winp::prop{
 
 		template <typename target_type>
 		operator target_type() const{
-			return utility::convert_param<m_value_type, target_type>::convert(m_value_holder_type::get_value_());
+			return utility::convert_param<m_value_type, target_type>::convert(m_value_holder_type::typed_get_value_());
 		}
 
 		m_value_type operator()() const{
@@ -30,164 +30,164 @@ namespace winp::prop{
 
 		template <typename target_type>
 		scalar &operator =(target_type target){
-			m_value_holder_type::change_(utility::convert_param<target_type, m_value_type>::convert(target));
+			m_value_holder_type::typed_change_(utility::convert_param<target_type, m_value_type>::convert(target));
 			return *this;
 		}
 
 		template <typename target_type>
 		scalar &operator +=(target_type target){
-			m_value_holder_type::change_(m_value_holder_type::get_value_() + utility::convert_param<target_type, m_value_type>::convert(target));
+			m_value_holder_type::typed_change_(m_value_holder_type::typed_get_value_() + utility::convert_param<target_type, m_value_type>::convert(target));
 			return *this;
 		}
 
 		template <typename target_type>
 		scalar &operator -=(target_type target){
-			m_value_holder_type::change_(m_value_holder_type::get_value_() - utility::convert_param<target_type, m_value_type>::convert(target));
+			m_value_holder_type::typed_change_(m_value_holder_type::typed_get_value_() - utility::convert_param<target_type, m_value_type>::convert(target));
 			return *this;
 		}
 
 		template <typename target_type>
 		scalar &operator *=(target_type target){
-			m_value_holder_type::change_(m_value_holder_type::get_value_() * utility::convert_param<target_type, m_value_type>::convert(target));
+			m_value_holder_type::typed_change_(m_value_holder_type::typed_get_value_() * utility::convert_param<target_type, m_value_type>::convert(target));
 			return *this;
 		}
 
 		template <typename target_type>
 		scalar &operator /=(target_type target){
-			m_value_holder_type::change_(m_value_holder_type::get_value_() / utility::convert_param<target_type, m_value_type>::convert(target));
+			m_value_holder_type::typed_change_(m_value_holder_type::typed_get_value_() / utility::convert_param<target_type, m_value_type>::convert(target));
 			return *this;
 		}
 
 		template <typename target_type>
 		scalar &operator %=(target_type target){
-			m_value_holder_type::change_(m_value_holder_type::get_value_() % utility::convert_param<target_type, m_value_type>::convert(target));
+			m_value_holder_type::typed_change_(m_value_holder_type::typed_get_value_() % utility::convert_param<target_type, m_value_type>::convert(target));
 			return *this;
 		}
 
 		template <typename target_type>
 		scalar &operator &=(target_type target){
-			m_value_holder_type::change_(m_value_holder_type::get_value_() & utility::convert_param<target_type, m_value_type>::convert(target));
+			m_value_holder_type::typed_change_(m_value_holder_type::typed_get_value_() & utility::convert_param<target_type, m_value_type>::convert(target));
 			return *this;
 		}
 
 		template <typename target_type>
 		scalar &operator |=(target_type target){
-			m_value_holder_type::change_(m_value_holder_type::get_value_() | utility::convert_param<target_type, m_value_type>::convert(target));
+			m_value_holder_type::typed_change_(m_value_holder_type::typed_get_value_() | utility::convert_param<target_type, m_value_type>::convert(target));
 			return *this;
 		}
 
 		template <typename target_type>
 		scalar &operator ^=(target_type target){
-			m_value_holder_type::change_(m_value_holder_type::get_value_() ^ utility::convert_param<target_type, m_value_type>::convert(target));
+			m_value_holder_type::typed_change_(m_value_holder_type::typed_get_value_() ^ utility::convert_param<target_type, m_value_type>::convert(target));
 			return *this;
 		}
 
 		template <typename target_type>
 		m_value_type operator +(target_type target) const{
-			return (m_value_holder_type::get_value_() + utility::convert_param<target_type, m_value_type>::convert(target));
+			return (m_value_holder_type::typed_get_value_() + utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
 		m_value_type operator -(target_type target) const{
-			return (m_value_holder_type::get_value_() - utility::convert_param<target_type, m_value_type>::convert(target));
+			return (m_value_holder_type::typed_get_value_() - utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
 		m_value_type operator *(target_type target) const{
-			return (m_value_holder_type::get_value_() * utility::convert_param<target_type, m_value_type>::convert(target));
+			return (m_value_holder_type::typed_get_value_() * utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
 		m_value_type operator /(target_type target) const{
-			return (m_value_holder_type::get_value_() / utility::convert_param<target_type, m_value_type>::convert(target));
+			return (m_value_holder_type::typed_get_value_() / utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
 		m_value_type operator %(target_type target) const{
-			return (m_value_holder_type::get_value_() % utility::convert_param<target_type, m_value_type>::convert(target));
+			return (m_value_holder_type::typed_get_value_() % utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
 		m_value_type operator &(target_type target) const{
-			return (m_value_holder_type::get_value_() & utility::convert_param<target_type, m_value_type>::convert(target));
+			return (m_value_holder_type::typed_get_value_() & utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
 		m_value_type operator |(target_type target) const{
-			return (m_value_holder_type::get_value_() | utility::convert_param<target_type, m_value_type>::convert(target));
+			return (m_value_holder_type::typed_get_value_() | utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
 		m_value_type operator ^(target_type target) const{
-			return (m_value_holder_type::get_value_() ^ utility::convert_param<target_type, m_value_type>::convert(target));
+			return (m_value_holder_type::typed_get_value_() ^ utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
 		bool operator <(target_type target) const{
-			return (m_value_holder_type::get_value_() < utility::convert_param<target_type, m_value_type>::convert(target));
+			return (m_value_holder_type::typed_get_value_() < utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
 		bool operator <=(target_type target) const{
-			return (m_value_holder_type::get_value_() <= utility::convert_param<target_type, m_value_type>::convert(target));
+			return (m_value_holder_type::typed_get_value_() <= utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
 		bool operator ==(target_type target) const{
-			return (m_value_holder_type::get_value_() == utility::convert_param<target_type, m_value_type>::convert(target));
+			return (m_value_holder_type::typed_get_value_() == utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
 		bool operator !=(target_type target) const{
-			return (m_value_holder_type::get_value_() != utility::convert_param<target_type, m_value_type>::convert(target));
+			return (m_value_holder_type::typed_get_value_() != utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
 		bool operator >=(target_type target) const{
-			return (m_value_holder_type::get_value_() >= utility::convert_param<target_type, m_value_type>::convert(target));
+			return (m_value_holder_type::typed_get_value_() >= utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
 		bool operator >(target_type target) const{
-			return (m_value_holder_type::get_value_() > utility::convert_param<target_type, m_value_type>::convert(target));
+			return (m_value_holder_type::typed_get_value_() > utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		scalar &operator ++(){
-			m_value_holder_type::change_(m_value_holder_type::get_value_() + static_cast<m_value_type>(1));
+			m_value_holder_type::typed_change_(m_value_holder_type::typed_get_value_() + static_cast<m_value_type>(1));
 			return *this;
 		}
 
 		m_value_type operator ++(int){
-			auto value = m_value_holder_type::get_value_();
-			m_value_holder_type::change_(value + static_cast<m_value_type>(1));
+			auto value = m_value_holder_type::typed_get_value_();
+			m_value_holder_type::typed_change_(value + static_cast<m_value_type>(1));
 			return value;
 		}
 
 		scalar &operator --(){
-			m_value_holder_type::change_(m_value_holder_type::get_value_() - static_cast<m_value_type>(1));
+			m_value_holder_type::typed_change_(m_value_holder_type::typed_get_value_() - static_cast<m_value_type>(1));
 			return *this;
 		}
 
 		m_value_type operator --(int){
-			auto value = m_value_holder_type::get_value_();
-			m_value_holder_type::change_(value - static_cast<m_value_type>(1));
+			auto value = m_value_holder_type::typed_get_value_();
+			m_value_holder_type::typed_change_(value - static_cast<m_value_type>(1));
 			return value;
 		}
 
 		m_value_type operator +() const{
-			return +m_value_holder_type::get_value_();
+			return +m_value_holder_type::typed_get_value_();
 		}
 
 		m_value_type operator -() const{
-			return -m_value_holder_type::get_value_();
+			return -m_value_holder_type::typed_get_value_();
 		}
 
 		m_value_type operator ~() const{
-			return ~m_value_holder_type::get_value_();
+			return ~m_value_holder_type::typed_get_value_();
 		}
 
 		auto operator !() const{
-			return !m_value_holder_type::get_value_();
+			return !m_value_holder_type::typed_get_value_();
 		}
 	};
 
@@ -204,7 +204,7 @@ namespace winp::prop{
 		scalar() = default;
 
 		operator m_value_type() const{
-			return m_value_holder_type::get_value_();
+			return m_value_holder_type::typed_get_value_();
 		}
 
 		m_value_type operator()() const{
@@ -213,49 +213,49 @@ namespace winp::prop{
 
 		template <typename target_type>
 		scalar &operator =(target_type target){
-			m_value_holder_type::change_(static_cast<const m_value_type &>(target));
+			m_value_holder_type::typed_change_(static_cast<const m_value_type &>(target));
 			return *this;
 		}
 
 		template <typename target_type>
 		scalar &operator +=(target_type target){
-			m_value_holder_type::change_(m_value_holder_type::get_value_() + static_cast<const m_value_type &>(target));
+			m_value_holder_type::typed_change_(m_value_holder_type::typed_get_value_() + static_cast<const m_value_type &>(target));
 			return *this;
 		}
 
 		template <typename target_type>
 		m_value_type operator +(target_type target) const{
-			return (m_value_holder_type::get_value_() + static_cast<const m_value_type &>(target));
+			return (m_value_holder_type::typed_get_value_() + static_cast<const m_value_type &>(target));
 		}
 
 		template <typename target_type>
 		bool operator <(target_type target) const{
-			return (m_value_holder_type::get_value_() < static_cast<const m_value_type &>(target));
+			return (m_value_holder_type::typed_get_value_() < static_cast<const m_value_type &>(target));
 		}
 
 		template <typename target_type>
 		bool operator <=(target_type target) const{
-			return (m_value_holder_type::get_value_() <= static_cast<const m_value_type &>(target));
+			return (m_value_holder_type::typed_get_value_() <= static_cast<const m_value_type &>(target));
 		}
 
 		template <typename target_type>
 		bool operator ==(target_type target) const{
-			return (m_value_holder_type::get_value_() == static_cast<const m_value_type &>(target));
+			return (m_value_holder_type::typed_get_value_() == static_cast<const m_value_type &>(target));
 		}
 
 		template <typename target_type>
 		bool operator !=(target_type target) const{
-			return (m_value_holder_type::get_value_() != static_cast<const m_value_type &>(target));
+			return (m_value_holder_type::typed_get_value_() != static_cast<const m_value_type &>(target));
 		}
 
 		template <typename target_type>
 		bool operator >=(target_type target) const{
-			return (m_value_holder_type::get_value_() >= static_cast<const m_value_type &>(target));
+			return (m_value_holder_type::typed_get_value_() >= static_cast<const m_value_type &>(target));
 		}
 
 		template <typename target_type>
 		bool operator >(target_type target) const{
-			return (m_value_holder_type::get_value_() > static_cast<const m_value_type &>(target));
+			return (m_value_holder_type::typed_get_value_() > static_cast<const m_value_type &>(target));
 		}
 	};
 
@@ -272,7 +272,7 @@ namespace winp::prop{
 		scalar() = default;
 
 		operator m_value_type() const{
-			return m_value_holder_type::get_value_();
+			return m_value_holder_type::typed_get_value_();
 		}
 
 		m_value_type operator()() const{
@@ -281,49 +281,49 @@ namespace winp::prop{
 
 		template <typename target_type>
 		scalar &operator =(target_type target){
-			m_value_holder_type::change_(static_cast<const m_value_type &>(target));
+			m_value_holder_type::typed_change_(static_cast<const m_value_type &>(target));
 			return *this;
 		}
 
 		template <typename target_type>
 		scalar &operator +=(target_type target){
-			m_value_holder_type::change_(m_value_holder_type::get_value_() + static_cast<const m_value_type &>(target));
+			m_value_holder_type::typed_change_(m_value_holder_type::typed_get_value_() + static_cast<const m_value_type &>(target));
 			return *this;
 		}
 
 		template <typename target_type>
 		m_value_type operator +(target_type target) const{
-			return (m_value_holder_type::get_value_() + static_cast<const m_value_type &>(target));
+			return (m_value_holder_type::typed_get_value_() + static_cast<const m_value_type &>(target));
 		}
 
 		template <typename target_type>
 		bool operator <(target_type target) const{
-			return (m_value_holder_type::get_value_() < static_cast<const m_value_type &>(target));
+			return (m_value_holder_type::typed_get_value_() < static_cast<const m_value_type &>(target));
 		}
 
 		template <typename target_type>
 		bool operator <=(target_type target) const{
-			return (m_value_holder_type::get_value_() <= static_cast<const m_value_type &>(target));
+			return (m_value_holder_type::typed_get_value_() <= static_cast<const m_value_type &>(target));
 		}
 
 		template <typename target_type>
 		bool operator ==(target_type target) const{
-			return (m_value_holder_type::get_value_() == static_cast<const m_value_type &>(target));
+			return (m_value_holder_type::typed_get_value_() == static_cast<const m_value_type &>(target));
 		}
 
 		template <typename target_type>
 		bool operator !=(target_type target) const{
-			return (m_value_holder_type::get_value_() != static_cast<const m_value_type &>(target));
+			return (m_value_holder_type::typed_get_value_() != static_cast<const m_value_type &>(target));
 		}
 
 		template <typename target_type>
 		bool operator >=(target_type target) const{
-			return (m_value_holder_type::get_value_() >= static_cast<const m_value_type &>(target));
+			return (m_value_holder_type::typed_get_value_() >= static_cast<const m_value_type &>(target));
 		}
 
 		template <typename target_type>
 		bool operator >(target_type target) const{
-			return (m_value_holder_type::get_value_() > static_cast<const m_value_type &>(target));
+			return (m_value_holder_type::typed_get_value_() > static_cast<const m_value_type &>(target));
 		}
 	};
 
@@ -341,7 +341,7 @@ namespace winp::prop{
 
 			template <typename target_type>
 			operator target_type() const{
-				return utility::convert_param<m_value_type, target_type>::convert(m_value_holder_type::get_value_());
+				return utility::convert_param<m_value_type, target_type>::convert(m_value_holder_type::typed_get_value_());
 			}
 
 			m_value_type operator()() const{
@@ -358,51 +358,51 @@ namespace winp::prop{
 
 			template <typename target_type>
 			scalar &operator =(target_type target){
-				m_value_holder_type::change_(utility::convert_param<target_type, m_value_type>::convert(target));
+				m_value_holder_type::typed_change_(utility::convert_param<target_type, m_value_type>::convert(target));
 				return *this;
 			}
 
 			scalar &operator =(std::remove_pointer_t<m_value_type> &target){
-				m_value_holder_type::change_(&target);
+				m_value_holder_type::typed_change_(&target);
 				return *this;
 			}
 
 			template <typename target_type>
 			bool operator <(target_type target) const{
-				return (m_value_holder_type::get_value_() < utility::convert_param<target_type, m_value_type>::convert(target));
+				return (m_value_holder_type::typed_get_value_() < utility::convert_param<target_type, m_value_type>::convert(target));
 			}
 
 			template <typename target_type>
 			bool operator <=(target_type target) const{
-				return (m_value_holder_type::get_value_() <= utility::convert_param<target_type, m_value_type>::convert(target));
+				return (m_value_holder_type::typed_get_value_() <= utility::convert_param<target_type, m_value_type>::convert(target));
 			}
 
 			template <typename target_type>
 			bool operator ==(target_type target) const{
-				return (m_value_holder_type::get_value_() == utility::convert_param<target_type, m_value_type>::convert(target));
+				return (m_value_holder_type::typed_get_value_() == utility::convert_param<target_type, m_value_type>::convert(target));
 			}
 
 			template <typename target_type>
 			bool operator !=(target_type target) const{
-				return (m_value_holder_type::get_value_() != utility::convert_param<target_type, m_value_type>::convert(target));
+				return (m_value_holder_type::typed_get_value_() != utility::convert_param<target_type, m_value_type>::convert(target));
 			}
 
 			template <typename target_type>
 			bool operator >=(target_type target) const{
-				return (m_value_holder_type::get_value_() >= utility::convert_param<target_type, m_value_type>::convert(target));
+				return (m_value_holder_type::typed_get_value_() >= utility::convert_param<target_type, m_value_type>::convert(target));
 			}
 
 			template <typename target_type>
 			bool operator >(target_type target) const{
-				return (m_value_holder_type::get_value_() > utility::convert_param<target_type, m_value_type>::convert(target));
+				return (m_value_holder_type::typed_get_value_() > utility::convert_param<target_type, m_value_type>::convert(target));
 			}
 
 			auto operator !() const{
-				return !m_value_holder_type::get_value_();
+				return !m_value_holder_type::typed_get_value_();
 			}
 
 			m_value_type operator ->() const{
-				return m_value_holder_type::get_value_();
+				return m_value_holder_type::typed_get_value_();
 			}
 		};
 }
