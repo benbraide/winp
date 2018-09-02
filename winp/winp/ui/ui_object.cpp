@@ -32,7 +32,7 @@ void winp::ui::object::init_(){
 		return ((value == this) ? parent_->get_child_at_(index + 2u) : value);
 	});
 
-	auto setter = [this](const prop::base<object> &prop, const void *value, std::size_t index){
+	auto setter = [this](const prop::base &prop, const void *value, std::size_t index){
 		if (&prop == &parent)
 			change_parent_(*static_cast<tree **>(const_cast<void *>(value)), index_());
 		else if (&prop == &this->index)
@@ -43,9 +43,9 @@ void winp::ui::object::init_(){
 			set_next_sibling_(*static_cast<object **>(const_cast<void *>(value)));
 	};
 
-	auto getter = [this](const prop::base<object> &prop, void *buf, std::size_t index){
+	auto getter = [this](const prop::base &prop, void *buf, std::size_t index){
 		if (&prop == &parent)
-			*static_cast<tree **>(buf) = parent_;
+			*static_cast<tree **>(buf) = get_parent_();
 		else if (&prop == &this->index)
 			*static_cast<std::size_t *>(buf) = index_();
 		else if (&prop == &previous_sibling)
@@ -54,14 +54,18 @@ void winp::ui::object::init_(){
 			*static_cast<object **>(buf) = get_next_sibling_();
 	};
 
-	parent.init_(*this, nullptr, setter, getter);
-	index.init_(*this, nullptr, setter, getter);
+	parent.init_(nullptr, setter, getter);
+	index.init_(nullptr, setter, getter);
 
-	previous_sibling.init_(*this, nullptr, setter, getter);
-	next_sibling.init_(*this, nullptr, setter, getter);
+	previous_sibling.init_(nullptr, setter, getter);
+	next_sibling.init_(nullptr, setter, getter);
 
-	ancestors.init_(*this, nullptr, nullptr, getter);
-	siblings.init_(*this, nullptr, nullptr, getter);
+	ancestors.init_(nullptr, nullptr, getter);
+	siblings.init_(nullptr, nullptr, getter);
+}
+
+winp::ui::tree *winp::ui::object::get_parent_() const{
+	return parent_;
 }
 
 bool winp::ui::object::validate_parent_change_(tree *value, std::size_t index) const{

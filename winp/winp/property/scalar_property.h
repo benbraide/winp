@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include "../utility/convert_param.h"
+
 #include "property_base.h"
 
 namespace winp::prop{
@@ -9,190 +11,183 @@ namespace winp::prop{
 	class scalar : public value_holder_type<value_type, in_owner_type>{
 	public:
 		using m_value_holder_type = value_holder_type<value_type, in_owner_type>;
+		using m_base_type = value_holder_type<value_type, in_owner_type>;
+
 		using base_type = typename m_value_holder_type::base_type;
 		using owner_type = typename m_value_holder_type::owner_type;
-
 		using m_value_type = typename m_value_holder_type::m_value_type;
-		using base_value_type = typename m_value_holder_type::base_value_type;
-		using const_ref_value_type = typename m_value_holder_type::const_ref_value_type;
-		using ref_value_type = typename m_value_holder_type::ref_value_type;
-		using ptr_value_type = typename m_value_holder_type::ptr_value_type;
-		using const_ptr_value_type = typename m_value_holder_type::const_ptr_value_type;
 
 		scalar() = default;
 
 		template <typename target_type>
-		explicit scalar(const target_type &target)
-			: m_value_holder_type(static_cast<const_ref_value_type>(target)){}
-
-		operator const_ref_value_type() const{
-			return m_value_holder_type::value_();
+		operator target_type() const{
+			return utility::convert_param<m_value_type, target_type>::convert(m_value_holder_type::get_value_());
 		}
 
-		const_ref_value_type operator()() const{
-			return operator const_ref_value_type();
+		m_value_type operator()() const{
+			return operator m_value_type();
 		}
 
 		template <typename target_type>
-		scalar &operator =(const target_type &target){
-			m_value_holder_type::change_(static_cast<const_ref_value_type>(target));
+		scalar &operator =(target_type target){
+			m_value_holder_type::change_(utility::convert_param<target_type, m_value_type>::convert(target));
 			return *this;
 		}
 
 		template <typename target_type>
-		scalar &operator +=(const target_type &target){
-			m_value_holder_type::change_(m_value_holder_type::value_() + static_cast<const_ref_value_type>(target));
+		scalar &operator +=(target_type target){
+			m_value_holder_type::change_(m_value_holder_type::get_value_() + utility::convert_param<target_type, m_value_type>::convert(target));
 			return *this;
 		}
 
 		template <typename target_type>
-		scalar &operator -=(const target_type &target){
-			m_value_holder_type::change_(m_value_holder_type::value_() - static_cast<const_ref_value_type>(target));
+		scalar &operator -=(target_type target){
+			m_value_holder_type::change_(m_value_holder_type::get_value_() - utility::convert_param<target_type, m_value_type>::convert(target));
 			return *this;
 		}
 
 		template <typename target_type>
-		scalar &operator *=(const target_type &target){
-			m_value_holder_type::change_(m_value_holder_type::value_() * static_cast<const_ref_value_type>(target));
+		scalar &operator *=(target_type target){
+			m_value_holder_type::change_(m_value_holder_type::get_value_() * utility::convert_param<target_type, m_value_type>::convert(target));
 			return *this;
 		}
 
 		template <typename target_type>
-		scalar &operator /=(const target_type &target){
-			m_value_holder_type::change_(m_value_holder_type::value_() / static_cast<const_ref_value_type>(target));
+		scalar &operator /=(target_type target){
+			m_value_holder_type::change_(m_value_holder_type::get_value_() / utility::convert_param<target_type, m_value_type>::convert(target));
 			return *this;
 		}
 
 		template <typename target_type>
-		scalar &operator %=(const target_type &target){
-			m_value_holder_type::change_(m_value_holder_type::value_() % static_cast<const_ref_value_type>(target));
+		scalar &operator %=(target_type target){
+			m_value_holder_type::change_(m_value_holder_type::get_value_() % utility::convert_param<target_type, m_value_type>::convert(target));
 			return *this;
 		}
 
 		template <typename target_type>
-		scalar &operator &=(const target_type &target){
-			m_value_holder_type::change_(m_value_holder_type::value_() & static_cast<const_ref_value_type>(target));
+		scalar &operator &=(target_type target){
+			m_value_holder_type::change_(m_value_holder_type::get_value_() & utility::convert_param<target_type, m_value_type>::convert(target));
 			return *this;
 		}
 
 		template <typename target_type>
-		scalar &operator |=(const target_type &target){
-			m_value_holder_type::change_(m_value_holder_type::value_() | static_cast<const_ref_value_type>(target));
+		scalar &operator |=(target_type target){
+			m_value_holder_type::change_(m_value_holder_type::get_value_() | utility::convert_param<target_type, m_value_type>::convert(target));
 			return *this;
 		}
 
 		template <typename target_type>
-		scalar &operator ^=(const target_type &target){
-			m_value_holder_type::change_(m_value_holder_type::value_() ^ static_cast<const_ref_value_type>(target));
+		scalar &operator ^=(target_type target){
+			m_value_holder_type::change_(m_value_holder_type::get_value_() ^ utility::convert_param<target_type, m_value_type>::convert(target));
 			return *this;
 		}
 
 		template <typename target_type>
-		base_value_type operator +(const target_type &target) const{
-			return (m_value_holder_type::value_() + static_cast<const_ref_value_type>(target));
+		m_value_type operator +(target_type target) const{
+			return (m_value_holder_type::get_value_() + utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
-		base_value_type operator -(const target_type &target) const{
-			return (m_value_holder_type::value_() - static_cast<const_ref_value_type>(target));
+		m_value_type operator -(target_type target) const{
+			return (m_value_holder_type::get_value_() - utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
-		base_value_type operator *(const target_type &target) const{
-			return (m_value_holder_type::value_() * static_cast<const_ref_value_type>(target));
+		m_value_type operator *(target_type target) const{
+			return (m_value_holder_type::get_value_() * utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
-		base_value_type operator /(const target_type &target) const{
-			return (m_value_holder_type::value_() / static_cast<const_ref_value_type>(target));
+		m_value_type operator /(target_type target) const{
+			return (m_value_holder_type::get_value_() / utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
-		base_value_type operator %(const target_type &target) const{
-			return (m_value_holder_type::value_() % static_cast<const_ref_value_type>(target));
+		m_value_type operator %(target_type target) const{
+			return (m_value_holder_type::get_value_() % utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
-		base_value_type operator &(const target_type &target) const{
-			return (m_value_holder_type::value_() & static_cast<const_ref_value_type>(target));
+		m_value_type operator &(target_type target) const{
+			return (m_value_holder_type::get_value_() & utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
-		base_value_type operator |(const target_type &target) const{
-			return (m_value_holder_type::value_() | static_cast<const_ref_value_type>(target));
+		m_value_type operator |(target_type target) const{
+			return (m_value_holder_type::get_value_() | utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
-		base_value_type operator ^(const target_type &target) const{
-			return (m_value_holder_type::value_() ^ static_cast<const_ref_value_type>(target));
+		m_value_type operator ^(target_type target) const{
+			return (m_value_holder_type::get_value_() ^ utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
-		bool operator <(const target_type &target) const{
-			return (m_value_holder_type::value_() < static_cast<const_ref_value_type>(target));
+		bool operator <(target_type target) const{
+			return (m_value_holder_type::get_value_() < utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
-		bool operator <=(const target_type &target) const{
-			return (m_value_holder_type::value_() <= static_cast<const_ref_value_type>(target));
+		bool operator <=(target_type target) const{
+			return (m_value_holder_type::get_value_() <= utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
-		bool operator ==(const target_type &target) const{
-			return (m_value_holder_type::value_() == static_cast<const_ref_value_type>(target));
+		bool operator ==(target_type target) const{
+			return (m_value_holder_type::get_value_() == utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
-		bool operator !=(const target_type &target) const{
-			return (m_value_holder_type::value_() != static_cast<const_ref_value_type>(target));
+		bool operator !=(target_type target) const{
+			return (m_value_holder_type::get_value_() != utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
-		bool operator >=(const target_type &target) const{
-			return (m_value_holder_type::value_() >= static_cast<const_ref_value_type>(target));
+		bool operator >=(target_type target) const{
+			return (m_value_holder_type::get_value_() >= utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		template <typename target_type>
-		bool operator >(const target_type &target) const{
-			return (m_value_holder_type::value_() > static_cast<const_ref_value_type>(target));
+		bool operator >(target_type target) const{
+			return (m_value_holder_type::get_value_() > utility::convert_param<target_type, m_value_type>::convert(target));
 		}
 
 		scalar &operator ++(){
-			m_value_holder_type::change_(m_value_holder_type::value_() + static_cast<base_value_type>(1));
+			m_value_holder_type::change_(m_value_holder_type::get_value_() + static_cast<m_value_type>(1));
 			return *this;
 		}
 
-		base_value_type operator ++(int){
-			auto value = m_value_holder_type::value_();
-			m_value_holder_type::change_(value + static_cast<base_value_type>(1));
+		m_value_type operator ++(int){
+			auto value = m_value_holder_type::get_value_();
+			m_value_holder_type::change_(value + static_cast<m_value_type>(1));
 			return value;
 		}
 
 		scalar &operator --(){
-			m_value_holder_type::change_(m_value_holder_type::value_() - static_cast<base_value_type>(1));
+			m_value_holder_type::change_(m_value_holder_type::get_value_() - static_cast<m_value_type>(1));
 			return *this;
 		}
 
-		base_value_type operator --(int){
-			auto value = m_value_holder_type::value_();
-			m_value_holder_type::change_(value - static_cast<base_value_type>(1));
+		m_value_type operator --(int){
+			auto value = m_value_holder_type::get_value_();
+			m_value_holder_type::change_(value - static_cast<m_value_type>(1));
 			return value;
 		}
 
-		base_value_type operator +() const{
-			return +m_value_holder_type::value_();
+		m_value_type operator +() const{
+			return +m_value_holder_type::get_value_();
 		}
 
-		base_value_type operator -() const{
-			return -m_value_holder_type::value_();
+		m_value_type operator -() const{
+			return -m_value_holder_type::get_value_();
 		}
 
-		base_value_type operator ~() const{
-			return ~m_value_holder_type::value_();
+		m_value_type operator ~() const{
+			return ~m_value_holder_type::get_value_();
 		}
 
 		auto operator !() const{
-			return !m_value_holder_type::value_();
+			return !m_value_holder_type::get_value_();
 		}
 	};
 
@@ -200,79 +195,67 @@ namespace winp::prop{
 	class scalar<std::string, in_owner_type, value_holder_type> : public value_holder_type<std::string, in_owner_type>{
 	public:
 		using m_value_holder_type = value_holder_type<std::string, in_owner_type>;
+		using m_base_type = value_holder_type<std::string, in_owner_type>;
+
 		using base_type = typename m_value_holder_type::base_type;
 		using owner_type = typename m_value_holder_type::owner_type;
-
 		using m_value_type = typename m_value_holder_type::m_value_type;
-		using base_value_type = typename m_value_holder_type::base_value_type;
-		using const_ref_value_type = typename m_value_holder_type::const_ref_value_type;
-		using ref_value_type = typename m_value_holder_type::ref_value_type;
-		using ptr_value_type = typename m_value_holder_type::ptr_value_type;
-		using const_ptr_value_type = typename m_value_holder_type::const_ptr_value_type;
 
 		scalar() = default;
 
-		template <typename target_type>
-		explicit scalar(const target_type &target)
-			: m_value_holder_type(static_cast<const_ref_value_type>(target)){}
-
-		operator const_ref_value_type() const{
-			return m_value_holder_type::value_();
+		operator m_value_type() const{
+			return m_value_holder_type::get_value_();
 		}
 
-		const_ref_value_type operator()() const{
-			return operator const_ref_value_type();
+		m_value_type operator()() const{
+			return operator m_value_type();
 		}
 
 		template <typename target_type>
-		scalar &operator =(const target_type &target){
-			m_value_holder_type::change_(static_cast<const_ref_value_type>(target));
+		scalar &operator =(target_type target){
+			m_value_holder_type::change_(static_cast<const m_value_type &>(target));
 			return *this;
 		}
 
 		template <typename target_type>
-		scalar &operator +=(const target_type &target){
-			m_value_holder_type::change_(m_value_holder_type::value_() + static_cast<const_ref_value_type>(target));
+		scalar &operator +=(target_type target){
+			m_value_holder_type::change_(m_value_holder_type::get_value_() + static_cast<const m_value_type &>(target));
 			return *this;
 		}
 
 		template <typename target_type>
-		base_value_type operator +(const target_type &target) const{
-			return (m_value_holder_type::value_() + static_cast<const_ref_value_type>(target));
+		m_value_type operator +(target_type target) const{
+			return (m_value_holder_type::get_value_() + static_cast<const m_value_type &>(target));
 		}
 
 		template <typename target_type>
-		bool operator <(const target_type &target) const{
-			return (m_value_holder_type::value_() < static_cast<const_ref_value_type>(target));
+		bool operator <(target_type target) const{
+			return (m_value_holder_type::get_value_() < static_cast<const m_value_type &>(target));
 		}
 
 		template <typename target_type>
-		bool operator <=(const target_type &target) const{
-			return (m_value_holder_type::value_() <= static_cast<const_ref_value_type>(target));
+		bool operator <=(target_type target) const{
+			return (m_value_holder_type::get_value_() <= static_cast<const m_value_type &>(target));
 		}
 
 		template <typename target_type>
-		bool operator ==(const target_type &target) const{
-			return (m_value_holder_type::value_() == static_cast<const_ref_value_type>(target));
+		bool operator ==(target_type target) const{
+			return (m_value_holder_type::get_value_() == static_cast<const m_value_type &>(target));
 		}
 
 		template <typename target_type>
-		bool operator !=(const target_type &target) const{
-			return (m_value_holder_type::value_() != static_cast<const_ref_value_type>(target));
+		bool operator !=(target_type target) const{
+			return (m_value_holder_type::get_value_() != static_cast<const m_value_type &>(target));
 		}
 
 		template <typename target_type>
-		bool operator >=(const target_type &target) const{
-			return (m_value_holder_type::value_() >= static_cast<const_ref_value_type>(target));
+		bool operator >=(target_type target) const{
+			return (m_value_holder_type::get_value_() >= static_cast<const m_value_type &>(target));
 		}
 
 		template <typename target_type>
-		bool operator >(const target_type &target) const{
-			return (m_value_holder_type::value_() > static_cast<const_ref_value_type>(target));
-		}
-
-		const base_value_type *operator ->() const{
-			return &m_value_holder_type::value_();
+		bool operator >(target_type target) const{
+			return (m_value_holder_type::get_value_() > static_cast<const m_value_type &>(target));
 		}
 	};
 
@@ -280,79 +263,67 @@ namespace winp::prop{
 	class scalar<std::wstring, in_owner_type, value_holder_type> : public value_holder_type<std::wstring, in_owner_type>{
 	public:
 		using m_value_holder_type = value_holder_type<std::wstring, in_owner_type>;
+		using m_base_type = value_holder_type<std::wstring, in_owner_type>;
+
 		using base_type = typename m_value_holder_type::base_type;
 		using owner_type = typename m_value_holder_type::owner_type;
-
 		using m_value_type = typename m_value_holder_type::m_value_type;
-		using base_value_type = typename m_value_holder_type::base_value_type;
-		using const_ref_value_type = typename m_value_holder_type::const_ref_value_type;
-		using ref_value_type = typename m_value_holder_type::ref_value_type;
-		using ptr_value_type = typename m_value_holder_type::ptr_value_type;
-		using const_ptr_value_type = typename m_value_holder_type::const_ptr_value_type;
 
 		scalar() = default;
 
-		template <typename target_type>
-		explicit scalar(const target_type &target)
-			: m_value_holder_type(static_cast<const_ref_value_type>(target)){}
-
-		operator const_ref_value_type() const{
-			return m_value_holder_type::value_();
+		operator m_value_type() const{
+			return m_value_holder_type::get_value_();
 		}
 
-		const_ref_value_type operator()() const{
-			return operator const_ref_value_type();
+		m_value_type operator()() const{
+			return operator m_value_type();
 		}
 
 		template <typename target_type>
-		scalar &operator =(const target_type &target){
-			m_value_holder_type::change_(static_cast<const_ref_value_type>(target));
+		scalar &operator =(target_type target){
+			m_value_holder_type::change_(static_cast<const m_value_type &>(target));
 			return *this;
 		}
 
 		template <typename target_type>
-		scalar &operator +=(const target_type &target){
-			m_value_holder_type::change_(m_value_holder_type::value_() + static_cast<const_ref_value_type>(target));
+		scalar &operator +=(target_type target){
+			m_value_holder_type::change_(m_value_holder_type::get_value_() + static_cast<const m_value_type &>(target));
 			return *this;
 		}
 
 		template <typename target_type>
-		base_value_type operator +(const target_type &target) const{
-			return (m_value_holder_type::value_() + static_cast<const_ref_value_type>(target));
+		m_value_type operator +(target_type target) const{
+			return (m_value_holder_type::get_value_() + static_cast<const m_value_type &>(target));
 		}
 
 		template <typename target_type>
-		bool operator <(const target_type &target) const{
-			return (m_value_holder_type::value_() < static_cast<const_ref_value_type>(target));
+		bool operator <(target_type target) const{
+			return (m_value_holder_type::get_value_() < static_cast<const m_value_type &>(target));
 		}
 
 		template <typename target_type>
-		bool operator <=(const target_type &target) const{
-			return (m_value_holder_type::value_() <= static_cast<const_ref_value_type>(target));
+		bool operator <=(target_type target) const{
+			return (m_value_holder_type::get_value_() <= static_cast<const m_value_type &>(target));
 		}
 
 		template <typename target_type>
-		bool operator ==(const target_type &target) const{
-			return (m_value_holder_type::value_() == static_cast<const_ref_value_type>(target));
+		bool operator ==(target_type target) const{
+			return (m_value_holder_type::get_value_() == static_cast<const m_value_type &>(target));
 		}
 
 		template <typename target_type>
-		bool operator !=(const target_type &target) const{
-			return (m_value_holder_type::value_() != static_cast<const_ref_value_type>(target));
+		bool operator !=(target_type target) const{
+			return (m_value_holder_type::get_value_() != static_cast<const m_value_type &>(target));
 		}
 
 		template <typename target_type>
-		bool operator >=(const target_type &target) const{
-			return (m_value_holder_type::value_() >= static_cast<const_ref_value_type>(target));
+		bool operator >=(target_type target) const{
+			return (m_value_holder_type::get_value_() >= static_cast<const m_value_type &>(target));
 		}
 
 		template <typename target_type>
-		bool operator >(const target_type &target) const{
-			return (m_value_holder_type::value_() > static_cast<const_ref_value_type>(target));
-		}
-
-		const base_value_type *operator ->() const{
-			return &m_value_holder_type::value_();
+		bool operator >(target_type target) const{
+			return (m_value_holder_type::get_value_() > static_cast<const m_value_type &>(target));
 		}
 	};
 
@@ -360,86 +331,78 @@ namespace winp::prop{
 	class scalar<value_type *, in_owner_type, value_holder_type> : public value_holder_type<value_type *, in_owner_type>{
 		public:
 			using m_value_holder_type = value_holder_type<value_type *, in_owner_type>;
+			using m_base_type = value_holder_type<value_type *, in_owner_type>;
+
 			using base_type = typename m_value_holder_type::base_type;
 			using owner_type = typename m_value_holder_type::owner_type;
-
 			using m_value_type = typename m_value_holder_type::m_value_type;
-			using base_value_type = typename m_value_holder_type::base_value_type;
-			using const_ref_value_type = typename m_value_holder_type::const_ref_value_type;
-			using ref_value_type = typename m_value_holder_type::ref_value_type;
-			using ptr_value_type = typename m_value_holder_type::ptr_value_type;
-			using const_ptr_value_type = typename m_value_holder_type::const_ptr_value_type;
 
-			scalar()
-				: m_value_holder_type(nullptr){}
+			scalar() = default;
 
 			template <typename target_type>
-			explicit scalar(const target_type &target)
-				: m_value_holder_type(static_cast<m_value_type>(target)){}
-
-			operator base_value_type() const{
-				return m_value_holder_type::value_();
+			operator target_type() const{
+				return utility::convert_param<m_value_type, target_type>::convert(m_value_holder_type::get_value_());
 			}
 
-			base_value_type operator()() const{
-				return operator base_value_type();
+			m_value_type operator()() const{
+				return operator m_value_type();
 			}
 
-			operator std::remove_pointer_t<base_value_type> &() const{
-				return *operator base_value_type();
+			operator std::remove_pointer_t<m_value_type> &() const{
+				return *operator m_value_type();
 			}
 
-			std::remove_pointer_t<base_value_type> &operator *() const{
-				return *operator base_value_type();
+			std::remove_pointer_t<m_value_type> &operator *() const{
+				return *operator m_value_type();
 			}
 
 			template <typename target_type>
-			scalar &operator =(const target_type &target){
-				m_value_holder_type::change_(static_cast<base_value_type>(target));
+			scalar &operator =(target_type target){
+				m_value_holder_type::change_(utility::convert_param<target_type, m_value_type>::convert(target));
 				return *this;
 			}
 
-			scalar &operator =(std::remove_pointer_t<base_value_type> &target){
+			scalar &operator =(std::remove_pointer_t<m_value_type> &target){
 				m_value_holder_type::change_(&target);
 				return *this;
 			}
 
 			template <typename target_type>
-			bool operator <(const target_type &target) const{
-				return (m_value_holder_type::value_() < static_cast<const_ptr_value_type>(target));
+			bool operator <(target_type target) const{
+				return (m_value_holder_type::get_value_() < utility::convert_param<target_type, m_value_type>::convert(target));
 			}
 
 			template <typename target_type>
-			bool operator <=(const target_type &target) const{
-				return (m_value_holder_type::value_() <= static_cast<const_ptr_value_type>(target));
+			bool operator <=(target_type target) const{
+				return (m_value_holder_type::get_value_() <= utility::convert_param<target_type, m_value_type>::convert(target));
 			}
 
 			template <typename target_type>
-			bool operator ==(const target_type &target) const{
-				return (m_value_holder_type::value_() == static_cast<const_ptr_value_type>(target));
+			bool operator ==(target_type target) const{
+				return (m_value_holder_type::get_value_() == utility::convert_param<target_type, m_value_type>::convert(target));
 			}
 
 			template <typename target_type>
-			bool operator !=(const target_type &target) const{
-				return (m_value_holder_type::value_() != static_cast<const_ptr_value_type>(target));
+			bool operator !=(target_type target) const{
+				return (m_value_holder_type::get_value_() != utility::convert_param<target_type, m_value_type>::convert(target));
 			}
 
 			template <typename target_type>
-			bool operator >=(const target_type &target) const{
-				return (m_value_holder_type::value_() >= static_cast<const_ptr_value_type>(target));
+			bool operator >=(target_type target) const{
+				return (m_value_holder_type::get_value_() >= utility::convert_param<target_type, m_value_type>::convert(target));
 			}
 
 			template <typename target_type>
-			bool operator >(const target_type &target) const{
-				return (m_value_holder_type::value_() > static_cast<const_ptr_value_type>(target));
+			bool operator >(target_type target) const{
+				return (m_value_holder_type::get_value_() > utility::convert_param<target_type, m_value_type>::convert(target));
 			}
 
 			auto operator !() const{
-				return !m_value_holder_type::value_();
+				return !m_value_holder_type::get_value_();
 			}
 
-			base_value_type operator ->() const{
-				return m_value_holder_type::value_();
+			m_value_type operator ->() const{
+				return m_value_holder_type::get_value_();
 			}
 		};
 }

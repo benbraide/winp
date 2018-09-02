@@ -34,20 +34,15 @@ namespace winp::prop{
 	class error : public proxy_value<value_type, in_owner_type>{
 	public:
 		using m_error_mapper = error_mapper;
-		using m_value_holder_type = proxy_value<value_type, in_owner_type>;
 
+		using m_value_holder_type = proxy_value<value_type, in_owner_type>;
 		using m_base_type = proxy_value<value_type, in_owner_type>;
+
 		using base_type = typename m_value_holder_type::base_type;
 		using owner_type = typename m_value_holder_type::owner_type;
-
 		using m_value_type = typename m_value_holder_type::m_value_type;
-		using base_value_type = typename m_value_holder_type::base_value_type;
-		using const_ref_value_type = typename m_value_holder_type::const_ref_value_type;
-		using ref_value_type = typename m_value_holder_type::ref_value_type;
-		using ptr_value_type = typename m_value_holder_type::ptr_value_type;
-		using const_ptr_value_type = typename m_value_holder_type::const_ptr_value_type;
 
-		using m_variant_type = std::variant<base_value_type, DWORD, HRESULT>;
+		using m_variant_type = std::variant<m_value_type, DWORD, HRESULT>;
 
 		error() = default;
 
@@ -61,8 +56,8 @@ namespace winp::prop{
 		}
 
 		operator error_held_type() const{
-			if (std::holds_alternative<base_value_type>(value_))
-				return ((std::get<base_value_type>(value_) == static_cast<base_value_type>(0)) ? error_held_type::nil : error_held_type::value);
+			if (std::holds_alternative<m_value_type>(value_))
+				return ((std::get<m_value_type>(value_) == static_cast<m_value_type>(0)) ? error_held_type::nil : error_held_type::value);
 
 			if (std::holds_alternative<DWORD>(value_))
 				return ((std::get<DWORD>(value_) == 0u) ? error_held_type::nil : error_held_type::local);
@@ -73,7 +68,7 @@ namespace winp::prop{
 			return error_held_type::nil;
 		}
 
-		operator base_value_type() const{
+		operator m_value_type() const{
 			return get_value_();
 		}
 
@@ -114,18 +109,18 @@ namespace winp::prop{
 		}
 
 		operator bool() const{
-			return (get_value_() != static_cast<base_value_type>(0));
+			return (get_value_() != static_cast<m_value_type>(0));
 		}
 
 		error &operator =(const error &target){
-			if (std::holds_alternative<base_value_type>(target.value_))
-				assign_(std::get<base_value_type>(target.value_));
+			if (std::holds_alternative<m_value_type>(target.value_))
+				assign_(std::get<m_value_type>(target.value_));
 			else if (std::holds_alternative<DWORD>(target.value_))
 				assign_(std::get<DWORD>(target.value_));
 			else if (std::holds_alternative<HRESULT>(target.value_))
 				assign_(std::get<HRESULT>(target.value_));
 			else
-				assign_(static_cast<base_value_type>(0));
+				assign_(static_cast<m_value_type>(0));
 
 			return *this;
 		}
@@ -173,7 +168,7 @@ namespace winp::prop{
 			return *this;
 		}
 
-		error &operator =(base_value_type value){
+		error &operator =(m_value_type value){
 			assign_(value);
 			return *this;
 		}
@@ -231,22 +226,22 @@ namespace winp::prop{
 				assign_(*static_cast<const HRESULT *>(value));
 				break;
 			default:
-				assign_(*static_cast<const base_value_type *>(value));
+				assign_(*static_cast<const m_value_type *>(value));
 				break;
 			}
 		}
 
-		base_value_type get_value_() const{
-			if (std::holds_alternative<base_value_type>(value_))
-				return std::get<base_value_type>(value_);
+		m_value_type get_value_() const{
+			if (std::holds_alternative<m_value_type>(value_))
+				return std::get<m_value_type>(value_);
 
 			if (std::holds_alternative<DWORD>(value_))
-				return static_cast<base_value_type>((std::get<DWORD>(value_) == 0u) ? 0 : 1);
+				return static_cast<m_value_type>((std::get<DWORD>(value_) == 0u) ? 0 : 1);
 
 			if (std::holds_alternative<HRESULT>(value_))
-				return static_cast<base_value_type>((std::get<HRESULT>(value_) == S_OK) ? 0 : 2);
+				return static_cast<m_value_type>((std::get<HRESULT>(value_) == S_OK) ? 0 : 2);
 
-			return static_cast<base_value_type>(0);
+			return static_cast<m_value_type>(0);
 		}
 
 		DWORD get_local_value_() const{
@@ -289,8 +284,8 @@ namespace winp::prop{
 
 		const std::wstring &get_converted_value_() const{
 			if (m_base_type::getter_ != nullptr)
-				m_base_type::getter_(*this, &converted_, static_cast<int>(std::get<base_value_type>(value_)));
-			return (converted_.empty() ? (converted_ = m_error_mapper::map(std::get<base_value_type>(value_))) : converted_);
+				m_base_type::getter_(*this, &converted_, static_cast<int>(std::get<m_value_type>(value_)));
+			return (converted_.empty() ? (converted_ = m_error_mapper::map(std::get<m_value_type>(value_))) : converted_);
 		}
 
 		const std::wstring &get_converted_local_value_() const{
@@ -326,7 +321,7 @@ namespace winp::prop{
 			value_ = target;
 			converted_.clear();
 
-			if (do_throw && get_value_() != static_cast<base_value_type>(0)){
+			if (do_throw && get_value_() != static_cast<m_value_type>(0)){
 				auto should_throw = (policy_ == error_throw_policy_type::enabled || policy_ == error_throw_policy_type::enabled_once);
 				if (policy_ == error_throw_policy_type::disabled_once || policy_ == error_throw_policy_type::enabled_once)
 					policy_ = previous_policy_;

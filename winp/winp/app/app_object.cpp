@@ -2,9 +2,8 @@
 
 void winp::app::object::init(){
 	main_thread_.reset(new thread::object(true));
-	dummy_app_ = std::make_shared<app::object>();
 
-	auto setter = [](const prop::base<object> &prop, const void *value, std::size_t index){
+	auto setter = [](const prop::base &prop, const void *value, std::size_t index){
 		if (is_shut_down_)
 			return;
 
@@ -65,7 +64,7 @@ void winp::app::object::init(){
 		}
 	};
 
-	auto getter = [](const prop::base<object> &prop, void *buf, std::size_t index){
+	auto getter = [](const prop::base &prop, void *buf, std::size_t index){
 		if (&prop == &is_shut_down)
 			*static_cast<bool *>(buf) = is_shut_down_;
 
@@ -78,10 +77,10 @@ void winp::app::object::init(){
 			*static_cast<m_thread_type **>(buf) = main_thread_.get();
 	};
 
-	threads.init_(*dummy_app_, nullptr, setter, nullptr);
-	current_thread.init_(*dummy_app_, nullptr, nullptr, getter);
-	main_thread.init_(*dummy_app_, nullptr, nullptr, getter);
-	is_shut_down.init_(*dummy_app_, nullptr, nullptr, getter);
+	threads.init_(nullptr, setter, nullptr);
+	current_thread.init_(nullptr, nullptr, getter);
+	main_thread.init_(nullptr, nullptr, getter);
+	is_shut_down.init_(nullptr, nullptr, getter);
 }
 
 void winp::app::object::shut_down(){
@@ -89,6 +88,9 @@ void winp::app::object::shut_down(){
 }
 
 int winp::app::object::run(bool shut_down_after){
+	if (is_shut_down_)
+		return -1;
+
 	auto result = main_thread_->run_();
 	if (shut_down_after)
 		shut_down();
@@ -97,8 +99,12 @@ int winp::app::object::run(bool shut_down_after){
 }
 
 std::size_t winp::app::object::add_thread_(m_thread_type &thread){
-	std::lock_guard<std::mutex> guard(lock_);
+	if (is_shut_down_)
+		return static_cast<std::size_t>(-1);
+
+	std::lock_guard<std::mutex> guard(lock);
 	threads_.push_back(&thread);
+
 	return (threads_.size() - 1u);
 }
 
@@ -107,7 +113,10 @@ bool winp::app::object::remove_thread_(m_thread_type &thread){
 }
 
 bool winp::app::object::remove_thread_at_(std::size_t index){
-	std::lock_guard<std::mutex> guard(lock_);
+	if (is_shut_down_)
+		return false;
+
+	std::lock_guard<std::mutex> guard(lock);
 	if (index >= threads_.size())
 		return false;
 
@@ -116,19 +125,28 @@ bool winp::app::object::remove_thread_at_(std::size_t index){
 }
 
 std::size_t winp::app::object::find_thread_(const m_thread_type &thread){
-	std::lock_guard<std::mutex> guard(lock_);
+	if (is_shut_down_)
+		return static_cast<std::size_t>(-1);
+
+	std::lock_guard<std::mutex> guard(lock);
 	return std::distance(threads_.begin(), std::find(threads_.begin(), threads_.end(), &thread));
 }
 
 winp::app::object::m_thread_type *winp::app::object::get_thread_at_(std::size_t index){
-	std::lock_guard<std::mutex> guard(lock_);
+	if (is_shut_down_)
+		return nullptr;
+
+	std::lock_guard<std::mutex> guard(lock);
 	return ((index < threads_.size()) ? *std::next(threads_.begin(), index) : nullptr);
 }
 
 winp::app::object::m_thread_type *winp::app::object::get_current_thread_(){
-	std::lock_guard<std::mutex> guard(lock_);
+	if (is_shut_down_)
+		return nullptr;
 
+	std::lock_guard<std::mutex> guard(lock);
 	auto id = std::this_thread::get_id();
+
 	for (auto thread : threads_){
 		if (thread->id_ == id)
 			return thread;
@@ -147,12 +165,11 @@ winp::prop::scalar<bool, winp::app::object, winp::prop::proxy_value> winp::app::
 
 winp::prop::error<winp::app::object> winp::app::object::error;
 
+std::shared_ptr<winp::thread::object> winp::app::object::main_thread_;
+
 std::list<winp::app::object::m_thread_type *> winp::app::object::threads_;
 
-std::mutex winp::app::object::lock_;
+std::mutex winp::app::object::lock;
 
 bool winp::app::object::is_shut_down_ = false;
 
-std::shared_ptr<winp::thread::object> winp::app::object::main_thread_;
-
-std::shared_ptr<winp::app::object> winp::app::object::dummy_app_;

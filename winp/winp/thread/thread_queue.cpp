@@ -2,7 +2,7 @@
 
 winp::thread::queue::queue(object &owner)
 	: owner_(&owner){
-	this->owner.init_(*this, nullptr, nullptr, [this](const prop::base<queue> &, void *buf, std::size_t){
+	this->owner.init_(nullptr, nullptr, [this](const prop::base &, void *buf, std::size_t){
 		*static_cast<const object **>(buf) = owner_;
 	});
 }

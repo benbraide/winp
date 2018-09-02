@@ -13,23 +13,14 @@ namespace winp::prop{
 
 		template <typename target_type>
 		operator target_type() const{
-			if (m_base_type::getter_ == nullptr)
-				throw 0;
-
 			auto value = target_type();
-			m_base_type::getter_(*this, &value, m_type_list_type::template index_of<target_type>);
-
+			m_base_type::value_(&value, m_type_list_type::template index_of<target_type>);
 			return value;
 		}
 
 		template <typename target_type>
 		variant &operator =(const target_type &target){
-			m_base_type::changed_(nullptr, m_type_list_type::template index_of<target_type>);
-			if (m_base_type::setter_ != nullptr)
-				m_base_type::setter_(*this, &target, m_type_list_type::template index_of<target_type>);
-			else
-				throw 0;
-
+			m_base_type::change_(&target, m_type_list_type::template index_of<target_type>);
 			return *this;
 		}
 	};

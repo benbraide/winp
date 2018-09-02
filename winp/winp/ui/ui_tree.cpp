@@ -13,7 +13,7 @@ winp::ui::tree::tree(tree &parent)
 winp::ui::tree::~tree() = default;
 
 void winp::ui::tree::init_(){
-	auto setter = [this](const prop::base<tree> &prop, const void *value, std::size_t index){
+	auto setter = [this](const prop::base &prop, const void *value, std::size_t index){
 		auto nc_value = const_cast<void *>(value);
 		if (&prop == &children){
 			switch (index){
@@ -71,7 +71,7 @@ void winp::ui::tree::init_(){
 		}
 	};
 
-	children.init_(*this, nullptr, setter, nullptr);
+	children.init_(nullptr, setter, nullptr);
 }
 
 bool winp::ui::tree::validate_child_insert_(object &child, std::size_t index) const{

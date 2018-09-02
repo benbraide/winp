@@ -30,6 +30,8 @@ namespace winp::ui{
 
 		void init_();
 
+		virtual tree *get_parent_() const;
+
 		virtual bool validate_parent_change_(tree *value, std::size_t index) const;
 
 		virtual std::size_t change_parent_(tree *value, std::size_t index = static_cast<std::size_t>(-1));

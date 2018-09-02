@@ -1,7 +1,17 @@
 #include "thread/thread_object.h"
 #include "thread/thread_value.h"
 
+#include "property/pair_property.h"
+
 int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_show){
+	winp::prop::size<int, void> sz;
+	sz.height = 18;
+	sz.width = 45;
+	sz = { 9, 72 };
+
+	int fv = sz.height;
+	int sv = sz.width;
+
 	/*auto fut = winp::thread::object::main_->queue->add([]{
 		return 9;
 	});

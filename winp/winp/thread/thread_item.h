@@ -26,6 +26,8 @@ namespace winp::thread{
 
 		item();
 
+		virtual void destroy_();
+
 		object *owner_;
 		HWND handle_;
 	};

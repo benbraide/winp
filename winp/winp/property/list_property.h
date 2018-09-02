@@ -25,17 +25,11 @@ namespace winp::prop{
 
 		using base_type = typename m_value_holder_type::base_type;
 		using owner_type = typename m_value_holder_type::owner_type;
+		using m_value_type = typename m_value_holder_type::m_value_type;
 
 		using change_callback_type = typename m_value_holder_type::change_callback_type;
 		using setter_type = typename m_value_holder_type::setter_type;
 		using getter_type = typename m_value_holder_type::getter_type;
-
-		using m_value_type = typename m_value_holder_type::m_value_type;
-		using base_value_type = typename m_value_holder_type::base_value_type;
-		using const_ref_value_type = typename m_value_holder_type::const_ref_value_type;
-		using ref_value_type = typename m_value_holder_type::ref_value_type;
-		using ptr_value_type = typename m_value_holder_type::ptr_value_type;
-		using const_ptr_value_type = typename m_value_holder_type::const_ptr_value_type;
 
 		using m_item_value_type = typename list_type::value_type;
 		using m_iterator_type = typename list_type::iterator;
@@ -106,10 +100,12 @@ namespace winp::prop{
 	protected:
 		friend in_owner_type;
 
-		virtual void init_(owner_type &owner, change_callback_type callback) override{
-			m_base_type::init_(owner, callback);
+		using m_base_type::init_;
 
-			auto getter = [this](const prop::base<list> &prop, void *buf, std::size_t index){
+		virtual void init_(change_callback_type callback) override{
+			m_base_type::init_(callback);
+
+			auto getter = [this](const prop::base &prop, void *buf, std::size_t index){
 				if (&prop == &last){
 					auto prev_it = m_base_type::m_value_.begin(), it = prev_it, end_it = m_base_type::m_value_.end();
 					for (; it != end_it; ){
@@ -129,15 +125,11 @@ namespace winp::prop{
 					*static_cast<std::size_t *>(buf) = m_base_type::m_value_.size();
 			};
 
-			first.init_(*this, nullptr, nullptr, getter);
-			last.init_(*this, nullptr, nullptr, getter);
-			begin.init_(*this, nullptr, nullptr, getter);
-			end.init_(*this, nullptr, nullptr, getter);
-			size.init_(*this, nullptr, nullptr, getter);
-		}
-
-		virtual void init_(owner_type &owner, change_callback_type callback, setter_type setter, getter_type getter) override{
-			init_(owner, callback);
+			first.init_(nullptr, nullptr, getter);
+			last.init_(nullptr, nullptr, getter);
+			begin.init_(nullptr, nullptr, getter);
+			end.init_(nullptr, nullptr, getter);
+			size.init_(nullptr, nullptr, getter);
 		}
 	};
 
@@ -149,17 +141,11 @@ namespace winp::prop{
 
 		using base_type = typename m_value_holder_type::base_type;
 		using owner_type = typename m_value_holder_type::owner_type;
+		using m_value_type = typename m_value_holder_type::m_value_type;
 
 		using change_callback_type = typename m_value_holder_type::change_callback_type;
 		using setter_type = typename m_value_holder_type::setter_type;
 		using getter_type = typename m_value_holder_type::getter_type;
-
-		using m_value_type = typename m_value_holder_type::m_value_type;
-		using base_value_type = typename m_value_holder_type::base_value_type;
-		using const_ref_value_type = typename m_value_holder_type::const_ref_value_type;
-		using ref_value_type = typename m_value_holder_type::ref_value_type;
-		using ptr_value_type = typename m_value_holder_type::ptr_value_type;
-		using const_ptr_value_type = typename m_value_holder_type::const_ptr_value_type;
 
 		using m_item_value_type = typename list_type::value_type;
 		using m_iterator_type = typename list_type::iterator;
@@ -226,10 +212,10 @@ namespace winp::prop{
 	protected:
 		friend in_owner_type;
 
-		virtual void init_(owner_type &owner, change_callback_type callback, setter_type setter, getter_type getter) override{
-			m_base_type::init_(owner, callback, setter, getter);
+		virtual void init_(change_callback_type callback, setter_type setter, getter_type getter) override{
+			m_base_type::init_(callback, setter, getter);
 
-			auto this_getter = [this](const prop::base<list> &prop, void *buf, std::size_t index){
+			auto this_getter = [this](const prop::base &prop, void *buf, std::size_t index){
 				if (&prop == &first)
 					m_base_type::change_(buf, list_action::action_first);
 				else if (&prop == &last)
@@ -242,11 +228,11 @@ namespace winp::prop{
 					m_base_type::change_(buf, list_action::action_size);
 			};
 
-			first.init_(*this, nullptr, nullptr, this_getter);
-			last.init_(*this, nullptr, nullptr, this_getter);
-			begin.init_(*this, nullptr, nullptr, this_getter);
-			end.init_(*this, nullptr, nullptr, this_getter);
-			size.init_(*this, nullptr, nullptr, this_getter);
+			first.init_(nullptr, nullptr, this_getter);
+			last.init_(nullptr, nullptr, this_getter);
+			begin.init_(nullptr, nullptr, this_getter);
+			end.init_(nullptr, nullptr, this_getter);
+			size.init_(nullptr, nullptr, this_getter);
 		}
 	};
 }

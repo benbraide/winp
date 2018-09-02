@@ -15,17 +15,11 @@ namespace winp::prop{
 
 		using base_type = typename m_value_holder_type::base_type;
 		using owner_type = typename m_value_holder_type::owner_type;
+		using m_value_type = typename m_value_holder_type::m_value_type;
 
 		using change_callback_type = typename m_value_holder_type::change_callback_type;
 		using setter_type = typename m_value_holder_type::setter_type;
 		using getter_type = typename m_value_holder_type::getter_type;
-
-		using m_value_type = typename m_value_holder_type::m_value_type;
-		using base_value_type = typename m_value_holder_type::base_value_type;
-		using const_ref_value_type = typename m_value_holder_type::const_ref_value_type;
-		using ref_value_type = typename m_value_holder_type::ref_value_type;
-		using ptr_value_type = typename m_value_holder_type::ptr_value_type;
-		using const_ptr_value_type = typename m_value_holder_type::const_ptr_value_type;
 
 		using m_type_list = utility::type_list<args_types...>;
 
@@ -60,16 +54,6 @@ namespace winp::prop{
 			auto value = std::make_pair(return_type(), static_cast<first_type>(target));
 			change_(&value);
 			return value.first;
-		}
-
-		template <typename target_type>
-		return_type get1_(const target_type &target, std::true_type){
-
-		}
-
-		template <typename target_type>
-		return_type get1_(const target_type &target, std::false_type){
-
 		}
 	};
 

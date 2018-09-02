@@ -4,6 +4,7 @@
 
 #include "../thread/thread_object.h"
 #include "../property/list_property.h"
+#include "../ui/ui_tree.h"
 
 namespace winp::app{
 	class object{
@@ -23,6 +24,8 @@ namespace winp::app{
 		static prop::scalar<bool, object, prop::proxy_value> is_shut_down;
 		static prop::error<object> error;
 
+		static std::mutex lock;
+
 	protected:
 		friend class thread::object;
 
@@ -38,11 +41,8 @@ namespace winp::app{
 
 		static m_thread_type *get_current_thread_();
 
-		static std::list<m_thread_type *> threads_;
-		static std::mutex lock_;
-		static bool is_shut_down_;
-
 		static std::shared_ptr<thread::object> main_thread_;
-		static std::shared_ptr<object> dummy_app_;
+		static std::list<m_thread_type *> threads_;
+		static bool is_shut_down_;
 	};
 }
