@@ -2,6 +2,7 @@
 #include "thread/thread_value.h"
 
 #include "property/pair_property.h"
+#include "property/quad_property.h"
 
 int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_show){
 	winp::prop::size<int, void> sz;
@@ -11,6 +12,20 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_sh
 
 	int fv = sz.height;
 	int sv = sz.width;
+	winp::prop::size<int, void>::m_value_type szv = sz;
+
+	winp::prop::rect<int, void> rct;
+	rct.left = 9;
+	rct.top = 18;
+	rct.right = 27;
+	rct.bottom = 36;
+	rct = { 45, 54, 63, 72 };
+
+	int frv = rct.left;
+	int srv = rct.top;
+	int trv = rct.right;
+	int lrv = rct.bottom;
+	winp::prop::rect<int, void>::m_value_type rv = rct;
 
 	auto ils = { 9, 18 };
 	std::tuple<int, int> tpl = { 9, 18 };
