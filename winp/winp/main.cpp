@@ -5,16 +5,16 @@
 #include "property/quad_property.h"
 
 int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_show){
-	winp::prop::size<int, void> sz;
-	sz.height = 18;
+	winp::prop::size<void, int, std::string, winp::prop::immediate_value> sz;
+	sz.height = "18";
 	sz.width = 45;
-	sz = { 9, 72 };
+	sz = { 9, "72" };
 
-	int fv = sz.height;
+	std::string fv = sz.height;
 	int sv = sz.width;
-	winp::prop::size<int, void>::m_value_type szv = sz;
+	winp::prop::size<void, int, std::string, winp::prop::immediate_value>::m_value_type szv = sz;
 
-	winp::prop::rect<int, void> rct;
+	winp::prop::rect<void, int, int, int, int, winp::prop::immediate_value> rct;
 	rct.left = 9;
 	rct.top = 18;
 	rct.right = 27;
@@ -25,7 +25,7 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_sh
 	int srv = rct.top;
 	int trv = rct.right;
 	int lrv = rct.bottom;
-	winp::prop::rect<int, void>::m_value_type rv = rct;
+	winp::prop::rect<void, int, int, int, int, winp::prop::immediate_value>::m_value_type rv = rct;
 
 	auto ils = { 9, 18 };
 	std::tuple<int, int> tpl = { 9, 18 };
