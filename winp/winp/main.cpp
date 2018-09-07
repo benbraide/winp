@@ -10,6 +10,7 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_sh
 	sz.width = 45;
 	sz = { 9, "72" };
 
+	winp::utility::size<int, std::string> csz = sz;
 	std::string fv = sz.height;
 	int sv = sz.width;
 	winp::prop::size<void, int, std::string, winp::prop::immediate_value>::m_value_type szv = sz;

@@ -2,6 +2,8 @@
 
 #include <tuple>
 
+#include "../utility/structures.h"
+
 #include "scalar_property.h"
 
 #define WINP_PROP_DEFINE_PAIR(pair_name, first_prop, second_prop)\
@@ -32,6 +34,11 @@ public:\
 \
 		first_prop.init_(nullptr, my_setter, my_getter);\
 		second_prop.init_(nullptr, my_setter, my_getter);\
+	}\
+\
+	operator utility::pair_name<value_type_1, value_type_2>() const{\
+		auto value = operator m_value_type();\
+		return utility::pair_name<value_type_1, value_type_2>{ std::get<0>(m_base_type::m_value_), std::get<1>(m_base_type::m_value_) };\
 	}\
 \
 	operator m_value_type() const{\

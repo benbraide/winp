@@ -35,6 +35,15 @@ public:\
 		third_prop.init_(nullptr, my_setter, my_getter);\
 	}\
 \
+	operator utility::tri_name<value_type_1, value_type_2, value_type_3>() const{\
+		auto value = operator m_value_type();\
+		return utility::tri_name<value_type_1, value_type_2, value_type_3>{\
+			std::get<0>(m_base_type::m_value_),\
+			std::get<1>(m_base_type::m_value_),\
+			std::get<2>(m_base_type::m_value_)\
+		};\
+	}\
+\
 	operator m_value_type() const{\
 		return m_value_holder_type::typed_get_value_();\
 	}\
