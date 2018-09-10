@@ -1,8 +1,6 @@
 #include "app_object.h"
 
 void winp::app::object::init(){
-	main_thread_.reset(new thread::object(true));
-
 	auto setter = [](const prop::base &prop, const void *value, std::size_t index){
 		if (is_shut_down_)
 			return;
@@ -81,6 +79,8 @@ void winp::app::object::init(){
 	current_thread.init_(nullptr, nullptr, getter);
 	main_thread.init_(nullptr, nullptr, getter);
 	is_shut_down.init_(nullptr, nullptr, getter);
+
+	main_thread_.reset(new thread::object(true));
 }
 
 void winp::app::object::shut_down(){

@@ -46,13 +46,13 @@ namespace winp::thread{
 		void each(const std::function<bool(item &)> &callback) const;
 
 		template <typename return_type, typename wparam_type = WPARAM, typename lparam_type = LPARAM>
-		return_type send_to(HWND receiver, unsigned int msg, const wparam_type &wparam = wparam_type(), const lparam_type &lparam = lparam_type()) const{
-			return send_to(reinterpret_cast<item *>(receiver), msg, wparam, lparam);
+		return_type send(HWND receiver, unsigned int msg, const wparam_type &wparam = wparam_type(), const lparam_type &lparam = lparam_type()) const{
+			
 		}
 
 		template <typename return_type, typename wparam_type = WPARAM, typename lparam_type = LPARAM>
-		return_type send_to(const item *receiver, unsigned int msg, const wparam_type &wparam = wparam_type(), const lparam_type &lparam = lparam_type()) const{
-			return send_to1_(receiver, msg, wparam, lparam, std::bool_constant<is_basic_value<wparam_type>::value>());
+		return_type send(const item *receiver, unsigned int msg, const wparam_type &wparam = wparam_type(), const lparam_type &lparam = lparam_type()) const{
+			return send(reinterpret_cast<HWND>(receiver), msg, wparam, lparam);
 		}
 
 		template <typename wparam_type = WPARAM, typename lparam_type = LPARAM>

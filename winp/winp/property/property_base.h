@@ -13,7 +13,13 @@ namespace winp::prop{
 
 		using error_value_type = default_error_mapper::value_type;
 
+		base();
+
+		base(const base &) = delete;
+
 		virtual ~base();
+
+		base &operator =(const base &) = delete;
 
 	protected:
 		virtual void init_(change_callback_type changed_callback);
@@ -31,10 +37,16 @@ namespace winp::prop{
 		change_callback_type changed_callback_;
 	};
 
-	template <class value_type, class in_owner_type>
-	class immediate_value : public base{
+	template <class in_owner_type>
+	class owned_base : public base{
 	public:
-		using base_type = base;
+		virtual ~owned_base() = default;
+	};
+
+	template <class value_type, class in_owner_type>
+	class immediate_value : public owned_base<in_owner_type>{
+	public:
+		using base_type = owned_base<in_owner_type>;
 		using owner_type = in_owner_type;
 		using m_value_type = value_type;
 
@@ -69,9 +81,9 @@ namespace winp::prop{
 	};
 
 	template <class in_owner_type>
-	class immediate_value<void, in_owner_type> : public base{
+	class immediate_value<void, in_owner_type> : public owned_base<in_owner_type>{
 	public:
-		using base_type = base;
+		using base_type = owned_base<in_owner_type>;
 		using owner_type = in_owner_type;
 		using m_value_type = void;
 
@@ -79,14 +91,15 @@ namespace winp::prop{
 	};
 
 	template <class value_type, class in_owner_type>
-	class proxy_value : public base{
+	class proxy_value : public owned_base<in_owner_type>{
 	public:
-		using base_type = base;
+		using base_type = owned_base<in_owner_type>;
 		using owner_type = in_owner_type;
 		using m_value_type = value_type;
 
-		using setter_type = base_type::setter_type;
-		using getter_type = base_type::getter_type;
+		using change_callback_type = base::change_callback_type;
+		using setter_type = base::setter_type;
+		using getter_type = base::getter_type;
 
 		proxy_value() = default;
 
@@ -133,14 +146,11 @@ namespace winp::prop{
 	};
 
 	template <class in_owner_type>
-	class proxy_value<void, in_owner_type> : public base{
+	class proxy_value<void, in_owner_type> : public owned_base<in_owner_type>{
 	public:
-		using base_type = base;
+		using base_type = owned_base<in_owner_type>;
 		using owner_type = in_owner_type;
 		using m_value_type = void;
-
-		using setter_type = base_type::setter_type;
-		using getter_type = base_type::getter_type;
 
 		proxy_value() = default;
 

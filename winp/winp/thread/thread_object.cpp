@@ -74,8 +74,19 @@ void winp::thread::object::init_(){
 int winp::thread::object::run_(){
 	MSG msg;
 	auto value = 0;
+	auto task_was_run_ = true;
 
 	while (true){
+		if (task_was_run_){
+			auto peek_status = PeekMessageW(&msg, nullptr, 0u, 0u, PM_NOREMOVE);
+			if (peek_status == FALSE || msg.message == WM_TIMER || msg.message == WM_PAINT || msg.message == WM_NCPAINT || msg.message == WM_ERASEBKGND){
+				task_was_run_ = run_task_();
+				continue;
+			}
+		}
+		else
+			task_was_run_ = true;
+
 		if (GetMessageW(&msg, nullptr, 0u, 0u) == -1 || app::object::is_shut_down_){
 			value = -1;
 			break;

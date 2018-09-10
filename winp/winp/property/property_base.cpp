@@ -1,5 +1,7 @@
 #include "../app/app_object.h"
 
+winp::prop::base::base() = default;
+
 winp::prop::base::~base() = default;
 
 void winp::prop::base::init_(change_callback_type changed_callback){

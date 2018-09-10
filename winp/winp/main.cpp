@@ -1,14 +1,38 @@
+#include "app/app_object.h"
+
 #include "thread/thread_object.h"
 #include "thread/thread_value.h"
 
 #include "property/pair_property.h"
 #include "property/quad_property.h"
 
+#include "utility/timer.h"
+
 int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_show){
+	using timer_type = winp::utility::timer<>;
+
+	winp::app::object::init();
+
+	winp::thread::item thit(*winp::app::object::main_thread);
+	winp::thread::item_message itmsg = thit.request;
+
+	timer_type timer(*winp::app::object::main_thread);
+	timer_type::interval_type int_timer = timer.request;
+	timer_type::counter_type cnt_timer = timer.request;
+
+	cnt_timer.running = true;
+	std::this_thread::sleep_for(std::chrono::nanoseconds(5000000000));
+	timer_type::counter_type::m_precision prec = cnt_timer.elapsed;
+	prec = cnt_timer.elapsed;
+
+	winp::prop::scalar<std::shared_ptr<int>> sptr;
+	sptr = std::make_shared<int>(99);
+
 	winp::prop::size<void, int, std::string, winp::prop::immediate_value> sz;
 	sz.height = "18";
 	sz.width = 45;
 	sz = { 9, "72" };
+	sz = winp::utility::size<int, std::string>{ 9, "72" };
 
 	winp::utility::size<int, std::string> csz = sz;
 	std::string fv = sz.height;
