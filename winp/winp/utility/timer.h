@@ -242,7 +242,7 @@ namespace winp::utility{
 		using interval_type = timer_interval<m_precision>;
 		using counter_type = timer_counter<m_precision>;
 
-		using variant_type = prop::variant<timer, interval_type, counter_type>;
+		using variant_type = prop::variant<timer, prop::proxy_value, interval_type, counter_type>;
 
 		explicit timer(thread::object &thread)
 			: thread_(&thread){

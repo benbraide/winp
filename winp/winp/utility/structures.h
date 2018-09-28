@@ -58,6 +58,13 @@ namespace winp::utility{
 		}
 	};
 
+	enum class hit_target{
+		nil,
+		error,
+		inside,
+		intersect,
+	};
+
 	enum class easing_type{
 		linear,
 		back,

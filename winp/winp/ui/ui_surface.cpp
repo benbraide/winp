@@ -1,5 +1,61 @@
 #include "ui_surface.h"
 
+winp::ui::surface_hit_test::surface_hit_test() = default;
+
+winp::ui::surface_hit_test::surface_hit_test(const surface_hit_test &copy)
+	: surface_(copy.surface_){
+	if (surface_ != nullptr)
+		init_();
+}
+
+winp::ui::surface_hit_test &winp::ui::surface_hit_test::operator=(const surface_hit_test &copy){
+	if ((surface_ = copy.surface_) != nullptr && target.getter_ == nullptr)
+		init_();
+	return *this;
+}
+
+void winp::ui::surface_hit_test::init_(){
+	auto getter = [this](const prop::base &prop, void *buf, std::size_t context){
+		if (&prop == &target){
+			auto pos = (is_absolute.m_value_ ? surface_->get_absolute_position_() : surface_->get_position_());
+			auto client_offset = surface_->get_client_position_offset_();
+			{//Update position
+				pos.x += client_offset.width;
+				pos.y += client_offset.height;
+			}
+
+			if (std::holds_alternative<m_rect_type>(value.m_value_)){
+				auto &rect = std::get<m_rect_type>(value.m_value_);
+				if (hit_test_(m_point_type{ rect.left, rect.top }, pos) == utility::hit_target::inside && hit_test_(m_point_type{ rect.right, rect.bottom }, pos) == utility::hit_target::inside){
+					*static_cast<utility::hit_target *>(buf) = utility::hit_target::inside;
+					return;
+				}
+
+				auto sz = surface_->get_size_();
+				if (pos.x < rect.right && pos.y < rect.bottom && (pos.x + sz.width) > rect.left && (pos.y + sz.height) > rect.top)
+					*static_cast<utility::hit_target *>(buf) = utility::hit_target::intersect;
+				else
+					*static_cast<utility::hit_target *>(buf) = utility::hit_target::nil;
+			}
+			else
+				*static_cast<utility::hit_target *>(buf) = hit_test_(std::get<m_point_type>(value.m_value_), pos);
+		}
+	};
+
+	target.init_(nullptr, nullptr, getter);
+}
+
+winp::utility::hit_target winp::ui::surface_hit_test::hit_test_(const m_point_type &pt, const m_point_type &pos) const{
+	if (pt.x < pos.x || pt.y < pos.y)
+		return utility::hit_target::nil;
+
+	auto sz = surface_->get_size_();
+	if (pt.x < (pos.x + sz.width) || pt.y < (pos.y + sz.height))
+		return utility::hit_target::inside;
+
+	return utility::hit_target::nil;
+}
+
 winp::ui::surface::surface(thread::object &thread)
 	: tree(thread){
 	init_();
@@ -14,67 +70,64 @@ winp::ui::surface::~surface() = default;
 
 void winp::ui::surface::init_(){
 	auto setter = [this](const prop::base &prop, const void *value, std::size_t context){
-		if (&prop == &visible){
-			if (*static_cast<const bool *>(value))
-				set_state_(state_visible);
-			else
-				remove_state_(state_visible);
+		if (&prop == &size){
+			auto tval = *static_cast<const m_size_type *>(value);
+			owner_->queue->post([=]{
+				set_size_(tval);
+			}, thread::queue::send_priority);
 		}
-		else if (&prop == &transparent){
-			if (*static_cast<const bool *>(value))
-				set_state_(state_transparent);
-			else
-				remove_state_(state_transparent);
+		else if (&prop == &position){
+			auto tval = *static_cast<const m_point_type *>(value);
+			owner_->queue->post([=]{
+				set_position_(tval);
+			}, thread::queue::send_priority);
 		}
-		else if (&prop == &size)
-			set_size_(*static_cast<const m_size_type *>(value));
-		else if (&prop == &position)
-			set_position_(*static_cast<const m_point_type *>(value));
-		else if (&prop == &absolute_position)
-			set_absolute_position_(*static_cast<const m_point_type *>(value));
-		else if (&prop == &color)
-			set_color_(*static_cast<const m_rgba_type *>(value));
+		else if (&prop == &absolute_position){
+			auto tval = *static_cast<const m_point_type *>(value);
+			owner_->queue->post([=]{
+				set_absolute_position_(tval);
+			}, thread::queue::send_priority);
+		}
 	};
 
 	auto getter = [this](const prop::base &prop, void *buf, std::size_t context){
-		if (&prop == &visible)
-			*static_cast<bool *>(buf) = has_state_(state_visible);
-		else if (&prop == &transparent)
-			*static_cast<bool *>(buf) = has_state_(state_transparent);
-		else if (&prop == &size)
-			*static_cast<m_size_type *>(buf) = get_size_();
+		if (&prop == &size)
+			*static_cast<m_size_type *>(buf) = owner_->queue->add([this]{ return get_size_(); }, thread::queue::send_priority).get();
+		else if (&prop == &client_position_offset)
+			*static_cast<m_size_type *>(buf) = owner_->queue->add([this]{ return get_client_position_offset_(); }, thread::queue::send_priority).get();
 		else if (&prop == &position)
-			*static_cast<m_point_type *>(buf) = get_position_();
+			*static_cast<m_point_type *>(buf) = owner_->queue->add([this]{ return get_position_(); }, thread::queue::send_priority).get();
 		else if (&prop == &absolute_position)
-			*static_cast<m_point_type *>(buf) = get_absolute_position_();
-		else if (&prop == &color)
-			*static_cast<m_rgba_type *>(buf) = get_color_();
+			*static_cast<m_point_type *>(buf) = owner_->queue->add([this]{ return get_absolute_position_(); }, thread::queue::send_priority).get();
 	};
 
-	visible.init_(nullptr, setter, getter);
-	transparent.init_(nullptr, setter, getter);
-
 	size.init_(nullptr, setter, getter);
+	client_position_offset.init_(nullptr, nullptr, getter);
+
 	position.init_(nullptr, setter, getter);
 	absolute_position.init_(nullptr, setter, getter);
 
-	color.init_(nullptr, setter, getter);
+	size_event_.thread_ = owner_;
+	move_event_.thread_ = owner_;
+}
+
+void winp::ui::surface::do_request_(void *buf, const std::type_info &id){
+	if (id == typeid(surface_hit_test)){
+		static_cast<surface_hit_test *>(buf)->surface_ = this;
+		static_cast<surface_hit_test *>(buf)->init_();
+	}
+	else if (id == typeid(size_event_type))
+		*static_cast<size_event_type *>(buf) = size_event_type(size_event_);
+	else if (id == typeid(move_event_type))
+		*static_cast<move_event_type *>(buf) = move_event_type(move_event_);
+	else if (id == typeid(surface *))
+		*static_cast<surface **>(buf) = this;
+	else
+		tree::do_request_(buf, id);
 }
 
 winp::ui::surface *winp::ui::surface::get_surface_parent_() const{
 	return dynamic_cast<surface *>(get_parent_());
-}
-
-void winp::ui::surface::set_state_(unsigned int value){
-	state_ |= value;
-}
-
-void winp::ui::surface::remove_state_(unsigned int value){
-	state_ &= ~value;
-}
-
-bool winp::ui::surface::has_state_(unsigned int value) const{
-	return ((state_ & value) == value);
 }
 
 void winp::ui::surface::set_size_(const m_size_type &value){
@@ -83,6 +136,10 @@ void winp::ui::surface::set_size_(const m_size_type &value){
 
 winp::ui::surface::m_size_type winp::ui::surface::get_size_() const{
 	return size_;
+}
+
+winp::ui::surface::m_size_type winp::ui::surface::get_client_position_offset_() const{
+	return m_size_type{ 0, 0 };
 }
 
 void winp::ui::surface::set_position_(const m_point_type &value){
@@ -103,20 +160,16 @@ winp::ui::surface::m_point_type winp::ui::surface::get_absolute_position_() cons
 	return ((surface_parent == nullptr) ? get_position_() : surface_parent->convert_position_to_absolute_value_(get_position_()));
 }
 
-void winp::ui::surface::set_color_(const m_rgba_type &value){
-	color_ = value;
-}
-
-winp::ui::surface::m_rgba_type winp::ui::surface::get_color_() const{
-	return color_;
-}
-
 winp::ui::surface::m_point_type winp::ui::surface::convert_position_from_absolute_value_(const m_point_type &value) const{
-	auto my_absolute_position = get_absolute_position_();
-	return m_point_type{ (value.x - my_absolute_position.x), (value.y - my_absolute_position.y) };
+	auto absolute_position = get_absolute_position_();
+	auto client_offset = get_client_position_offset_();
+
+	return m_point_type{ (value.x - absolute_position.x - client_offset.width), (value.y - absolute_position.y - client_offset.height) };
 }
 
 winp::ui::surface::m_point_type winp::ui::surface::convert_position_to_absolute_value_(const m_point_type &value) const{
-	auto my_absolute_position = get_absolute_position_();
-	return m_point_type{ (my_absolute_position.x + value.x), (my_absolute_position.y + value.y) };
+	auto absolute_position = get_absolute_position_();
+	auto client_offset = get_client_position_offset_();
+
+	return m_point_type{ (value.x + absolute_position.x + client_offset.width), (value.y + absolute_position.y + client_offset.height) };
 }

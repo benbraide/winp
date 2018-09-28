@@ -1,13 +1,14 @@
 #pragma once
 
 #include <memory>
+#include <unordered_map>
 
 #include "../property/error_property.h"
 #include "../property/variant_property.h"
+#include "../property/map_property.h"
 
 #include "thread_queue.h"
-#include "thread_value_manager.h"
-#include "thread_item.h"
+#include "windows_manager.h"
 
 namespace winp::app{
 	class object;
@@ -17,65 +18,66 @@ namespace winp::message{
 	class object;
 }
 
+namespace winp::ui{
+	class window_surface;
+}
+
 namespace winp::thread{
+	class object;
+
+	class post_message{
+	public:
+		post_message();
+
+		post_message(const post_message &copy);
+
+		post_message &operator =(const post_message &copy);
+
+		prop::scalar<object *, post_message, prop::proxy_value> target;
+		prop::scalar<bool, post_message, prop::proxy_value> result;
+
+		prop::scalar<unsigned int, post_message, prop::immediate_value> code;
+		prop::scalar<WPARAM, post_message, prop::immediate_value> wparam;
+		prop::scalar<LPARAM, post_message, prop::immediate_value> lparam;
+
+	private:
+		friend class object;
+
+		void init_();
+
+		object *target_ = nullptr;
+	};
+
 	class object{
 	public:
 		using queue_type = queue;
 		using m_callback_type = queue::callback_type;
 		using m_app_type = app::object;
-
-		template <class target_type>
-		struct is_basic_value{
-			static constexpr bool value = (
-				   std::is_same_v<target_type, bool>
-				|| std::is_pointer_v<target_type>
-				|| std::is_integral_v<target_type>
-			);
-		};
-
-		struct item_placeholders_type{
-			std::shared_ptr<item> allocated_wparam_only;
-			std::shared_ptr<item> allocated_lparam_only;
-			std::shared_ptr<item> allocated_both;
-		};
+		using error_value_type = prop::default_error_mapper::value_type;
 
 		object();
 
 		virtual ~object();
 
-		void each(const std::function<bool(item &)> &callback) const;
-
-		template <typename return_type, typename wparam_type = WPARAM, typename lparam_type = LPARAM>
-		return_type send(HWND receiver, unsigned int msg, const wparam_type &wparam = wparam_type(), const lparam_type &lparam = lparam_type()) const{
-			
-		}
-
-		template <typename return_type, typename wparam_type = WPARAM, typename lparam_type = LPARAM>
-		return_type send(const item *receiver, unsigned int msg, const wparam_type &wparam = wparam_type(), const lparam_type &lparam = lparam_type()) const{
-			return send(reinterpret_cast<HWND>(receiver), msg, wparam, lparam);
-		}
-
-		template <typename wparam_type = WPARAM, typename lparam_type = LPARAM>
-		void post_to(const item *receiver, unsigned int msg, const wparam_type &wparam = wparam_type(), const lparam_type &lparam = lparam_type()) const{
-
-		}
-
 		prop::scalar<bool, object, prop::proxy_value> is_main;
 		prop::scalar<bool, object, prop::proxy_value> inside;
 
-		prop::variant<object, std::thread::id, DWORD> id;
+		prop::variant<object, prop::proxy_value, std::thread::id, DWORD> id;
 		prop::scalar<queue *, object> queue;
+
+		prop::variant<object, prop::proxy_value> request;
 
 	protected:
 		friend class app::object;
-		friend class item;
 		friend class message::object;
 
+		friend class item;
+		friend class post_message;
+
+		friend class ui::window_surface;
+		friend class windows_manager;
+
 		explicit object(bool);
-
-		void add_(item &target);
-
-		void remove_(item *target);
 
 		void init_();
 
@@ -83,11 +85,15 @@ namespace winp::thread{
 
 		virtual bool run_task_();
 
+		virtual void get_all_sent_tasks_(std::list<m_callback_type> &list);
+
+		virtual m_callback_type get_next_sent_task_();
+
 		virtual m_callback_type get_next_task_();
 
-		virtual void before_task_(m_callback_type &task);
+		virtual void do_request_(void *buf, const std::type_info &id);
 
-		virtual void after_task_(m_callback_type &task);
+		virtual void throw_(error_value_type value) const;
 
 		queue_type queue_;
 		std::thread::id id_;
@@ -95,7 +101,6 @@ namespace winp::thread{
 
 		bool is_main_;
 		bool is_exiting_;
-
-		std::list<item *> list_;
+		windows_manager windows_manager_;
 	};
 }

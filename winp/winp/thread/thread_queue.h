@@ -17,7 +17,7 @@ namespace winp::thread{
 	class queue{
 	public:
 		using callback_type = std::function<void()>;
-		using list_type = std::map<int, std::list<callback_type>>;
+		using list_type = std::map<int, std::list<callback_type>, std::greater<>>;
 
 		struct added_info_type{
 			std::list<callback_type> *list = nullptr;
@@ -92,6 +92,8 @@ namespace winp::thread{
 
 		prop::scalar<const object *, queue, prop::proxy_value> owner;
 
+		static const int send_priority = 99999;
+
 	protected:
 		friend class object;
 		template <class> friend class future;
@@ -99,6 +101,10 @@ namespace winp::thread{
 		explicit queue(object &owner);
 
 		added_info_type add_(const callback_type &task, int priority);
+
+		void pop_all_send_priorities_(std::list<callback_type> &list);
+
+		callback_type pop_send_priority_();
 
 		callback_type pop_();
 

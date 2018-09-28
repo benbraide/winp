@@ -41,6 +41,17 @@ namespace winp::prop{
 	class owned_base : public base{
 	public:
 		virtual ~owned_base() = default;
+
+	protected:
+		friend in_owner_type;
+
+		virtual void init_(change_callback_type changed_callback) override{
+			base::init_(changed_callback);
+		}
+
+		virtual void init_(change_callback_type callback, setter_type setter, getter_type getter) override{
+			base::init_(callback, setter, getter);
+		}
 	};
 
 	template <class value_type, class in_owner_type>
@@ -74,6 +85,10 @@ namespace winp::prop{
 		}
 
 		virtual const m_value_type &typed_get_value_() const{
+			return m_value_;
+		}
+
+		virtual m_value_type &typed_get_value_(){
 			return m_value_;
 		}
 

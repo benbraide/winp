@@ -33,6 +33,61 @@ winp::thread::queue::added_info_type winp::thread::queue::add_(const callback_ty
 	return added_info_type{ list, it };
 }
 
+void winp::thread::queue::pop_all_send_priorities_(std::list<callback_type> &list){
+	if (!owner_->inside){
+		app::object::error = prop::default_error_mapper::value_type::thread_context_mismatch;
+		return;
+	}
+
+	std::lock_guard<std::mutex> guard(lock_);
+
+	list.clear();
+	if (list_.empty())
+		return;
+
+	auto it = list_.find(send_priority);
+	if (it == list_.end())
+		return;
+
+	if (it->second.empty()){
+		list_.erase(it);
+		return;
+	}
+
+	for (auto &entry : it->second)
+		list.push_back(entry);
+
+	list_.erase(it);
+}
+
+winp::thread::queue::callback_type winp::thread::queue::pop_send_priority_(){
+	if (!owner_->inside){
+		app::object::error = prop::default_error_mapper::value_type::thread_context_mismatch;
+		return nullptr;
+	}
+
+	std::lock_guard<std::mutex> guard(lock_);
+	if (list_.empty())
+		return nullptr;
+
+	auto it = list_.find(send_priority);
+	if (it == list_.end())
+		return nullptr;
+
+	if (it->second.empty()){
+		list_.erase(it);
+		return nullptr;
+	}
+
+	auto task = *it->second.begin();
+	it->second.erase(it->second.begin());
+
+	if (it->second.empty())
+		list_.erase(it);
+
+	return task;
+}
+
 winp::thread::queue::callback_type winp::thread::queue::pop_(){
 	callback_type task;
 	if (!owner_->inside){
@@ -41,10 +96,15 @@ winp::thread::queue::callback_type winp::thread::queue::pop_(){
 	}
 
 	std::lock_guard<std::mutex> guard(lock_);
-	for (auto top = list_.rbegin(); top  != list_.rend(); ++top){
-		if (!top->second.empty()){
-			task = *top->second.begin();
-			top->second.erase(top->second.begin());
+	if (list_.empty())
+		return nullptr;
+
+	for (auto it = list_.begin(); it != list_.end(); ++it){
+		if (!it->second.empty()){
+			task = *it->second.begin();
+			it->second.erase(it->second.begin());
+			if (it->second.empty())
+				list_.erase(it);
 			break;
 		}
 	}

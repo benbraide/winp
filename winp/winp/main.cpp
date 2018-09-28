@@ -8,13 +8,25 @@
 
 #include "utility/timer.h"
 
+#include "ui/ui_visible_surface.h"
+
 int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_show){
 	using timer_type = winp::utility::timer<>;
 
 	winp::app::object::init();
 
-	winp::thread::item thit(*winp::app::object::main_thread);
-	winp::thread::item_message itmsg = thit.request;
+	winp::ui::visible_surface thit(*winp::app::object::main_thread);
+	winp::ui::send_message itmsg = thit.request;
+	winp::ui::surface_hit_test shtt = thit.request;
+
+	shtt.value = winp::utility::point<int>{ 9, 18 };
+	shtt.value = winp::utility::rect<int>{ 9, 18, 27, 36 };
+
+	winp::ui::visible_surface *dc1 = thit.request;
+	winp::ui::surface *dc2 = thit.request;
+	winp::ui::tree *dc3 = thit.request;
+	winp::ui::object *dc4 = thit.request;
+	winp::thread::item *dc5 = thit.request;
 
 	timer_type timer(*winp::app::object::main_thread);
 	timer_type::interval_type int_timer = timer.request;
@@ -65,7 +77,7 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_sh
 
 	auto i = 9;
 	auto p = &i;
-	auto w = CreateWindowW(L"BUTTON", L"", 0, 0, 0, 0, 0, nullptr, nullptr, nullptr, 0);
+	auto w = CreateWindowExW(0, L"BUTTON", L"", 0, 0, 0, 0, 0, nullptr, nullptr, nullptr, nullptr);
 
 	auto l1 = static_cast<unsigned __int32>(reinterpret_cast<unsigned __int64>(p));
 	auto l2 = static_cast<unsigned __int32>(reinterpret_cast<unsigned __int64>(w));

@@ -5,16 +5,16 @@
 
 namespace winp::prop{
 	struct list_action{
-		static const unsigned int action_add				= (0 << 0x0000);
-		static const unsigned int action_remove				= (1 << 0x0000);
-		static const unsigned int action_remove_index		= (1 << 0x0001);
-		static const unsigned int action_at					= (1 << 0x0002);
-		static const unsigned int action_find				= (1 << 0x0003);
-		static const unsigned int action_first				= (1 << 0x0004);
-		static const unsigned int action_last				= (1 << 0x0005);
-		static const unsigned int action_begin				= (1 << 0x0006);
-		static const unsigned int action_end				= (1 << 0x0007);
-		static const unsigned int action_size				= (1 << 0x0008);
+		static const unsigned int action_add				= (1 << 0x0000);
+		static const unsigned int action_remove				= (1 << 0x0001);
+		static const unsigned int action_remove_index		= (1 << 0x0002);
+		static const unsigned int action_at					= (1 << 0x0003);
+		static const unsigned int action_find				= (1 << 0x0004);
+		static const unsigned int action_first				= (1 << 0x0005);
+		static const unsigned int action_last				= (1 << 0x0006);
+		static const unsigned int action_begin				= (1 << 0x0007);
+		static const unsigned int action_end				= (1 << 0x0008);
+		static const unsigned int action_size				= (1 << 0x0009);
 	};
 
 	template <class list_type, class in_owner_type, template <class, class> class value_holder_type>
@@ -234,5 +234,127 @@ namespace winp::prop{
 			end.init_(nullptr, nullptr, this_getter);
 			size.init_(nullptr, nullptr, this_getter);
 		}
+	};
+
+	template <class list_type, class in_owner_type, template <class, class> class value_holder_type>
+	class flag_list : public scalar<list_type, in_owner_type, value_holder_type>{
+	public:
+		using m_base_type = scalar<list_type, in_owner_type, value_holder_type>;
+		using m_value_type = typename m_base_type::m_value_type;
+
+		using m_base_type::operator ();
+
+		template <typename target_type>
+		operator target_type() const{
+			return m_base_type::operator target_type();
+		}
+
+		template <typename target_type>
+		flag_list &operator =(target_type target){
+			m_base_type::operator =(target);
+			return *this;
+		}
+
+		template <typename target_type>
+		flag_list &operator +=(target_type target){
+			m_base_type::typed_change_(m_base_type::typed_get_value_() | utility::convert_param<target_type, m_value_type>::convert(target));
+			return *this;
+		}
+
+		template <typename target_type>
+		flag_list &operator -=(target_type target){
+			m_base_type::typed_change_(m_base_type::typed_get_value_() & ~utility::convert_param<target_type, m_value_type>::convert(target));
+			return *this;
+		}
+
+		template <typename target_type>
+		flag_list &operator *=(target_type) = delete;
+
+		template <typename target_type>
+		flag_list &operator /=(target_type) = delete;
+
+		template <typename target_type>
+		flag_list &operator %=(target_type) = delete;
+
+		template <typename target_type>
+		flag_list &operator &=(target_type) = delete;
+
+		template <typename target_type>
+		flag_list &operator |=(target_type) = delete;
+
+		template <typename target_type>
+		flag_list &operator ^=(target_type) = delete;
+
+		template <typename target_type>
+		m_value_type operator +(target_type target) const{
+			return (m_base_type::typed_get_value_() | utility::convert_param<target_type, m_value_type>::convert(target));
+		}
+
+		template <typename target_type>
+		m_value_type operator -(target_type target) const{
+			return (m_base_type::typed_get_value_() & ~utility::convert_param<target_type, m_value_type>::convert(target));
+		}
+
+		template <typename target_type>
+		m_value_type operator *(target_type) const = delete;
+
+		template <typename target_type>
+		m_value_type operator /(target_type) const = delete;
+
+		template <typename target_type>
+		m_value_type operator %(target_type) const = delete;
+
+		template <typename target_type>
+		m_value_type operator &(target_type) const = delete;
+
+		template <typename target_type>
+		m_value_type operator |(target_type) const = delete;
+
+		template <typename target_type>
+		m_value_type operator ^(target_type) const = delete;
+
+		template <typename target_type>
+		bool operator [](target_type target) const{
+			return ((m_base_type::typed_get_value_() & utility::convert_param<target_type, m_value_type>::convert(target)) != static_cast<m_value_type>(0));
+		}
+
+		template <typename target_type>
+		bool operator ==(target_type target) const{
+			auto converted = utility::convert_param<target_type, m_value_type>::convert(target);
+			return ((m_base_type::typed_get_value_() & converted) == converted);
+		}
+
+		template <typename target_type>
+		bool operator !=(target_type target) const{
+			return !(*this == target);
+		}
+
+		template <typename target_type>
+		bool operator <(target_type) const = delete;
+
+		template <typename target_type>
+		bool operator <=(target_type) const = delete;
+
+		template <typename target_type>
+		bool operator >=(target_type) const = delete;
+
+		template <typename target_type>
+		bool operator >(target_type) const = delete;
+
+		flag_list &operator ++() = delete;
+
+		m_value_type operator ++(int) = delete;
+
+		flag_list &operator --() = delete;
+
+		m_value_type operator --(int) = delete;
+
+		m_value_type operator +() const = delete;
+
+		m_value_type operator -() const = delete;
+
+		m_value_type operator ~() const = delete;
+
+		bool operator !() const = delete;
 	};
 }

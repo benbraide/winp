@@ -10,6 +10,8 @@ namespace winp::prop{
 			nil,
 			proper_does_not_support_action,
 			thread_context_mismatch,
+			cannot_handle_request,
+			window_parent_not_created,
 		};
 
 		static value_type value(const std::wstring &converted);

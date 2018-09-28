@@ -1,13 +1,16 @@
 #include "app_object.h"
 
 void winp::app::object::init(){
-	auto setter = [](const prop::base &prop, const void *value, std::size_t index){
+	if (main_thread_ != nullptr)
+		return;//Already initialized
+
+	auto setter = [](const prop::base &prop, const void *value, std::size_t context){
 		if (is_shut_down_)
 			return;
 
 		auto nc_value = const_cast<void *>(value);
 		if (&prop == &threads){
-			switch (index){
+			switch (context){
 			case prop::list_action::action_add:
 			{
 				auto info = static_cast<std::pair<std::size_t, m_thread_type *> *>(nc_value);
@@ -62,7 +65,7 @@ void winp::app::object::init(){
 		}
 	};
 
-	auto getter = [](const prop::base &prop, void *buf, std::size_t index){
+	auto getter = [](const prop::base &prop, void *buf, std::size_t context){
 		if (&prop == &is_shut_down)
 			*static_cast<bool *>(buf) = is_shut_down_;
 
@@ -70,7 +73,7 @@ void winp::app::object::init(){
 			return;
 
 		if (&prop == &current_thread)
-			*static_cast<m_thread_type **>(buf) = get_current_thread_();
+			*static_cast<m_thread_type **>(buf) = current_thread_;
 		else if (&prop == &main_thread)
 			*static_cast<m_thread_type **>(buf) = main_thread_.get();
 	};
@@ -81,6 +84,22 @@ void winp::app::object::init(){
 	is_shut_down.init_(nullptr, nullptr, getter);
 
 	main_thread_.reset(new thread::object(true));
+	thread::windows_manager::init_dispatchers_();
+
+	class_info_.cbSize = sizeof(WNDCLASSEXW);
+	class_info_.hInstance = GetModuleHandleW(nullptr);
+	class_info_.lpfnWndProc = thread::windows_manager::entry_;
+	class_info_.lpszClassName = WINP_CLASS_WUUID;
+	class_info_.lpszMenuName = nullptr;
+	class_info_.style = (CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS);
+	class_info_.hbrBackground = nullptr;
+	class_info_.hCursor = nullptr;
+	class_info_.hIconSm = nullptr;
+	class_info_.hIcon = nullptr;
+	class_info_.cbWndExtra = 0;
+	class_info_.cbClsExtra = 0;
+
+	RegisterClassExW(&class_info_);
 }
 
 void winp::app::object::shut_down(){
@@ -96,6 +115,10 @@ int winp::app::object::run(bool shut_down_after){
 		shut_down();
 
 	return result;
+}
+
+bool winp::app::object::is_native_handle(HWND handle){
+	return (static_cast<unsigned __int32>(reinterpret_cast<unsigned __int64>(handle) >> 32) == 0u);
 }
 
 std::size_t winp::app::object::add_thread_(m_thread_type &thread){
@@ -140,21 +163,6 @@ winp::app::object::m_thread_type *winp::app::object::get_thread_at_(std::size_t 
 	return ((index < threads_.size()) ? *std::next(threads_.begin(), index) : nullptr);
 }
 
-winp::app::object::m_thread_type *winp::app::object::get_current_thread_(){
-	if (is_shut_down_)
-		return nullptr;
-
-	std::lock_guard<std::mutex> guard(lock);
-	auto id = std::this_thread::get_id();
-
-	for (auto thread : threads_){
-		if (thread->id_ == id)
-			return thread;
-	}
-
-	return nullptr;
-}
-
 winp::prop::list<std::list<winp::app::object::m_thread_type *>, winp::app::object, winp::prop::proxy_value> winp::app::object::threads;
 
 winp::prop::scalar<winp::app::object::m_thread_type *, winp::app::object, winp::prop::proxy_value> winp::app::object::current_thread;
@@ -163,7 +171,7 @@ winp::prop::scalar<winp::app::object::m_thread_type *, winp::app::object, winp::
 
 winp::prop::scalar<bool, winp::app::object, winp::prop::proxy_value> winp::app::object::is_shut_down;
 
-winp::prop::error<winp::app::object> winp::app::object::error;
+thread_local winp::prop::error<winp::app::object> winp::app::object::error;
 
 std::shared_ptr<winp::thread::object> winp::app::object::main_thread_;
 
@@ -171,5 +179,9 @@ std::list<winp::app::object::m_thread_type *> winp::app::object::threads_;
 
 std::mutex winp::app::object::lock;
 
-bool winp::app::object::is_shut_down_ = false;
+std::atomic_bool winp::app::object::is_shut_down_ = false;
+
+WNDCLASSEXW winp::app::object::class_info_{};
+
+thread_local winp::app::object::m_thread_type *winp::app::object::current_thread_ = nullptr;
 
