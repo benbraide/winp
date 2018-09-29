@@ -49,17 +49,37 @@ namespace winp::ui{
 
 		virtual void do_apply_(const void *value, const std::type_info &id) override;
 
-		virtual HWND get_handle_() const override;
-
 		virtual void set_size_(const m_size_type &value) override;
+
+		virtual m_size_type get_size_() const override;
 
 		virtual m_size_type get_client_position_offset_() const override;
 
 		virtual void set_position_(const m_point_type &value) override;
 
+		virtual m_point_type get_position_() const override;
+
+		virtual m_point_type get_absolute_position_() const override;
+
+		virtual m_rect_type get_dimension_() const override;
+
+		virtual m_rect_type get_absolute_dimension_() const override;
+
 		virtual m_point_type convert_position_from_absolute_value_(const m_point_type &value) const override;
 
 		virtual m_point_type convert_position_to_absolute_value_(const m_point_type &value) const override;
+
+		virtual m_rect_type convert_dimension_from_absolute_value_(const m_rect_type &value) const override;
+
+		virtual m_rect_type convert_dimension_to_absolute_value_(const m_rect_type &value) const override;
+
+		virtual void set_visible_state_(bool state) override;
+
+		virtual bool get_visible_state_() const override;
+
+		virtual void set_transaprent_state_(bool state) override;
+
+		virtual bool get_transaprent_state_() const override;
 
 		virtual window_surface *get_window_surface_parent_() const;
 
@@ -71,7 +91,21 @@ namespace winp::ui{
 
 		virtual void create_();
 
+		virtual void set_maximized_state_(bool state);
+
+		virtual bool get_maximized_state_() const;
+
+		virtual void set_minimized_state_(bool state);
+
+		virtual bool get_minimized_state_() const;
+
 		virtual void set_styles_(DWORD value, bool is_extended);
+
+		virtual void add_styles_(DWORD value, bool is_extended);
+
+		virtual void remove_styles_(DWORD value, bool is_extended);
+
+		virtual bool has_styles_(DWORD value, bool is_extended, bool has_all = false) const;
 
 		virtual DWORD get_styles_(bool is_extended) const;
 
@@ -91,7 +125,7 @@ namespace winp::ui{
 
 		virtual const wchar_t *get_window_text_() const;
 
-		virtual bool resolve_parent_(HWND &handle, m_point_type &position, DWORD &styles) const;
+		virtual HWND get_first_window_ancestor_handle_() const;
 
 		virtual void fire_event_(m_event_type &ev, event::object &e) const;
 

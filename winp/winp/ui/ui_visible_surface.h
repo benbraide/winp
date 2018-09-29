@@ -28,9 +28,9 @@ namespace winp::ui{
 
 		prop::rgba<visible_surface, float> background_color;
 
-		static const unsigned int state_nil					= (0 << 0x0000);
+		/*static const unsigned int state_nil					= (0 << 0x0000);
 		static const unsigned int state_visible				= (1 << 0x0000);
-		static const unsigned int state_transparent			= (1 << 0x0001);
+		static const unsigned int state_transparent			= (1 << 0x0001);*/
 
 	protected:
 		void init_();
@@ -41,21 +41,28 @@ namespace winp::ui{
 
 		virtual visible_surface *get_visible_surface_parent_() const;
 
-		virtual void toggle_state_(unsigned int value, bool set);
+		/*virtual void toggle_state_(unsigned int value, bool set);
 
 		virtual void set_state_(unsigned int value);
 
 		virtual void remove_state_(unsigned int value);
 
-		virtual bool has_state_(unsigned int value) const;
+		virtual bool has_state_(unsigned int value) const;*/
+
+		virtual void set_visible_state_(bool state);
+
+		virtual bool get_visible_state_() const;
+
+		virtual void set_transaprent_state_(bool state);
+
+		virtual bool get_transaprent_state_() const;
 
 		virtual void set_background_color_(const m_rgba_type &value);
 
 		virtual m_rgba_type get_background_color_() const;
 
-		unsigned int state_ = state_nil;
+		//unsigned int state_ = state_nil;
 		m_rgba_type background_color_;
-
 		m_event_type show_event_;
 		m_event_type hide_event_;
 	};

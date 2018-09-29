@@ -11,6 +11,10 @@ namespace winp::message{
 	class dispatcher;
 }
 
+namespace winp::thread{
+	class windows_manager;
+}
+
 namespace winp::ui{
 	class object;
 	class tree;
@@ -150,9 +154,12 @@ namespace winp::ui{
 
 	protected:
 		friend class tree;
+
 		friend class send_message;
 		friend class post_message;
+
 		friend class message::dispatcher;
+		friend class thread::windows_manager;
 
 		void init_();
 
@@ -161,6 +168,17 @@ namespace winp::ui{
 		virtual void set_parent_(tree *value);
 
 		virtual tree *get_parent_() const;
+
+		template <typename target_type>
+		target_type *get_first_ancestor_of_() const{
+			target_type *ancestor = nullptr;
+			for (auto parent = get_parent_(); parent != nullptr; get_parent_of_(*parent)){
+				if ((ancestor = dynamic_cast<target_type *>(parent)) != nullptr)
+					break;
+			}
+			
+			return ancestor;
+		}
 
 		virtual bool validate_parent_change_(tree *value, std::size_t index) const;
 
@@ -186,6 +204,8 @@ namespace winp::ui{
 
 		virtual object *get_next_sibling_() const;
 
+		virtual bool handles_message_(UINT msg) const;
+
 		virtual bool handle_message_(message::basic &info);
 
 		virtual void fire_ancestor_change_event_(tree *value, std::size_t index) const;
@@ -202,6 +222,10 @@ namespace winp::ui{
 			change_event_.fire_(e);
 			return (is_changing && !e.prevent_default);
 		}
+
+		static tree *get_parent_of_(const object &target);
+
+		static message::dispatcher *find_dispatcher_(UINT msg);
 
 		tree *parent_;
 		std::size_t index_;

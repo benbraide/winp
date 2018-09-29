@@ -338,6 +338,10 @@ winp::ui::object *winp::ui::object::get_next_sibling_() const{
 	return ((parent_ == nullptr) ? nullptr : parent_->get_child_at_(get_index_() + 1u));
 }
 
+bool winp::ui::object::handles_message_(UINT msg) const{
+	return false;
+}
+
 bool winp::ui::object::handle_message_(message::basic &info){
 	return false;
 }
@@ -399,4 +403,12 @@ void winp::ui::object::fire_sibling_change_event_(object &sibling, std::size_t p
 
 	event::change<void, unsigned __int64> e(sibling_change_id, info, const_cast<object *>(this));
 	change_event_.fire_(e);
+}
+
+winp::ui::tree *winp::ui::object::get_parent_of_(const object &target){
+	return target.get_parent_();
+}
+
+winp::message::dispatcher *winp::ui::object::find_dispatcher_(UINT msg){
+	return thread::windows_manager::find_dispatcher_(msg);
 }

@@ -78,9 +78,17 @@ LRESULT CALLBACK winp::thread::windows_manager::entry_(HWND handle, UINT msg, WP
 	if (object == nullptr)//Forward message
 		return ((IsWindowUnicode(handle) == FALSE) ? CallWindowProcA(DefWindowProcA, handle, msg, wparam, lparam) : CallWindowProcW(DefWindowProcW, handle, msg, wparam, lparam));
 
+	switch (msg){
+
+	}
+
 	LRESULT result = 0;
-	if (!find_dispatcher_(msg)->dispatch_(*object, msg, wparam, lparam, result))//Default not prevented
-		result = (object->get_default_message_entry_())(handle, msg, wparam, lparam);
+	auto handles_message = object->handles_message_(msg);
+
+	if (handles_message && !default_dispatcher_->dispatch_(*object, msg, wparam, lparam, result))
+		result = CallWindowProcW(object->get_default_message_entry_(), handle, msg, wparam, lparam);
+	else if (!handles_message && !find_dispatcher_(msg)->dispatch_(*object, msg, wparam, lparam, result))//Default not prevented
+		result = CallWindowProcW(object->get_default_message_entry_(), handle, msg, wparam, lparam);
 
 	return result;
 }

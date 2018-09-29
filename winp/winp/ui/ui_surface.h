@@ -8,9 +8,11 @@
 
 namespace winp::ui{
 	class surface;
+	class window_surface;
 
 	class surface_hit_test{
 	public:
+		using m_size_type = utility::size<int>;
 		using m_point_type = utility::point<int>;
 		using m_rect_type = utility::rect<int>;
 
@@ -29,7 +31,7 @@ namespace winp::ui{
 
 		void init_();
 
-		virtual utility::hit_target hit_test_(const m_point_type &pt, const m_point_type &pos) const;
+		virtual utility::hit_target hit_test_(const m_point_type &pt, const m_point_type &pos, const m_size_type &size) const;
 
 		surface *surface_ = nullptr;
 	};
@@ -56,11 +58,15 @@ namespace winp::ui{
 		prop::point<surface, int> position;
 		prop::point<surface, int> absolute_position;
 
+		prop::rect<surface, int> dimension;
+		prop::rect<surface, int> absolute_dimension;
+
 		prop::map<m_point_type, m_point_type, surface> position_from_absolute;
 		prop::map<m_point_type, m_point_type, surface> position_to_absolute;
 
 	protected:
 		friend class surface_hit_test;
+		friend class window_surface;
 
 		void init_();
 
@@ -82,9 +88,27 @@ namespace winp::ui{
 
 		virtual m_point_type get_absolute_position_() const;
 
+		virtual m_rect_type get_dimension_() const;
+
+		virtual m_rect_type get_absolute_dimension_() const;
+
 		virtual m_point_type convert_position_from_absolute_value_(const m_point_type &value) const;
 
 		virtual m_point_type convert_position_to_absolute_value_(const m_point_type &value) const;
+
+		virtual m_rect_type convert_dimension_from_absolute_value_(const m_rect_type &value) const;
+
+		virtual m_rect_type convert_dimension_to_absolute_value_(const m_rect_type &value) const;
+
+		template <typename target_type>
+		m_point_type get_offset_from_ancestor_of_(const m_point_type &ref) const{
+			auto parent = get_surface_parent_();
+			if (parent == nullptr || dynamic_cast<target_type *>(parent) != nullptr)
+				return ref;
+
+			auto parent_position = parent->get_position_();
+			return parent->get_offset_from_ancestor_of_<target_type>(m_point_type{ (parent_position.x + ref.x), (parent_position.y + ref.y) });
+		}
 
 		m_size_type size_{};
 		m_point_type position_{};

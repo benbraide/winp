@@ -3,6 +3,8 @@
 #include <memory>
 #include <unordered_map>
 
+#include "../utility/structures.h"
+
 #include "thread_item.h"
 
 namespace winp::app{
@@ -10,6 +12,7 @@ namespace winp::app{
 }
 
 namespace winp::ui{
+	class object;
 	class window_surface;
 }
 
@@ -22,6 +25,7 @@ namespace winp::thread{
 
 	class windows_manager{
 	public:
+		using m_point_type = utility::point<int>;
 		using map_type = std::unordered_map<HWND, ui::window_surface *>;
 
 		struct cache_info{
@@ -29,11 +33,22 @@ namespace winp::thread{
 			ui::window_surface *object;
 		};
 
+		struct mouse_info{
+			ui::window_surface *moused;
+			m_point_type last_position;
+			m_point_type pressed_position;
+			UINT button_pressed;
+			bool is_captured;
+			bool is_dragging;
+		};
+
 		windows_manager();
 
 	private:
 		friend class app::object;
 		friend class object;
+
+		friend class ui::object;
 		friend class ui::window_surface;
 
 		void prepare_for_run_();
