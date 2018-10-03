@@ -9,14 +9,20 @@
 #include "event_object.h"
 
 namespace winp::event{
-	template <class owner_type, class object_type, class return_type>
-	class manager{
+	class manager_base{
+	protected:
+		friend class ui::object;
+
+		virtual void fire_generic_(object &e) const = 0;
+	};
+
+	template <class owner_type, class object_type>
+	class manager : public manager_base{
 	public:
 		using m_object_type = object_type;
-		using m_return_type = return_type;
 
-		using m_callback_type = std::function<m_return_type(m_object_type &)>;
-		using m_no_arg_callback_type = std::function<m_return_type()>;
+		using m_callback_type = std::function<void(m_object_type &)>;
+		using m_no_arg_callback_type = std::function<void()>;
 
 		using m_map_type = std::unordered_map<unsigned __int64, m_callback_type>;
 
@@ -59,28 +65,19 @@ namespace winp::event{
 			}, thread::queue::send_priority).get();
 		}
 
-	private:
+	protected:
 		friend owner_type;
 
-		template <typename dummy_type = return_type>
-		std::enable_if_t<std::is_void_v<dummy_type>> fire_(m_object_type &e) const{
+		virtual void fire_generic_(object &e) const override{
+			fire_(*dynamic_cast<m_object_type *>(&e));
+		}
+
+		virtual void fire_(m_object_type &e) const{
 			for (auto &item : handlers_){
 				item.second(e);
 				if ((e.state_ & object::state_type::propagation_stopped) != 0u)
 					break;
 			}
-		}
-
-		template <typename dummy_type = return_type>
-		std::enable_if_t<!std::is_void_v<dummy_type>> fire_(m_object_type &e, const dummy_type &default_value = dummy_type()) const{
-			auto value = default_value;
-			for (auto &item : handlers_){
-				value = item.second(e);
-				if ((e.state_ & object::state_type::propagation_stopped) != 0u)
-					break;
-			}
-
-			return value;
 		}
 
 		m_map_type handlers_;

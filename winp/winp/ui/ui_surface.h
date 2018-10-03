@@ -42,10 +42,6 @@ namespace winp::ui{
 		using m_point_type = utility::point<int>;
 		using m_rect_type = utility::rect<int>;
 
-		using m_event_type = event::manager<surface, event::object, void>;
-		using size_event_type = event_manager<m_event_type, event_id_type::size>;
-		using move_event_type = event_manager<m_event_type, event_id_type::move>;
-
 		explicit surface(thread::object &thread);
 
 		explicit surface(tree &parent);
@@ -64,9 +60,13 @@ namespace winp::ui{
 		prop::map<m_point_type, m_point_type, surface> position_from_absolute;
 		prop::map<m_point_type, m_point_type, surface> position_to_absolute;
 
+		event::manager<surface, event::object> size_event;
+		event::manager<surface, event::object> move_event;
+
 	protected:
 		friend class surface_hit_test;
 		friend class window_surface;
+		friend class thread::windows_manager;
 
 		void init_();
 
@@ -112,8 +112,5 @@ namespace winp::ui{
 
 		m_size_type size_{};
 		m_point_type position_{};
-
-		m_event_type size_event_;
-		m_event_type move_event_;
 	};
 }

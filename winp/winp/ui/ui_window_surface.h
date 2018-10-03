@@ -2,10 +2,6 @@
 
 #include "ui_visible_surface.h"
 
-namespace winp::thread{
-	class windows_manager;
-}
-
 namespace winp::message{
 	class create_destroy_dispatcher;
 }
@@ -13,11 +9,6 @@ namespace winp::message{
 namespace winp::ui{
 	class window_surface : public visible_surface{
 	public:
-		using m_event_type = event::manager<window_surface, event::object, void>;
-
-		using create_event_type = event_manager<m_event_type, event_id_type::create>;
-		using destroy_event_type = event_manager<m_event_type, event_id_type::destroy>;
-
 		enum class window_state{
 			restored,
 			maximized,
@@ -37,9 +28,12 @@ namespace winp::ui{
 		prop::scalar<bool, window_surface, prop::proxy_value> maximized;
 		prop::scalar<bool, window_surface, prop::proxy_value> minimized;
 
+		event::manager<window_surface, event::object> create_event;
+		event::manager<window_surface, event::object> destroy_event;
+
 	protected:
+		friend class message::dispatcher;
 		friend class thread::windows_manager;
-		friend class message::create_destroy_dispatcher;
 
 		void init_();
 
@@ -83,8 +77,6 @@ namespace winp::ui{
 
 		virtual window_surface *get_window_surface_parent_() const;
 
-		virtual void set_handle_(HWND value);
-
 		virtual void set_message_entry_(LONG_PTR value);
 
 		virtual void add_to_toplevel_();
@@ -127,12 +119,7 @@ namespace winp::ui{
 
 		virtual HWND get_first_window_ancestor_handle_() const;
 
-		virtual void fire_event_(m_event_type &ev, event::object &e) const;
-
 		DWORD styles_;
 		DWORD extended_styles_;
-
-		m_event_type create_event_;
-		m_event_type destroy_event_;
 	};
 }

@@ -1,33 +1,64 @@
+#include "../app/app_object.h"
 #include "message_dispatcher.h"
 
-bool winp::message::dispatcher::dispatch_(ui::window_surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const{
+void winp::message::dispatcher::dispatch_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result, bool call_default) const{
 	message::basic info(&target, message::basic::info_type{
 		msg,
 		wparam, 
 		lparam
 	});
 
-	auto prevent_default = target.handle_message_(info);
-	result = info.result;
-
-	return prevent_default;
+	if (!target.handle_message_(info) && call_default){
+		auto window_target = dynamic_cast<ui::window_surface *>(&target);
+		if (window_target != nullptr)
+			result = CallWindowProcW(get_default_message_entry_of_(*window_target), window_target->get_handle_(), msg, wparam, lparam);
+		else
+			result = info.result;
+	}
+	else
+		result = info.result;
 }
 
-bool winp::message::dispatcher::fire_event_(ui::window_surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const{
+bool winp::message::dispatcher::fire_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const{
 	return false;
 }
 
-bool winp::message::create_destroy_dispatcher::dispatch_(ui::window_surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const{
-	return fire_event_(target, msg, wparam, lparam, result);
+void winp::message::dispatcher::fire_event_of_(ui::surface &target, event::manager_base &ev, event::object &e){
+	target.fire_event_(ev, e);
 }
 
-bool winp::message::create_destroy_dispatcher::fire_event_(ui::window_surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const{
+HWND winp::message::dispatcher::get_handle_of_(ui::surface &target){
+	return target.get_handle_();
+}
+
+WNDPROC winp::message::dispatcher::get_default_message_entry_of_(ui::window_surface &target){
+	return target.get_default_message_entry_();
+}
+
+void winp::message::create_destroy_dispatcher::dispatch_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result, bool call_default) const{
+	fire_event_(target, msg, wparam, lparam, result);
+	if (call_default){
+		auto window_target = dynamic_cast<ui::window_surface *>(&target);
+		if (window_target != nullptr)
+			result = CallWindowProcW(get_default_message_entry_of_(*window_target), get_handle_of_(target), msg, wparam, lparam);
+		else
+			result = 0;
+	}
+	else
+		result = 0;
+}
+
+bool winp::message::create_destroy_dispatcher::fire_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const{
+	auto window_target = dynamic_cast<ui::window_surface *>(&target);
+	if (window_target == nullptr)
+		return true;
+
 	event::object e(&target);
 	if (msg == WM_CREATE)
-		target.fire_event_(target.create_event_, e);
+		fire_event_of_(*window_target, window_target->create_event, e);
 	else
-		target.fire_event_(target.destroy_event_, e);
+		fire_event_of_(*window_target, window_target->destroy_event, e);
 
 	result = 0;
-	return e.prevent_default;
+	return false;
 }

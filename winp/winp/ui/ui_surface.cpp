@@ -110,8 +110,8 @@ void winp::ui::surface::init_(){
 	dimension.init_(nullptr, nullptr, getter);
 	absolute_dimension.init_(nullptr, nullptr, getter);
 
-	size_event_.thread_ = owner_;
-	move_event_.thread_ = owner_;
+	size_event.thread_ = owner_;
+	move_event.thread_ = owner_;
 }
 
 void winp::ui::surface::do_request_(void *buf, const std::type_info &id){
@@ -119,10 +119,6 @@ void winp::ui::surface::do_request_(void *buf, const std::type_info &id){
 		static_cast<surface_hit_test *>(buf)->surface_ = this;
 		static_cast<surface_hit_test *>(buf)->init_();
 	}
-	else if (id == typeid(size_event_type))
-		*static_cast<size_event_type *>(buf) = size_event_type(size_event_);
-	else if (id == typeid(move_event_type))
-		*static_cast<move_event_type *>(buf) = move_event_type(move_event_);
 	else if (id == typeid(surface *))
 		*static_cast<surface **>(buf) = this;
 	else

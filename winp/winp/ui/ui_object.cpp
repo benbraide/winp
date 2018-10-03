@@ -97,22 +97,22 @@ void winp::ui::post_message::init_(){
 }
 
 winp::ui::object::object(thread::object &thread)
-	: item(thread), parent_(nullptr), index_(static_cast<std::size_t>(-1)){
+	: item(thread), handle_(nullptr), parent_(nullptr), index_(static_cast<std::size_t>(-1)){
 	init_();
 }
 
 winp::ui::object::object(tree &parent)
-	: item(*parent.owner_), parent_(&parent), index_(static_cast<std::size_t>(-1)){
+	: item(*parent.owner_), handle_(nullptr), parent_(&parent), index_(static_cast<std::size_t>(-1)){
 	init_();
 }
 
 winp::ui::object::~object() = default;
 
 void winp::ui::object::init_(){
-	ancestors.m_value_.init_([this]() -> tree *{//begin
-		return parent_;
-	}, [this](tree *current) -> tree *{//next
-		return current->parent;
+	ancestors.m_value_.init_([this](){//begin
+		return owner_->queue->add([this]() -> tree *{ return parent_; }, thread::queue::send_priority).get();
+	}, [this](tree *current){//next
+		return owner_->queue->add([&]() -> tree *{ return current->parent; }, thread::queue::send_priority).get();
 	});
 
 	siblings.m_value_.init_([this]() -> object *{//begin
@@ -157,7 +157,12 @@ void winp::ui::object::init_(){
 	};
 
 	auto getter = [this](const prop::base &prop, void *buf, std::size_t index){
-		if (&prop == &parent)
+		if (&prop == &handle){
+			owner_->queue->add([&]{
+				*static_cast<HWND *>(buf) = get_handle_();
+			}, thread::queue::send_priority).get();
+		}
+		else if (&prop == &parent)
 			*static_cast<tree **>(buf) = owner_->queue->add([this]{ return get_parent_(); }, thread::queue::send_priority).get();
 		else if (&prop == &this->index)
 			*static_cast<std::size_t *>(buf) = owner_->queue->add([this]{ return get_index_(); }, thread::queue::send_priority).get();
@@ -167,6 +172,7 @@ void winp::ui::object::init_(){
 			*static_cast<object **>(buf) = owner_->queue->add([this]{ return get_next_sibling_(); }, thread::queue::send_priority).get();
 	};
 
+	handle.init_(nullptr, nullptr, getter);
 	parent.init_(nullptr, setter, getter);
 	index.init_(nullptr, setter, getter);
 
@@ -175,6 +181,8 @@ void winp::ui::object::init_(){
 
 	ancestors.init_(nullptr, nullptr, getter);
 	siblings.init_(nullptr, nullptr, getter);
+
+	change_event.thread_ = owner_;
 }
 
 void winp::ui::object::do_request_(void *buf, const std::type_info &id){
@@ -186,12 +194,18 @@ void winp::ui::object::do_request_(void *buf, const std::type_info &id){
 		static_cast<post_message *>(buf)->target_ = get_handle_();
 		static_cast<post_message *>(buf)->init_();
 	}
-	else if (id == typeid(change_event_type))
-		*static_cast<change_event_type *>(buf) = change_event_type(change_event_);
 	else if (id == typeid(object *))
 		*static_cast<object **>(buf) = this;
 	else
 		item::do_request_(buf, id);
+}
+
+void winp::ui::object::set_handle_(HWND value){
+	handle_ = value;
+}
+
+HWND winp::ui::object::get_handle_() const{
+	return handle_;
 }
 
 void winp::ui::object::set_parent_(tree *value){
@@ -353,7 +367,7 @@ void winp::ui::object::fire_ancestor_change_event_(tree *value, std::size_t inde
 	};
 
 	event::change<void, unsigned __int64> e(ancestor_change_id, info, const_cast<object *>(this));
-	change_event_.fire_(e);
+	change_event.fire_(e);
 }
 
 bool winp::ui::object::fire_parent_change_event_(bool is_changing, tree *current_value, tree *&value, std::size_t &index) const{
@@ -365,7 +379,7 @@ bool winp::ui::object::fire_parent_change_event_(bool is_changing, tree *current
 	};
 
 	event::change<void, unsigned __int64> e(parent_change_id, info, const_cast<object *>(this));
-	change_event_.fire_(e);
+	change_event.fire_(e);
 	
 	if (is_changing){//Update values
 		if (info.new_parent == nullptr || info.new_parent->owner_ == owner_)
@@ -386,7 +400,7 @@ bool winp::ui::object::fire_index_change_event_(bool is_changing, std::size_t pr
 	};
 
 	event::change<void, unsigned __int64> e(index_change_id, info, const_cast<object *>(this));
-	change_event_.fire_(e);
+	change_event.fire_(e);
 
 	if (is_changing)//Update value
 		value = info.current_index;
@@ -402,7 +416,11 @@ void winp::ui::object::fire_sibling_change_event_(object &sibling, std::size_t p
 	};
 
 	event::change<void, unsigned __int64> e(sibling_change_id, info, const_cast<object *>(this));
-	change_event_.fire_(e);
+	change_event.fire_(e);
+}
+
+void winp::ui::object::fire_event_(event::manager_base &ev, event::object &e) const{
+	ev.fire_generic_(e);
 }
 
 winp::ui::tree *winp::ui::object::get_parent_of_(const object &target){

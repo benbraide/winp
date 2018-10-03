@@ -7,10 +7,6 @@ namespace winp::ui{
 	public:
 		using m_rgba_type = utility::rgba<float>;
 
-		using m_event_type = event::manager<visible_surface, event::object, void>;
-		using show_event_type = event_manager<m_event_type, event_id_type::show>;
-		using hide_event_type = event_manager<m_event_type, event_id_type::hide>;
-
 		enum class visibility{
 			visible,
 			hidden,
@@ -28,11 +24,16 @@ namespace winp::ui{
 
 		prop::rgba<visible_surface, float> background_color;
 
+		event::manager<visible_surface, event::object> show_event;
+		event::manager<visible_surface, event::object> hide_event;
+
 		/*static const unsigned int state_nil					= (0 << 0x0000);
 		static const unsigned int state_visible				= (1 << 0x0000);
 		static const unsigned int state_transparent			= (1 << 0x0001);*/
 
 	protected:
+		friend class thread::windows_manager;
+
 		void init_();
 
 		virtual void do_request_(void *buf, const std::type_info &id) override;
@@ -63,7 +64,5 @@ namespace winp::ui{
 
 		//unsigned int state_ = state_nil;
 		m_rgba_type background_color_;
-		m_event_type show_event_;
-		m_event_type hide_event_;
 	};
 }

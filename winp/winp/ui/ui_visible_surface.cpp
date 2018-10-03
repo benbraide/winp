@@ -47,8 +47,8 @@ void winp::ui::visible_surface::init_(){
 	transparent.init_(nullptr, setter, getter);
 	background_color.init_(nullptr, setter, getter);
 
-	show_event_.thread_ = owner_;
-	hide_event_.thread_ = owner_;
+	show_event.thread_ = owner_;
+	hide_event.thread_ = owner_;
 }
 
 void winp::ui::visible_surface::do_request_(void *buf, const std::type_info &id){
@@ -58,10 +58,6 @@ void winp::ui::visible_surface::do_request_(void *buf, const std::type_info &id)
 		else
 			*static_cast<visibility *>(buf) = visibility::hidden;
 	}
-	else if (id == typeid(show_event_type))
-		*static_cast<show_event_type *>(buf) = show_event_type(show_event_);
-	else if (id == typeid(hide_event_type))
-		*static_cast<hide_event_type *>(buf) = hide_event_type(hide_event_);
 	else if (id == typeid(visible_surface *))
 		*static_cast<visible_surface **>(buf) = this;
 	else

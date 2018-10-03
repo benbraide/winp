@@ -41,3 +41,26 @@ winp::event::message::~message() = default;
 LRESULT winp::event::message::get_result_() const{
 	return LRESULT();
 }
+
+winp::event::mouse::mouse(ui::object *target, const info_type &info, const m_point_type &offset, button_type button)
+	: message(target, info), offset_(offset), button_(button){
+	auto getter = [this](const prop::base &prop, void *buf, std::size_t context){
+		if (&prop == &position)
+			*static_cast<m_point_type *>(buf) = get_position_();
+		else if (&prop == &this->offset)
+			*static_cast<m_point_type *>(buf) = offset_;
+		else if (&prop == &this->button)
+			*static_cast<button_type *>(buf) = button_;
+	};
+
+	position.init_(nullptr, nullptr, getter);
+	this->offset.init_(nullptr, nullptr, getter);
+	this->button.init_(nullptr, nullptr, getter);
+}
+
+winp::event::mouse::~mouse() = default;
+
+winp::event::mouse::m_point_type winp::event::mouse::get_position_() const{
+	auto position = ::GetMessagePos();
+	return m_point_type{ GET_X_LPARAM(position), GET_Y_LPARAM(position) };
+}

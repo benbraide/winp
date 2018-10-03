@@ -77,35 +77,8 @@ namespace winp::ui{
 		fail,
 	};
 
-	template <class event_type, event_id_type id>
-	class event_manager{
-	public:
-		explicit event_manager(event_type &e)
-			: e_(&e){}
-
-		unsigned __int64 operator +=(const typename event_type::m_callback_type &handler){
-			return (*e_ += handler);
-		}
-
-		unsigned __int64 operator +=(const typename event_type::m_no_arg_callback_type &handler){
-			return (*e_ += handler);
-		}
-
-		bool operator -=(unsigned __int64 id){
-			return (*e_ -= id);
-		}
-
-	private:
-		event_type *e_;
-	};
-
 	class object : public thread::item{
 	public:
-		using m_event_type = event::manager<object, event::object, void>;
-		using m_change_event_type = event::manager<object, event::change<void, unsigned __int64>, void>;
-
-		using change_event_type = event_manager<m_change_event_type, event_id_type::change>;
-
 		struct ancestor_change_info{
 			tree *ancestor;	
 			std::size_t index;
@@ -136,6 +109,7 @@ namespace winp::ui{
 
 		virtual ~object();
 
+		prop::scalar<HWND, object, prop::proxy_value> handle;
 		prop::scalar<tree *, object, prop::proxy_value> parent;
 		prop::scalar<std::size_t, object, prop::proxy_value> index;
 
@@ -144,6 +118,8 @@ namespace winp::ui{
 
 		prop::list<utility::dynamic_list<tree, object>, object, prop::immediate_value> ancestors;
 		prop::list<utility::dynamic_list<object, object>, object, prop::immediate_value> siblings;
+
+		event::manager<object, event::change<void, unsigned __int64>> change_event;
 
 		static const unsigned __int64 ancestor_change_id		= (1ui64 << 0x00000000ui64);
 		static const unsigned __int64 parent_change_id			= (1ui64 << 0x00000001ui64);
@@ -164,6 +140,10 @@ namespace winp::ui{
 		void init_();
 
 		virtual void do_request_(void *buf, const std::type_info &id) override;
+
+		virtual void set_handle_(HWND value);
+
+		virtual HWND get_handle_() const;
 
 		virtual void set_parent_(tree *value);
 
@@ -216,10 +196,12 @@ namespace winp::ui{
 
 		virtual void fire_sibling_change_event_(object &sibling, std::size_t previous_index, std::size_t current_index) const;
 
+		virtual void fire_event_(event::manager_base &ev, event::object &e) const;
+
 		template <typename info_type>
 		bool fire_change_event_(unsigned __int64 id, info_type &info, bool is_changing = false) const{
 			event::change<void, unsigned __int64> e(id, info, const_cast<object *>(this));
-			change_event_.fire_(e);
+			change_event.fire_(e);
 			return (is_changing && !e.prevent_default);
 		}
 
@@ -227,8 +209,8 @@ namespace winp::ui{
 
 		static message::dispatcher *find_dispatcher_(UINT msg);
 
+		HWND handle_;
 		tree *parent_;
 		std::size_t index_;
-		m_change_event_type change_event_;
 	};
 }

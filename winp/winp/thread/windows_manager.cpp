@@ -61,6 +61,55 @@ void winp::thread::windows_manager::destroy_window_(HWND handle){
 	}
 }
 
+LRESULT winp::thread::windows_manager::mouse_leave_(ui::window_surface &target, UINT msg, DWORD mouse_position){
+	auto target_handle = target.get_handle_();
+	switch (SendMessageW(target_handle, WM_NCHITTEST, 0, mouse_position)){
+	case HTCLIENT://Inside client --> Possibly inside child
+		if (msg == WM_NCMOUSELEAVE)//Moved from non-client to client
+			track_mouse_(target_handle, 0);
+		return CallWindowProcW(target.get_default_message_entry_(), target_handle, msg, 0, 0);
+	case HTNOWHERE:
+	case HTERROR://Outside window
+		break;
+	default://Moved from client to non-client
+		track_mouse_(target_handle, TME_NONCLIENT);
+		return CallWindowProcW(target.get_default_message_entry_(), target_handle, msg, 0, 0);
+	}
+
+	
+	LRESULT result = 0;
+	auto dispatcher = find_dispatcher_(WM_NCMOUSELEAVE);
+
+	ui::surface *moused = mouse_info_.moused;
+	mouse_info_.moused = nullptr;
+
+	for (; moused != nullptr && moused != &target; moused = moused->get_surface_parent_()){
+		if (moused->handles_message_(WM_NCMOUSELEAVE))
+			default_dispatcher_->dispatch_(target, WM_NCMOUSELEAVE, 0, 0, result, false);
+		else
+			dispatcher->dispatch_(target, WM_NCMOUSELEAVE, 0, 0, result, false);
+	}
+
+	if (target.handles_message_(WM_NCMOUSELEAVE))
+		default_dispatcher_->dispatch_(target, msg, 0, 0, result, true);
+	else
+		dispatcher->dispatch_(target, msg, 0, 0, result, true);
+
+	return result;
+}
+
+LRESULT winp::thread::windows_manager::mouse_move_(ui::window_surface &target, DWORD mouse_position, WPARAM wparam, LPARAM lparam, bool prevent_default){
+	return 0;
+}
+
+LRESULT winp::thread::windows_manager::mouse_down_(ui::window_surface &target, DWORD mouse_position, WPARAM wparam, LPARAM lparam, bool prevent_default){
+	return 0;
+}
+
+LRESULT winp::thread::windows_manager::mouse_up_(ui::window_surface &target, DWORD mouse_position, WPARAM wparam, LPARAM lparam, bool prevent_default){
+	return 0;
+}
+
 void winp::thread::windows_manager::init_dispatchers_(){
 	default_dispatcher_ = std::make_shared<message::dispatcher>();
 
@@ -73,22 +122,43 @@ winp::message::dispatcher *winp::thread::windows_manager::find_dispatcher_(UINT 
 	return ((it == dispatchers_.end()) ? default_dispatcher_.get() : it->second.get());
 }
 
+void winp::thread::windows_manager::track_mouse_(HWND target, UINT flags){
+	TRACKMOUSEEVENT info{ sizeof(TRACKMOUSEEVENT), (TME_LEAVE | flags), target, 0 };
+	TrackMouseEvent(&info);
+}
+
 LRESULT CALLBACK winp::thread::windows_manager::entry_(HWND handle, UINT msg, WPARAM wparam, LPARAM lparam){
-	auto object = app::object::current_thread_->windows_manager_.find_object_(handle);
+	auto &manager = app::object::current_thread_->windows_manager_;
+
+	auto object = manager.find_object_(handle);
 	if (object == nullptr)//Forward message
 		return ((IsWindowUnicode(handle) == FALSE) ? CallWindowProcA(DefWindowProcA, handle, msg, wparam, lparam) : CallWindowProcW(DefWindowProcW, handle, msg, wparam, lparam));
 
 	switch (msg){
+	case WM_NCMOUSEMOVE:
+	{
+		auto result = CallWindowProcW(object->get_default_message_entry_(), handle, msg, wparam, lparam);
 
+		auto window_ancestor = object->get_first_ancestor_of_<ui::window_surface>();
+		if (window_ancestor != nullptr)
+			manager.mouse_move_(*window_ancestor, GetMessagePos(), 0, 0, true);
+
+		return result;
+	}
+	case WM_MOUSEMOVE:
+		return manager.mouse_move_(*object, GetMessagePos(), wparam, lparam, false);
+	case WM_NCMOUSELEAVE:
+	case WM_MOUSELEAVE:
+		return manager.mouse_leave_(*object, GetMessagePos(), msg);
+	default:
+		break;
 	}
 
 	LRESULT result = 0;
-	auto handles_message = object->handles_message_(msg);
-
-	if (handles_message && !default_dispatcher_->dispatch_(*object, msg, wparam, lparam, result))
-		result = CallWindowProcW(object->get_default_message_entry_(), handle, msg, wparam, lparam);
-	else if (!handles_message && !find_dispatcher_(msg)->dispatch_(*object, msg, wparam, lparam, result))//Default not prevented
-		result = CallWindowProcW(object->get_default_message_entry_(), handle, msg, wparam, lparam);
+	if (object->handles_message_(msg))
+		default_dispatcher_->dispatch_(*object, msg, wparam, lparam, result, true);
+	else
+		find_dispatcher_(msg)->dispatch_(*object, msg, wparam, lparam, result, true);
 
 	return result;
 }

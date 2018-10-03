@@ -75,8 +75,8 @@ void winp::ui::window_surface::init_(){
 	maximized.init_(nullptr, setter, getter);
 	minimized.init_(nullptr, setter, getter);
 
-	create_event_.thread_ = owner_;
-	destroy_event_.thread_ = owner_;
+	create_event.thread_ = owner_;
+	destroy_event.thread_ = owner_;
 
 	handle_ = nullptr;
 }
@@ -88,11 +88,7 @@ void winp::ui::window_surface::destroy_(){
 }
 
 void winp::ui::window_surface::do_request_(void *buf, const std::type_info &id){
-	if (id == typeid(create_event_type))
-		*static_cast<create_event_type *>(buf) = create_event_type(create_event_);
-	else if (id == typeid(destroy_event_type))
-		*static_cast<destroy_event_type *>(buf) = destroy_event_type(destroy_event_);
-	else if (id == typeid(window_surface *))
+	if (id == typeid(window_surface *))
 		*static_cast<window_surface **>(buf) = this;
 	else
 		visible_surface::do_request_(buf, id);
@@ -269,10 +265,6 @@ winp::ui::window_surface *winp::ui::window_surface::get_window_surface_parent_()
 	return dynamic_cast<window_surface *>(get_parent_());
 }
 
-void winp::ui::window_surface::set_handle_(HWND value){
-	handle_ = value;
-}
-
 void winp::ui::window_surface::set_message_entry_(LONG_PTR value){}
 
 void winp::ui::window_surface::add_to_toplevel_(){
@@ -447,8 +439,4 @@ const wchar_t *winp::ui::window_surface::get_window_text_() const{
 HWND winp::ui::window_surface::get_first_window_ancestor_handle_() const{
 	auto window_ancestor = get_first_ancestor_of_<window_surface>();
 	return ((window_ancestor == nullptr) ? nullptr : window_ancestor->get_handle_());
-}
-
-void winp::ui::window_surface::fire_event_(m_event_type &ev, event::object &e) const{
-	ev.fire_(e);
 }

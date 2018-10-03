@@ -3,6 +3,7 @@
 #include "../utility/windows.h"
 #include "../property/scalar_property.h"
 #include "../property/variant_property.h"
+#include "../property/pair_property.h"
 
 namespace winp::thread{
 	class item;
@@ -14,7 +15,7 @@ namespace winp::ui{
 }
 
 namespace winp::event{
-	template <class owner_type, class object_type, class return_type>
+	template <class owner_type, class object_type>
 	class manager;
 
 	class object{
@@ -39,7 +40,7 @@ namespace winp::event{
 	protected:
 		friend class ui::object;
 		friend class thread::object;
-		template <class, class, class> friend class manager;
+		template <class, class> friend class manager;
 
 		bool bubble_();
 
@@ -63,7 +64,7 @@ namespace winp::event{
 	protected:
 		friend class ui::object;
 		friend class thread::object;
-		template <class, class, class> friend class manager;
+		template <class, class> friend class manager;
 
 		virtual LRESULT get_result_() const;
 
@@ -101,7 +102,7 @@ namespace winp::event{
 	protected:
 		friend class ui::object;
 		friend class thread::object;
-		template <class, class, class> friend class manager;
+		template <class, class> friend class manager;
 
 		virtual LRESULT get_result_() const override{
 			return (LRESULT)result_;
@@ -125,7 +126,7 @@ namespace winp::event{
 	protected:
 		friend class ui::object;
 		friend class thread::object;
-		template <class, class, class> friend class manager;
+		template <class, class> friend class manager;
 	};
 
 	template <class result_type, class id_type>
@@ -163,5 +164,31 @@ namespace winp::event{
 		}
 
 		id_type id_;
+	};
+
+	class mouse : public message{
+	public:
+		using m_point_type = utility::point<int>;
+
+		enum class button_type{
+			nil,
+			left,
+			middle,
+			right,
+		};
+
+		mouse(ui::object *target, const info_type &info, const m_point_type &offset, button_type button);
+
+		virtual ~mouse();
+
+		prop::scalar<m_point_type, mouse, prop::proxy_value> position;
+		prop::scalar<m_point_type, mouse, prop::proxy_value> offset;
+		prop::scalar<button_type, mouse, prop::proxy_value> button;
+
+	protected:
+		virtual m_point_type get_position_() const;
+
+		m_point_type offset_;
+		button_type button_;
 	};
 }

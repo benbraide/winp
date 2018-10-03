@@ -22,7 +22,6 @@ namespace winp::thread{
 		virtual ~item();
 
 		prop::scalar<object *, item, prop::proxy_value> thread;
-		prop::scalar<HWND, item, prop::proxy_value> handle;
 
 		prop::variant<item, prop::proxy_value> request;
 		prop::variant<item, prop::proxy_value> apply;
@@ -43,11 +42,8 @@ namespace winp::thread{
 
 		virtual void do_apply_(const void *value, const std::type_info &id);
 
-		virtual HWND get_handle_() const;
-
 		virtual void throw_(error_value_type value) const;
 
 		object *owner_;
-		HWND handle_;
 	};
 }
