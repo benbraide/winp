@@ -8,7 +8,7 @@
 #include "../property/map_property.h"
 
 #include "thread_queue.h"
-#include "windows_manager.h"
+#include "surface_manager.h"
 
 namespace winp::app{
 	class object;
@@ -19,6 +19,7 @@ namespace winp::message{
 }
 
 namespace winp::ui{
+	class surface;
 	class window_surface;
 }
 
@@ -74,8 +75,9 @@ namespace winp::thread{
 		friend class item;
 		friend class post_message;
 
+		friend class ui::surface;
 		friend class ui::window_surface;
-		friend class windows_manager;
+		friend class surface_manager;
 
 		explicit object(bool);
 
@@ -101,6 +103,6 @@ namespace winp::thread{
 
 		bool is_main_;
 		bool is_exiting_;
-		windows_manager windows_manager_;
+		surface_manager windows_manager_;
 	};
 }

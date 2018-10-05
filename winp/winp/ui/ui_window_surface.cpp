@@ -1,12 +1,12 @@
 #include "../app/app_object.h"
 
 winp::ui::window_surface::window_surface(thread::object &thread)
-	: visible_surface(thread){
+	: io_surface(thread){
 	init_();
 }
 
 winp::ui::window_surface::window_surface(tree &parent)
-	: visible_surface(thread){
+	: io_surface(thread){
 	init_();
 }
 
@@ -91,17 +91,21 @@ void winp::ui::window_surface::do_request_(void *buf, const std::type_info &id){
 	if (id == typeid(window_surface *))
 		*static_cast<window_surface **>(buf) = this;
 	else
-		visible_surface::do_request_(buf, id);
+		io_surface::do_request_(buf, id);
 }
 
 void winp::ui::window_surface::do_apply_(const void *value, const std::type_info &id){
 
 }
 
+WNDPROC winp::ui::window_surface::get_default_message_entry_() const{
+	return DefWindowProcW;
+}
+
 void winp::ui::window_surface::set_size_(const m_size_type &value){
 	auto handle = get_handle_();
 	if (handle == nullptr)
-		visible_surface::set_size_(value);
+		io_surface::set_size_(value);
 	else
 		SetWindowPos(handle, nullptr, 0, 0, value.width, value.height, (SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE));
 }
@@ -109,7 +113,7 @@ void winp::ui::window_surface::set_size_(const m_size_type &value){
 winp::ui::surface::m_size_type winp::ui::window_surface::get_size_() const{
 	auto handle = get_handle_();
 	if (handle == nullptr)
-		return visible_surface::get_size_();
+		return io_surface::get_size_();
 
 	RECT dimension{};
 	GetWindowRect(handle, &dimension);
@@ -119,7 +123,7 @@ winp::ui::surface::m_size_type winp::ui::window_surface::get_size_() const{
 
 winp::ui::surface::m_size_type winp::ui::window_surface::get_client_position_offset_() const{
 	if (handle_ == nullptr)
-		return visible_surface::get_client_position_offset_();
+		return io_surface::get_client_position_offset_();
 
 	POINT client_offset{ 0, 0 };
 	ClientToScreen(handle_, &client_offset);
@@ -133,7 +137,7 @@ winp::ui::surface::m_size_type winp::ui::window_surface::get_client_position_off
 void winp::ui::window_surface::set_position_(const m_point_type &value){
 	auto handle = get_handle_();
 	if (handle == nullptr)
-		visible_surface::set_position_(value);
+		io_surface::set_position_(value);
 	else
 		SetWindowPos(handle, nullptr, value.x, value.y, 0, 0, (SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE));
 }
@@ -141,7 +145,7 @@ void winp::ui::window_surface::set_position_(const m_point_type &value){
 winp::ui::surface::m_point_type winp::ui::window_surface::get_position_() const{
 	auto handle = get_handle_();
 	if (handle == nullptr)
-		return visible_surface::get_position_();
+		return io_surface::get_position_();
 
 	RECT dimension{};
 	GetWindowRect(handle, &dimension);
@@ -154,7 +158,7 @@ winp::ui::surface::m_point_type winp::ui::window_surface::get_position_() const{
 winp::ui::surface::m_point_type winp::ui::window_surface::get_absolute_position_() const{
 	auto handle = get_handle_();
 	if (handle == nullptr)
-		return visible_surface::get_absolute_position_();
+		return io_surface::get_absolute_position_();
 
 	RECT dimension{};
 	GetWindowRect(handle, &dimension);
@@ -165,7 +169,7 @@ winp::ui::surface::m_point_type winp::ui::window_surface::get_absolute_position_
 winp::ui::surface::m_rect_type winp::ui::window_surface::get_dimension_() const{
 	auto handle = get_handle_();
 	if (handle == nullptr)
-		return visible_surface::get_dimension_();
+		return io_surface::get_dimension_();
 
 	RECT dimension{};
 	GetWindowRect(handle, &dimension);
@@ -179,7 +183,7 @@ winp::ui::surface::m_rect_type winp::ui::window_surface::get_dimension_() const{
 winp::ui::surface::m_rect_type winp::ui::window_surface::get_absolute_dimension_() const{
 	auto handle = get_handle_();
 	if (handle == nullptr)
-		return visible_surface::get_absolute_dimension_();
+		return io_surface::get_absolute_dimension_();
 
 	RECT dimension{};
 	GetWindowRect(handle, &dimension);
@@ -190,7 +194,7 @@ winp::ui::surface::m_rect_type winp::ui::window_surface::get_absolute_dimension_
 winp::ui::surface::m_point_type winp::ui::window_surface::convert_position_from_absolute_value_(const m_point_type &value) const{
 	auto handle = get_handle_();
 	if (handle == nullptr)
-		return visible_surface::convert_position_from_absolute_value_(value);
+		return io_surface::convert_position_from_absolute_value_(value);
 
 	POINT p{ value.x, value.y };
 	ScreenToClient(handle, &p);
@@ -201,7 +205,7 @@ winp::ui::surface::m_point_type winp::ui::window_surface::convert_position_from_
 winp::ui::surface::m_point_type winp::ui::window_surface::convert_position_to_absolute_value_(const m_point_type &value) const{
 	auto handle = get_handle_();
 	if (handle == nullptr)
-		return visible_surface::convert_position_to_absolute_value_(value);
+		return io_surface::convert_position_to_absolute_value_(value);
 
 	POINT p{ value.x, value.y };
 	ClientToScreen(handle, &p);
@@ -212,7 +216,7 @@ winp::ui::surface::m_point_type winp::ui::window_surface::convert_position_to_ab
 winp::ui::surface::m_rect_type winp::ui::window_surface::convert_dimension_from_absolute_value_(const m_rect_type &value) const{
 	auto handle = get_handle_();
 	if (handle == nullptr)
-		return visible_surface::convert_dimension_from_absolute_value_(value);
+		return io_surface::convert_dimension_from_absolute_value_(value);
 
 	RECT r{ value.left, value.top, value.right, value.bottom };
 	MapWindowPoints(HWND_DESKTOP, handle, reinterpret_cast<POINT *>(&r), (sizeof(RECT) / sizeof(POINT)));
@@ -223,7 +227,7 @@ winp::ui::surface::m_rect_type winp::ui::window_surface::convert_dimension_from_
 winp::ui::surface::m_rect_type winp::ui::window_surface::convert_dimension_to_absolute_value_(const m_rect_type &value) const{
 	auto handle = get_handle_();
 	if (handle == nullptr)
-		return visible_surface::convert_dimension_to_absolute_value_(value);
+		return io_surface::convert_dimension_to_absolute_value_(value);
 
 	RECT r{ value.left, value.top, value.right, value.bottom };
 	MapWindowPoints(handle, HWND_DESKTOP, reinterpret_cast<POINT *>(&r), (sizeof(RECT) / sizeof(POINT)));
@@ -263,13 +267,6 @@ bool winp::ui::window_surface::get_transaprent_state_() const{
 
 winp::ui::window_surface *winp::ui::window_surface::get_window_surface_parent_() const{
 	return dynamic_cast<window_surface *>(get_parent_());
-}
-
-void winp::ui::window_surface::set_message_entry_(LONG_PTR value){}
-
-void winp::ui::window_surface::add_to_toplevel_(){
-	if (get_parent_() == nullptr)
-		owner_->windows_manager_.toplevel_map_[get_handle_()] = this;
 }
 
 void winp::ui::window_surface::create_(){
@@ -422,10 +419,6 @@ DWORD winp::ui::window_surface::get_filtered_extended_styles_() const{
 
 HINSTANCE winp::ui::window_surface::get_instance_() const{
 	return GetModuleHandleW(nullptr);
-}
-
-WNDPROC winp::ui::window_surface::get_default_message_entry_() const{
-	return DefWindowProcW;
 }
 
 const wchar_t *winp::ui::window_surface::get_class_name_() const{

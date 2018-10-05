@@ -33,7 +33,7 @@ namespace winp::app{
 
 	protected:
 		friend class thread::object;
-		friend class thread::windows_manager;
+		friend class thread::surface_manager;
 
 		static std::size_t add_thread_(m_thread_type &thread);
 

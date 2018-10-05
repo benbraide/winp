@@ -1,13 +1,13 @@
 #pragma once
 
-#include "ui_visible_surface.h"
+#include "ui_io_surface.h"
 
 namespace winp::message{
 	class create_destroy_dispatcher;
 }
 
 namespace winp::ui{
-	class window_surface : public visible_surface{
+	class window_surface : public io_surface{
 	public:
 		enum class window_state{
 			restored,
@@ -33,7 +33,7 @@ namespace winp::ui{
 
 	protected:
 		friend class message::dispatcher;
-		friend class thread::windows_manager;
+		friend class thread::surface_manager;
 
 		void init_();
 
@@ -42,6 +42,8 @@ namespace winp::ui{
 		virtual void do_request_(void *buf, const std::type_info &id) override;
 
 		virtual void do_apply_(const void *value, const std::type_info &id) override;
+
+		virtual WNDPROC get_default_message_entry_() const override;
 
 		virtual void set_size_(const m_size_type &value) override;
 
@@ -77,10 +79,6 @@ namespace winp::ui{
 
 		virtual window_surface *get_window_surface_parent_() const;
 
-		virtual void set_message_entry_(LONG_PTR value);
-
-		virtual void add_to_toplevel_();
-
 		virtual void create_();
 
 		virtual void set_maximized_state_(bool state);
@@ -110,8 +108,6 @@ namespace winp::ui{
 		virtual DWORD get_filtered_extended_styles_() const;
 
 		virtual HINSTANCE get_instance_() const;
-
-		virtual WNDPROC get_default_message_entry_() const;
 
 		virtual const wchar_t *get_class_name_() const;
 

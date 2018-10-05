@@ -31,8 +31,6 @@ namespace winp::ui{
 
 		void init_();
 
-		virtual utility::hit_target hit_test_(const m_point_type &pt, const m_point_type &pos, const m_size_type &size) const;
-
 		surface *surface_ = nullptr;
 	};
 
@@ -66,13 +64,21 @@ namespace winp::ui{
 	protected:
 		friend class surface_hit_test;
 		friend class window_surface;
-		friend class thread::windows_manager;
+		friend class thread::surface_manager;
 
 		void init_();
 
 		virtual void do_request_(void *buf, const std::type_info &id) override;
 
 		virtual surface *get_surface_parent_() const;
+
+		virtual surface *get_root_surface_() const;
+
+		virtual WNDPROC get_default_message_entry_() const;
+
+		virtual void set_message_entry_(LONG_PTR value);
+
+		virtual void add_to_toplevel_();
 
 		virtual void set_size_(const m_size_type &value);
 
@@ -99,6 +105,12 @@ namespace winp::ui{
 		virtual m_rect_type convert_dimension_from_absolute_value_(const m_rect_type &value) const;
 
 		virtual m_rect_type convert_dimension_to_absolute_value_(const m_rect_type &value) const;
+
+		virtual utility::hit_target hit_test_(const m_point_type &pt, bool is_absolute) const;
+
+		virtual utility::hit_target hit_test_(const m_rect_type &rect, bool is_absolute) const;
+
+		virtual utility::hit_target hit_test_(const m_point_type &pt, const m_point_type &pos, const m_size_type &size) const;
 
 		template <typename target_type>
 		m_point_type get_offset_from_ancestor_of_(const m_point_type &ref) const{

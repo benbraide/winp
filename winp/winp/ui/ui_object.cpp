@@ -1,5 +1,4 @@
 #include "../app/app_object.h"
-#include "ui_tree.h"
 
 winp::ui::send_message::send_message() = default;
 
@@ -428,5 +427,5 @@ winp::ui::tree *winp::ui::object::get_parent_of_(const object &target){
 }
 
 winp::message::dispatcher *winp::ui::object::find_dispatcher_(UINT msg){
-	return thread::windows_manager::find_dispatcher_(msg);
+	return thread::surface_manager::find_dispatcher_(msg);
 }

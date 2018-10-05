@@ -35,6 +35,10 @@ void winp::thread::item::init_(){
 	queued_task.init_(nullptr, setter, nullptr);
 }
 
+winp::thread::object *winp::thread::item::get_owner_() const{
+	return owner_;
+}
+
 void winp::thread::item::destroy_(){}
 
 void winp::thread::item::do_request_(void *buf, const std::type_info &id){

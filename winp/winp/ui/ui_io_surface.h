@@ -49,10 +49,17 @@ namespace winp::ui{
 
 	protected:
 		friend class message::mouse_dispatcher;
+		friend class thread::surface_manager;
+
+		virtual io_surface *get_io_surface_parent_() const;
 
 		virtual void set_moused_state_(bool state);
 
+		virtual void mouse_moved_(const m_point_type &position);
+
 		virtual io_surface *get_top_moused_() const;
+
+		virtual io_surface *find_moused_child_(const m_point_type &position) const;
 
 		io_surface *moused_ = nullptr;
 	};

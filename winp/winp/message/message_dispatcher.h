@@ -5,13 +5,13 @@
 #include "message_object.h"
 
 namespace winp::thread{
-	class windows_manager;
+	class surface_manager;
 }
 
 namespace winp::message{
 	class dispatcher{
 	protected:
-		friend class thread::windows_manager;
+		friend class thread::surface_manager;
 
 		virtual void dispatch_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result, bool call_default) const;
 

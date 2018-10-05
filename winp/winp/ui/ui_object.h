@@ -12,7 +12,7 @@ namespace winp::message{
 }
 
 namespace winp::thread{
-	class windows_manager;
+	class surface_manager;
 }
 
 namespace winp::ui{
@@ -135,7 +135,7 @@ namespace winp::ui{
 		friend class post_message;
 
 		friend class message::dispatcher;
-		friend class thread::windows_manager;
+		friend class thread::surface_manager;
 
 		void init_();
 

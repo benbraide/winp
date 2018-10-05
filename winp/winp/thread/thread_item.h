@@ -36,6 +36,8 @@ namespace winp::thread{
 
 		void init_();
 
+		virtual object *get_owner_() const;
+
 		virtual void destroy_();
 
 		virtual void do_request_(void *buf, const std::type_info &id);

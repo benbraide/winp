@@ -17,39 +17,14 @@ winp::ui::surface_hit_test &winp::ui::surface_hit_test::operator=(const surface_
 void winp::ui::surface_hit_test::init_(){
 	auto getter = [this](const prop::base &prop, void *buf, std::size_t context){
 		if (&prop == &target){
-			auto pos = (is_absolute.m_value_ ? surface_->get_absolute_position_() : surface_->get_position_());
-			auto client_offset = surface_->get_client_position_offset_();
-			{//Update position
-				pos.x += client_offset.width;
-				pos.y += client_offset.height;
-			}
-
-			auto size = surface_->get_size_();
-			if (std::holds_alternative<m_rect_type>(value.m_value_)){
-				auto &rect = std::get<m_rect_type>(value.m_value_);
-				if (hit_test_(m_point_type{ rect.left, rect.top }, pos, size) == utility::hit_target::inside && hit_test_(m_point_type{ rect.right, rect.bottom }, pos, size) == utility::hit_target::inside)
-					*static_cast<utility::hit_target *>(buf) = utility::hit_target::inside;
-				else if (pos.x < rect.right && pos.y < rect.bottom && (pos.x + size.width) > rect.left && (pos.y + size.height) > rect.top)
-					*static_cast<utility::hit_target *>(buf) = utility::hit_target::intersect;
-				else
-					*static_cast<utility::hit_target *>(buf) = utility::hit_target::nil;
-			}
+			if (std::holds_alternative<m_rect_type>(value.m_value_))
+				*static_cast<utility::hit_target *>(buf) = surface_->hit_test_(std::get<m_rect_type>(value.m_value_), is_absolute.m_value_);
 			else
-				*static_cast<utility::hit_target *>(buf) = hit_test_(std::get<m_point_type>(value.m_value_), pos, size);
+				*static_cast<utility::hit_target *>(buf) = surface_->hit_test_(std::get<m_point_type>(value.m_value_), is_absolute.m_value_);
 		}
 	};
 
 	target.init_(nullptr, nullptr, getter);
-}
-
-winp::utility::hit_target winp::ui::surface_hit_test::hit_test_(const m_point_type &pt, const m_point_type &pos, const m_size_type &size) const{
-	if (pt.x < pos.x || pt.y < pos.y)
-		return utility::hit_target::nil;
-
-	if (pt.x < (pos.x + size.width) || pt.y < (pos.y + size.height))
-		return utility::hit_target::inside;
-
-	return utility::hit_target::nil;
 }
 
 winp::ui::surface::surface(thread::object &thread)
@@ -127,6 +102,23 @@ void winp::ui::surface::do_request_(void *buf, const std::type_info &id){
 
 winp::ui::surface *winp::ui::surface::get_surface_parent_() const{
 	return dynamic_cast<surface *>(get_parent_());
+}
+
+winp::ui::surface *winp::ui::surface::get_root_surface_() const{
+	auto parent = get_surface_parent_();
+	return ((parent == nullptr) ? const_cast<surface *>(this) : parent->get_root_surface_());
+}
+
+WNDPROC winp::ui::surface::get_default_message_entry_() const{
+	auto parent = get_surface_parent_();
+	return ((parent == nullptr) ? nullptr : parent->get_default_message_entry_());
+}
+
+void winp::ui::surface::set_message_entry_(LONG_PTR value){}
+
+void winp::ui::surface::add_to_toplevel_(){
+	if (get_parent_() == nullptr)
+		owner_->windows_manager_.toplevel_map_[get_handle_()] = this;
 }
 
 void winp::ui::surface::set_size_(const m_size_type &value){
@@ -215,4 +207,43 @@ winp::ui::surface::m_rect_type winp::ui::surface::convert_dimension_to_absolute_
 	auto v_offset = (absolute_position.y + client_offset.height);
 
 	return m_rect_type{ (value.left + h_offset), (value.top + v_offset), (value.right + h_offset), (value.bottom + v_offset) };
+}
+
+winp::utility::hit_target winp::ui::surface::hit_test_(const m_point_type &pt, bool is_absolute) const{
+	auto pos = (is_absolute ? get_absolute_position_() : get_position_());
+	auto client_offset = get_client_position_offset_();
+	{//Update position
+		pos.x += client_offset.width;
+		pos.y += client_offset.height;
+	}
+
+	return hit_test_(pt, pos, get_size_());
+}
+
+winp::utility::hit_target winp::ui::surface::hit_test_(const m_rect_type &rect, bool is_absolute) const{
+	auto pos = (is_absolute ? get_absolute_position_() : get_position_());
+	auto client_offset = get_client_position_offset_();
+	{//Update position
+		pos.x += client_offset.width;
+		pos.y += client_offset.height;
+	}
+
+	auto size = get_size_();
+	if (hit_test_(m_point_type{ rect.left, rect.top }, pos, size) == utility::hit_target::inside && hit_test_(m_point_type{ rect.right, rect.bottom }, pos, size) == utility::hit_target::inside)
+		return utility::hit_target::inside;
+
+	if (pos.x < rect.right && pos.y < rect.bottom && (pos.x + size.width) > rect.left && (pos.y + size.height) > rect.top)
+		return utility::hit_target::intersect;
+
+	return utility::hit_target::nil;
+}
+
+winp::utility::hit_target winp::ui::surface::hit_test_(const m_point_type &pt, const m_point_type &pos, const m_size_type &size) const{
+	if (pt.x < pos.x || pt.y < pos.y)
+		return utility::hit_target::nil;
+
+	if (pt.x < (pos.x + size.width) || pt.y < (pos.y + size.height))
+		return utility::hit_target::inside;
+
+	return utility::hit_target::nil;
 }

@@ -84,11 +84,11 @@ void winp::app::object::init(){
 	is_shut_down.init_(nullptr, nullptr, getter);
 
 	main_thread_.reset(new thread::object(true));
-	thread::windows_manager::init_dispatchers_();
+	thread::surface_manager::init_dispatchers_();
 
 	class_info_.cbSize = sizeof(WNDCLASSEXW);
 	class_info_.hInstance = GetModuleHandleW(nullptr);
-	class_info_.lpfnWndProc = thread::windows_manager::entry_;
+	class_info_.lpfnWndProc = thread::surface_manager::entry_;
 	class_info_.lpszClassName = WINP_CLASS_WUUID;
 	class_info_.lpszMenuName = nullptr;
 	class_info_.style = (CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS);

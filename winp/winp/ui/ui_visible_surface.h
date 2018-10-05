@@ -32,7 +32,7 @@ namespace winp::ui{
 		static const unsigned int state_transparent			= (1 << 0x0001);*/
 
 	protected:
-		friend class thread::windows_manager;
+		friend class thread::surface_manager;
 
 		void init_();
 
