@@ -13,9 +13,15 @@ namespace winp::message{
 	protected:
 		friend class thread::surface_manager;
 
+		enum class event_result_type{
+			nil,
+			result_set,
+			prevent_default,
+		};
+
 		virtual void dispatch_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result, bool call_default) const;
 
-		virtual bool fire_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const;
+		virtual event_result_type fire_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const;
 
 		static void fire_event_of_(ui::surface &target, event::manager_base &ev, event::object &e);
 
@@ -28,6 +34,6 @@ namespace winp::message{
 	protected:
 		virtual void dispatch_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result, bool call_default) const override;
 
-		virtual bool fire_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const override;
+		virtual event_result_type fire_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const override;
 	};
 }

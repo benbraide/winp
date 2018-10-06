@@ -34,9 +34,6 @@ namespace winp::ui{
 
 			event::manager<io_surface, event::mouse> drag;
 			event::manager<io_surface, event::mouse> drag_end;
-
-			event::manager<io_surface, event::mouse> drag_out;
-			event::manager<io_surface, event::mouse> drag_in;
 		};
 
 		explicit io_surface(thread::object &thread);
@@ -51,15 +48,15 @@ namespace winp::ui{
 		friend class message::mouse_dispatcher;
 		friend class thread::surface_manager;
 
+		virtual void do_request_(void *buf, const std::type_info &id) override;
+
 		virtual io_surface *get_io_surface_parent_() const;
-
-		virtual void set_moused_state_(bool state);
-
-		virtual void mouse_moved_(const m_point_type &position);
 
 		virtual io_surface *get_top_moused_() const;
 
 		virtual io_surface *find_moused_child_(const m_point_type &position) const;
+
+		virtual bool should_begin_drag_(const m_size_type &delta) const;
 
 		io_surface *moused_ = nullptr;
 	};

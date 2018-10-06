@@ -82,7 +82,7 @@ namespace winp::event{
 			: base_type(std::forward<arg_types>(args)...){
 			auto setter = [this](const prop::base &prop, const void *value, std::size_t context){
 				if (&prop == &result){
-					m_base_type::state_ |= message::state_type::result_set;
+					m_base_type::state_ |= base_type::state_type::template result_set;
 					result_ = *static_cast<const m_result_type *>(value);
 				}
 			};
@@ -90,14 +90,18 @@ namespace winp::event{
 			auto getter = [this](const prop::base &prop, void *buf, std::size_t context){
 				if (&prop == &result)
 					*static_cast<m_result_type *>(buf) = result_;
+				else if (&prop == &result_set)
+					*static_cast<bool *>(buf) = ((base_type::state_ & base_type::state_type::template propagation_stopped) != 0u);
 			};
 
 			result.init_(nullptr, setter, getter);
+			result_set.init_(nullptr, nullptr, getter);
 		}
 
 		virtual ~typed() = default;
 
 		prop::scalar<m_result_type, typed, prop::proxy_value> result;
+		prop::scalar<bool, typed, prop::proxy_value> result_set;
 
 	protected:
 		friend class ui::object;

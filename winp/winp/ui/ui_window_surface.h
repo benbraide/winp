@@ -77,6 +77,10 @@ namespace winp::ui{
 
 		virtual bool get_transaprent_state_() const override;
 
+		virtual utility::hit_target hit_test_(const m_point_type &pt, bool is_absolute) const override;
+
+		virtual utility::hit_target hit_test_(const m_rect_type &rect, bool is_absolute) const override;
+
 		virtual window_surface *get_window_surface_parent_() const;
 
 		virtual void create_();

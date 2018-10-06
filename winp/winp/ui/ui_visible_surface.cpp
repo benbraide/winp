@@ -49,6 +49,14 @@ void winp::ui::visible_surface::init_(){
 
 	show_event.thread_ = owner_;
 	hide_event.thread_ = owner_;
+
+	auto sys_color = GetSysColor(COLOR_WINDOW);
+	{//Split color
+		background_color_.red = (GetRValue(sys_color) / 255.0f);
+		background_color_.green = (GetGValue(sys_color) / 255.0f);
+		background_color_.blue = (GetBValue(sys_color) / 255.0f);
+		background_color_.alpha = 0.0f;
+	}
 }
 
 void winp::ui::visible_surface::do_request_(void *buf, const std::type_info &id){

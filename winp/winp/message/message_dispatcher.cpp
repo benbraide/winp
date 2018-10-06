@@ -19,8 +19,8 @@ void winp::message::dispatcher::dispatch_(ui::surface &target, UINT msg, WPARAM 
 		result = info.result;
 }
 
-bool winp::message::dispatcher::fire_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const{
-	return false;
+winp::message::dispatcher::event_result_type winp::message::dispatcher::fire_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const{
+	return event_result_type::nil;
 }
 
 void winp::message::dispatcher::fire_event_of_(ui::surface &target, event::manager_base &ev, event::object &e){
@@ -48,10 +48,10 @@ void winp::message::create_destroy_dispatcher::dispatch_(ui::surface &target, UI
 		result = 0;
 }
 
-bool winp::message::create_destroy_dispatcher::fire_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const{
+winp::message::dispatcher::event_result_type winp::message::create_destroy_dispatcher::fire_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const{
 	auto window_target = dynamic_cast<ui::window_surface *>(&target);
 	if (window_target == nullptr)
-		return true;
+		return event_result_type::nil;
 
 	event::object e(&target);
 	if (msg == WM_CREATE)
@@ -60,5 +60,5 @@ bool winp::message::create_destroy_dispatcher::fire_event_(ui::surface &target, 
 		fire_event_of_(*window_target, window_target->destroy_event, e);
 
 	result = 0;
-	return false;
+	return event_result_type::nil;
 }

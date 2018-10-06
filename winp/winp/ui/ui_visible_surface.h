@@ -27,6 +27,9 @@ namespace winp::ui{
 		event::manager<visible_surface, event::object> show_event;
 		event::manager<visible_surface, event::object> hide_event;
 
+		event::manager<visible_surface, event::object> background_erase_event;
+		event::manager<visible_surface, event::object> paint_event;
+
 		/*static const unsigned int state_nil					= (0 << 0x0000);
 		static const unsigned int state_visible				= (1 << 0x0000);
 		static const unsigned int state_transparent			= (1 << 0x0001);*/

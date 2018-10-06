@@ -265,6 +265,57 @@ bool winp::ui::window_surface::get_transaprent_state_() const{
 	return has_styles_(WS_EX_TRANSPARENT, true);
 }
 
+winp::utility::hit_target winp::ui::window_surface::hit_test_(const m_point_type &pt, bool is_absolute) const{
+	auto handle = get_handle_();
+	if (handle == nullptr)
+		return io_surface::hit_test_(pt, is_absolute);
+
+	auto absolute_pt = (is_absolute ? pt : convert_position_to_absolute_value_(pt));
+	switch (SendMessageW(handle, WM_NCHITTEST, 0, MAKELONG(absolute_pt.x, absolute_pt.y))){
+	case HTNOWHERE:
+	case HTERROR://Outside window
+		return utility::hit_target::nil;
+	default:
+		break;
+	}
+
+	return utility::hit_target::inside;
+}
+
+winp::utility::hit_target winp::ui::window_surface::hit_test_(const m_rect_type &rect, bool is_absolute) const{
+	auto handle = get_handle_();
+	if (handle == nullptr)
+		return io_surface::hit_test_(rect, is_absolute);
+
+	bool first_pt_inside, second_pt_inside;
+	auto absolute_rect = (is_absolute ? rect : convert_dimension_to_absolute_value_(rect));
+
+	switch (SendMessageW(handle, WM_NCHITTEST, 0, MAKELONG(absolute_rect.left, absolute_rect.top))){
+	case HTNOWHERE:
+	case HTERROR://Outside window
+		first_pt_inside = false;
+		break;
+	default:
+		first_pt_inside = true;
+		break;
+	}
+
+	switch (SendMessageW(handle, WM_NCHITTEST, 0, MAKELONG(absolute_rect.right, absolute_rect.bottom))){
+	case HTNOWHERE:
+	case HTERROR://Outside window
+		second_pt_inside = false;
+		break;
+	default:
+		second_pt_inside = true;
+		break;
+	}
+
+	if (first_pt_inside && second_pt_inside)
+		return utility::hit_target::inside;
+
+	return ((first_pt_inside || second_pt_inside) ? utility::hit_target::intersect : utility::hit_target::nil);
+}
+
 winp::ui::window_surface *winp::ui::window_surface::get_window_surface_parent_() const{
 	return dynamic_cast<window_surface *>(get_parent_());
 }

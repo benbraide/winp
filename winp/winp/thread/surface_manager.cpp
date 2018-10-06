@@ -172,23 +172,21 @@ LRESULT winp::thread::surface_manager::mouse_move_(ui::io_surface &target, DWORD
 
 	auto top_moused = target.get_top_moused_();
 	if (previous_moused == &target){//Check for drag
+		auto last_mouse_position = mouse_info_.last_position;
 		if (!mouse_info_.is_dragging && mouse_info_.is_captured){
 			m_size_type delta{//Absolute values
 				((computed_mouse_position.x < mouse_info_.pressed_position.x) ? (mouse_info_.pressed_position.x - computed_mouse_position.x) : (computed_mouse_position.x - mouse_info_.pressed_position.x)),
 				((computed_mouse_position.y < mouse_info_.pressed_position.y) ? (mouse_info_.pressed_position.y - computed_mouse_position.y) : (computed_mouse_position.y - mouse_info_.pressed_position.y))
 			};
 
-			if (delta.width >= ::GetSystemMetrics(SM_CXDRAG) || delta.height >= ::GetSystemMetrics(SM_CYDRAG)){//Begin drag
-				auto last_mouse_position = mouse_info_.last_position;
+			if (top_moused->should_begin_drag_(delta)){//Begin drag
 				mouse_info_.last_position = mouse_info_.pressed_position;
-
 				if (target.handles_message_(WINP_WM_MOUSEDRAGBEGIN))
 					default_dispatcher_->dispatch_(*top_moused, WINP_WM_MOUSEDRAGBEGIN, wparam, lparam, result, !prevent_default);
 				else
 					find_dispatcher_(WINP_WM_MOUSEDRAGBEGIN)->dispatch_(*top_moused, WINP_WM_MOUSEDRAGBEGIN, wparam, lparam, result, !prevent_default);
 
 				mouse_info_.is_dragging = true;
-				mouse_info_.last_position = last_mouse_position;
 			}
 		}
 
@@ -197,6 +195,8 @@ LRESULT winp::thread::surface_manager::mouse_move_(ui::io_surface &target, DWORD
 				default_dispatcher_->dispatch_(*top_moused, WINP_WM_MOUSEDRAG, wparam, lparam, result, !prevent_default);
 			else
 				find_dispatcher_(WINP_WM_MOUSEDRAG)->dispatch_(*top_moused, WINP_WM_MOUSEDRAG, wparam, lparam, result, !prevent_default);
+
+			mouse_info_.last_position = last_mouse_position;
 		}
 	}
 
