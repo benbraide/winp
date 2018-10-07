@@ -69,6 +69,8 @@ namespace winp::ui{
 
 		virtual m_rect_type convert_dimension_to_absolute_value_(const m_rect_type &value) const override;
 
+		virtual void redraw_() override;
+
 		virtual void set_visible_state_(bool state) override;
 
 		virtual bool get_visible_state_() const override;

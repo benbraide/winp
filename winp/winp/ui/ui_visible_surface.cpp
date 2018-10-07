@@ -1,12 +1,12 @@
 #include "ui_visible_surface.h"
 
 winp::ui::visible_surface::visible_surface(thread::object &thread)
-	: surface(thread){
+	: surface(thread), background_color_(0){
 	init_();
 }
 
 winp::ui::visible_surface::visible_surface(tree &parent)
-	: surface(parent){
+	: surface(parent), background_color_(0){
 	init_();
 }
 
@@ -40,7 +40,7 @@ void winp::ui::visible_surface::init_(){
 		else if (&prop == &transparent)
 			*static_cast<bool *>(buf) = owner_->queue->add([this]{ return get_transaprent_state_(); }, thread::queue::send_priority).get();
 		else if (&prop == &background_color)
-			*static_cast<m_rgba_type *>(buf) = owner_->queue->add([this]{ return get_background_color_(); }, thread::queue::send_priority).get();
+			*static_cast<m_rgba_type *>(buf) = owner_->queue->add([this]{ return get_converted_background_color_(); }, thread::queue::send_priority).get();
 	};
 
 	visible.init_(nullptr, setter, getter);
@@ -51,12 +51,11 @@ void winp::ui::visible_surface::init_(){
 	hide_event.thread_ = owner_;
 
 	auto sys_color = GetSysColor(COLOR_WINDOW);
-	{//Split color
-		background_color_.red = (GetRValue(sys_color) / 255.0f);
-		background_color_.green = (GetGValue(sys_color) / 255.0f);
-		background_color_.blue = (GetBValue(sys_color) / 255.0f);
-		background_color_.alpha = 0.0f;
-	}
+	background_color_ = D2D1::ColorF(
+		(GetRValue(sys_color) / 255.0f),
+		(GetGValue(sys_color) / 255.0f),
+		(GetBValue(sys_color) / 255.0f)
+	);
 }
 
 void winp::ui::visible_surface::do_request_(void *buf, const std::type_info &id){
@@ -116,6 +115,8 @@ bool winp::ui::visible_surface::has_state_(unsigned int value) const{
 	return ((state_ & value) == value);
 }*/
 
+void winp::ui::visible_surface::redraw_(){}
+
 void winp::ui::visible_surface::set_visible_state_(bool state){
 	//toggle_state_(state_visible, state);
 }
@@ -134,10 +135,20 @@ bool winp::ui::visible_surface::get_transaprent_state_() const{
 	return false;
 }
 
-void winp::ui::visible_surface::set_background_color_(const m_rgba_type &value){
+void winp::ui::visible_surface::set_background_color_(const D2D1::ColorF &value){
 	background_color_ = value;
+	redraw_();
 }
 
-winp::ui::visible_surface::m_rgba_type winp::ui::visible_surface::get_background_color_() const{
+void winp::ui::visible_surface::set_background_color_(const m_rgba_type &value){
+	set_background_color_(D2D1::ColorF(value.red, value.green, value.blue, value.alpha));
+}
+
+D2D1::ColorF winp::ui::visible_surface::get_background_color_() const{
 	return background_color_;
+}
+
+winp::ui::visible_surface::m_rgba_type winp::ui::visible_surface::get_converted_background_color_() const{
+	auto bg = get_background_color_();
+	return m_rgba_type{ bg.r, bg.g, bg.b, bg.a };
 }

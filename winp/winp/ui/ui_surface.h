@@ -64,6 +64,8 @@ namespace winp::ui{
 	protected:
 		friend class surface_hit_test;
 		friend class window_surface;
+
+		friend class event::drawing;
 		friend class thread::surface_manager;
 
 		void init_();

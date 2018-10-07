@@ -14,6 +14,10 @@ namespace winp::app{
 	class object;
 }
 
+namespace winp::event{
+	class drawing;
+}
+
 namespace winp::message{
 	class object;
 }
@@ -56,7 +60,7 @@ namespace winp::thread{
 		using m_app_type = app::object;
 		using error_value_type = prop::default_error_mapper::value_type;
 
-		object();
+		explicit object(const std::function<void(object &)> &entry = nullptr);
 
 		virtual ~object();
 
@@ -64,12 +68,17 @@ namespace winp::thread{
 		prop::scalar<bool, object, prop::proxy_value> inside;
 
 		prop::variant<object, prop::proxy_value, std::thread::id, DWORD> id;
-		prop::scalar<queue *, object> queue;
+		prop::scalar<queue *, object, prop::proxy_value> queue;
+
+		prop::scalar<ID2D1Factory *, object, prop::proxy_value> draw_factory;
+		prop::scalar<IDWriteFactory *, object, prop::proxy_value> write_factory;
 
 		prop::variant<object, prop::proxy_value> request;
 
 	protected:
 		friend class app::object;
+
+		friend class event::drawing;
 		friend class message::object;
 
 		friend class item;
@@ -93,6 +102,14 @@ namespace winp::thread{
 
 		virtual m_callback_type get_next_task_();
 
+		virtual ID2D1Factory *get_draw_factory_();
+
+		virtual IDWriteFactory *get_write_factory_();
+
+		virtual ID2D1DCRenderTarget *get_device_render_();
+
+		virtual ID2D1SolidColorBrush *get_color_brush_();
+
 		virtual void do_request_(void *buf, const std::type_info &id);
 
 		virtual void throw_(error_value_type value) const;
@@ -101,8 +118,16 @@ namespace winp::thread{
 		std::thread::id id_;
 		DWORD local_id_ = 0;
 
-		bool is_main_;
-		bool is_exiting_;
+		bool is_main_ = false;
+		bool is_exiting_ = false;
+
+		HWND message_hwnd_ = nullptr;
 		surface_manager windows_manager_;
+
+		ID2D1Factory *draw_factory_ = nullptr;
+		IDWriteFactory *write_factory_ = nullptr;
+
+		ID2D1DCRenderTarget *device_render_ = nullptr;
+		ID2D1SolidColorBrush *color_brush_ = nullptr;
 	};
 }

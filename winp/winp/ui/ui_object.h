@@ -7,6 +7,10 @@
 
 #include "../thread/thread_item.h"
 
+namespace winp::event{
+	class drawing;
+}
+
 namespace winp::message{
 	class dispatcher;
 }
@@ -134,6 +138,7 @@ namespace winp::ui{
 		friend class send_message;
 		friend class post_message;
 
+		friend class event::drawing;
 		friend class message::dispatcher;
 		friend class thread::surface_manager;
 

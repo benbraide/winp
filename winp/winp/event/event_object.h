@@ -3,7 +3,7 @@
 #include "../utility/windows.h"
 #include "../property/scalar_property.h"
 #include "../property/variant_property.h"
-#include "../property/pair_property.h"
+#include "../property/quad_property.h"
 
 namespace winp::thread{
 	class item;
@@ -42,7 +42,7 @@ namespace winp::event{
 		friend class thread::object;
 		template <class, class> friend class manager;
 
-		bool bubble_();
+		virtual bool bubble_();
 
 		ui::object *owner_;
 		ui::object *target_;
@@ -168,6 +168,46 @@ namespace winp::event{
 		}
 
 		id_type id_;
+	};
+
+	class drawing : public message{
+	public:
+		using m_rect_type = utility::rect<int>;
+
+		drawing(ui::object *target, const info_type &info);
+
+		virtual ~drawing();
+
+		prop::scalar<ID2D1RenderTarget *, drawing, prop::proxy_value> render;
+		prop::scalar<ID2D1SolidColorBrush *, drawing, prop::proxy_value> color_brush;
+
+		prop::scalar<HDC, drawing, prop::proxy_value> device;
+		prop::scalar<m_rect_type, drawing, prop::proxy_value> region;
+
+		prop::scalar<bool, drawing, prop::proxy_value> erase_background;
+
+	protected:
+		void init_();
+
+		virtual void set_target_(ui::object *target);
+
+		virtual void begin_();
+
+		virtual ID2D1RenderTarget *get_render_();
+
+		virtual ID2D1SolidColorBrush *get_color_brush_();
+
+		virtual HDC get_device_();
+
+		virtual m_rect_type get_region_();
+
+		virtual bool erase_background_();
+
+		ID2D1RenderTarget *render_ = nullptr;
+		ID2D1SolidColorBrush *color_brush_ = nullptr;
+
+		PAINTSTRUCT struct_{};
+		std::function<void()> cleaner_;
 	};
 
 	class mouse : public message{

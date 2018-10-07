@@ -5,7 +5,7 @@
 namespace winp::ui{
 	class visible_surface : public surface{
 	public:
-		using m_rgba_type = utility::rgba<float>;
+		using m_rgba_type = utility::rgba<float>;//9GiFQvPq9KfmxgG
 
 		enum class visibility{
 			visible,
@@ -53,6 +53,8 @@ namespace winp::ui{
 
 		virtual bool has_state_(unsigned int value) const;*/
 
+		virtual void redraw_();
+
 		virtual void set_visible_state_(bool state);
 
 		virtual bool get_visible_state_() const;
@@ -61,11 +63,15 @@ namespace winp::ui{
 
 		virtual bool get_transaprent_state_() const;
 
+		virtual void set_background_color_(const D2D1::ColorF &value);
+
 		virtual void set_background_color_(const m_rgba_type &value);
 
-		virtual m_rgba_type get_background_color_() const;
+		virtual D2D1::ColorF get_background_color_() const;
+
+		virtual m_rgba_type get_converted_background_color_() const;
 
 		//unsigned int state_ = state_nil;
-		m_rgba_type background_color_;
+		D2D1::ColorF background_color_;
 	};
 }

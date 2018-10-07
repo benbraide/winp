@@ -235,6 +235,12 @@ winp::ui::surface::m_rect_type winp::ui::window_surface::convert_dimension_to_ab
 	return m_rect_type{ r.left, r.top, r.right, r.bottom };
 }
 
+void winp::ui::window_surface::redraw_(){
+	auto handle = get_handle_();
+	if (handle != nullptr)
+		InvalidateRect(handle, nullptr, TRUE);
+}
+
 void winp::ui::window_surface::set_visible_state_(bool state){
 	auto handle = get_handle_();
 	if (handle == nullptr){

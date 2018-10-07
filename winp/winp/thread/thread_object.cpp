@@ -26,13 +26,16 @@ void winp::thread::post_message::init_(){
 	result.init_(nullptr, nullptr, getter);
 }
 
-winp::thread::object::object()
-	: queue_(*this), is_main_(false), is_exiting_(false){
+winp::thread::object::object(const std::function<void(object &)> &entry)
+	: queue_(*this){
 	init_();
-	std::thread([this]{
+	std::thread([=]{
 		id_ = std::this_thread::get_id();
 		local_id_ = GetCurrentThreadId();
+
 		app::object::current_thread_ = this;
+		if (entry != nullptr)
+			entry(*this);
 
 		run_();
 
@@ -42,7 +45,7 @@ winp::thread::object::object()
 }
 
 winp::thread::object::object(bool)
-	: queue_(*this), is_main_(true), is_exiting_(false){
+	: queue_(*this){
 	init_();
 	id_ = std::this_thread::get_id();
 	local_id_ = GetCurrentThreadId();
@@ -67,6 +70,12 @@ void winp::thread::object::init_(){
 				break;
 			}
 		}
+		else if (&prop == &queue)
+			*static_cast<thread::queue **>(buf) = &queue_;
+		else if (&prop == &draw_factory)
+			*static_cast<ID2D1Factory **>(buf) = get_draw_factory_();
+		else if (&prop == &write_factory)
+			*static_cast<IDWriteFactory **>(buf) = get_write_factory_();
 		else if (&prop == &is_main)
 			*static_cast<bool *>(buf) = is_main_;
 		else if (&prop == &inside)
@@ -75,12 +84,15 @@ void winp::thread::object::init_(){
 			do_request_(buf, *reinterpret_cast<std::type_info *>(context));
 	};
 
-	queue.m_value_ = &queue_;
-	is_main.init_(nullptr, nullptr, getter);
-
+	queue.init_(nullptr, nullptr, getter);
 	id.init_(nullptr, nullptr, getter);
-	inside.init_(nullptr, nullptr, getter);
 	request.init_(nullptr, nullptr, getter);
+
+	is_main.init_(nullptr, nullptr, getter);
+	inside.init_(nullptr, nullptr, getter);
+
+	draw_factory.init_(nullptr, nullptr, getter);
+	write_factory.init_(nullptr, nullptr, getter);
 
 	app::object::threads += this;
 }
@@ -93,7 +105,9 @@ int winp::thread::object::run_(){
 	auto value = 0;
 	auto task_was_run_ = true;
 
+	message_hwnd_ = CreateWindowExW(0, app::object::class_info_.lpszClassName, L"", 0, 0, 0, 0, 0, HWND_MESSAGE, nullptr, GetModuleHandleW(nullptr), nullptr);
 	windows_manager_.prepare_for_run_();
+
 	get_all_sent_tasks_(sent_task_list);
 	for (auto &task : sent_task_list)
 		task();//Execute initially sent tasks
@@ -123,7 +137,7 @@ int winp::thread::object::run_(){
 		else//Execute sent task
 			sent_task();
 	}
-	 
+
 	is_exiting_ = true;
 	while (!app::object::is_shut_down_ && run_task_()){}//Execute remaining tasks
 
@@ -150,6 +164,55 @@ winp::thread::object::m_callback_type winp::thread::object::get_next_sent_task_(
 
 winp::thread::object::m_callback_type winp::thread::object::get_next_task_(){
 	return queue_.pop_();
+}
+
+ID2D1Factory *winp::thread::object::get_draw_factory_(){
+	if (draw_factory_ == nullptr)//Create factory
+		D2D1CreateFactory(D2D1_FACTORY_TYPE::D2D1_FACTORY_TYPE_SINGLE_THREADED, &draw_factory_);
+	return draw_factory_;
+}
+
+IDWriteFactory *winp::thread::object::get_write_factory_(){
+	if (write_factory_ == nullptr)//Create factory
+		DWriteCreateFactory(DWRITE_FACTORY_TYPE::DWRITE_FACTORY_TYPE_ISOLATED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown **>(&write_factory_));
+	return write_factory_;
+}
+
+ID2D1DCRenderTarget *winp::thread::object::get_device_render_(){
+	if (device_render_ == nullptr){
+		auto factory = get_draw_factory_();
+		if (factory != nullptr){
+			auto props = D2D1::RenderTargetProperties(
+				D2D1_RENDER_TARGET_TYPE_DEFAULT,
+				D2D1::PixelFormat(
+					DXGI_FORMAT_B8G8R8A8_UNORM,
+					D2D1_ALPHA_MODE_PREMULTIPLIED),
+				0,
+				0,
+				D2D1_RENDER_TARGET_USAGE_NONE,
+				D2D1_FEATURE_LEVEL_DEFAULT
+			);
+
+			factory->CreateDCRenderTarget(&props, &device_render_);
+		}
+	}
+
+	return device_render_;
+}
+
+ID2D1SolidColorBrush *winp::thread::object::get_color_brush_(){
+	if (color_brush_ == nullptr){
+		auto render = get_device_render_();
+		if (render != nullptr){
+			render->CreateSolidColorBrush(
+				D2D1::ColorF(D2D1::ColorF::Black, 1.0f),
+				D2D1::BrushProperties(),
+				&color_brush_
+			);
+		}
+	}
+
+	return color_brush_;
 }
 
 void winp::thread::object::do_request_(void *buf, const std::type_info &id){
