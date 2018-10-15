@@ -26,6 +26,8 @@ namespace winp::ui{
 
 	protected:
 		friend class object;
+
+		friend class message::dispatcher;
 		friend class thread::surface_manager;
 
 		void init_();

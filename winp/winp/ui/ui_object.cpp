@@ -418,6 +418,10 @@ void winp::ui::object::fire_sibling_change_event_(object &sibling, std::size_t p
 	change_event.fire_(e);
 }
 
+std::size_t winp::ui::object::event_handlers_count_(event::manager_base &ev) const{
+	return ev.count_();
+}
+
 void winp::ui::object::fire_event_(event::manager_base &ev, event::object &e) const{
 	ev.fire_generic_(e);
 }

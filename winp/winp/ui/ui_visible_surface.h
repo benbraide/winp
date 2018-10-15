@@ -22,13 +22,12 @@ namespace winp::ui{
 		prop::scalar<bool, visible_surface, prop::proxy_value> visible;
 		prop::scalar<bool, visible_surface, prop::proxy_value> transparent;
 
-		prop::rgba<visible_surface, float> background_color;
+		prop::scalar<m_rgba_type, visible_surface, prop::proxy_value> background_color;
 
 		event::manager<visible_surface, event::object> show_event;
 		event::manager<visible_surface, event::object> hide_event;
 
-		event::manager<visible_surface, event::object> background_erase_event;
-		event::manager<visible_surface, event::object> paint_event;
+		event::manager<visible_surface, event::draw> draw_event;
 
 		/*static const unsigned int state_nil					= (0 << 0x0000);
 		static const unsigned int state_visible				= (1 << 0x0000);

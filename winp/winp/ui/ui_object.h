@@ -8,7 +8,7 @@
 #include "../thread/thread_item.h"
 
 namespace winp::event{
-	class drawing;
+	class draw;
 }
 
 namespace winp::message{
@@ -138,7 +138,7 @@ namespace winp::ui{
 		friend class send_message;
 		friend class post_message;
 
-		friend class event::drawing;
+		friend class event::draw;
 		friend class message::dispatcher;
 		friend class thread::surface_manager;
 
@@ -200,6 +200,8 @@ namespace winp::ui{
 		virtual bool fire_index_change_event_(bool is_changing, std::size_t previous_value, std::size_t &value) const;
 
 		virtual void fire_sibling_change_event_(object &sibling, std::size_t previous_index, std::size_t current_index) const;
+
+		virtual std::size_t event_handlers_count_(event::manager_base &ev) const;
 
 		virtual void fire_event_(event::manager_base &ev, event::object &e) const;
 

@@ -15,7 +15,7 @@ namespace winp::app{
 }
 
 namespace winp::event{
-	class drawing;
+	class draw;
 }
 
 namespace winp::message{
@@ -78,7 +78,7 @@ namespace winp::thread{
 	protected:
 		friend class app::object;
 
-		friend class event::drawing;
+		friend class event::draw;
 		friend class message::object;
 
 		friend class item;
@@ -106,7 +106,7 @@ namespace winp::thread{
 
 		virtual IDWriteFactory *get_write_factory_();
 
-		virtual ID2D1DCRenderTarget *get_device_render_();
+		virtual ID2D1DCRenderTarget *get_device_drawer_();
 
 		virtual ID2D1SolidColorBrush *get_color_brush_();
 
@@ -127,7 +127,7 @@ namespace winp::thread{
 		ID2D1Factory *draw_factory_ = nullptr;
 		IDWriteFactory *write_factory_ = nullptr;
 
-		ID2D1DCRenderTarget *device_render_ = nullptr;
+		ID2D1DCRenderTarget *device_drawer_ = nullptr;
 		ID2D1SolidColorBrush *color_brush_ = nullptr;
 	};
 }

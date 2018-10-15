@@ -13,6 +13,8 @@ namespace winp::event{
 	protected:
 		friend class ui::object;
 
+		virtual std::size_t count_() const = 0;
+
 		virtual void fire_generic_(object &e) const = 0;
 	};
 
@@ -67,6 +69,10 @@ namespace winp::event{
 
 	protected:
 		friend owner_type;
+
+		virtual std::size_t count_() const override{
+			return handlers_.size();
+		}
 
 		virtual void fire_generic_(object &e) const override{
 			fire_(*dynamic_cast<m_object_type *>(&e));

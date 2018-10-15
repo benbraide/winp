@@ -178,8 +178,8 @@ IDWriteFactory *winp::thread::object::get_write_factory_(){
 	return write_factory_;
 }
 
-ID2D1DCRenderTarget *winp::thread::object::get_device_render_(){
-	if (device_render_ == nullptr){
+ID2D1DCRenderTarget *winp::thread::object::get_device_drawer_(){
+	if (device_drawer_ == nullptr){
 		auto factory = get_draw_factory_();
 		if (factory != nullptr){
 			auto props = D2D1::RenderTargetProperties(
@@ -193,16 +193,16 @@ ID2D1DCRenderTarget *winp::thread::object::get_device_render_(){
 				D2D1_FEATURE_LEVEL_DEFAULT
 			);
 
-			factory->CreateDCRenderTarget(&props, &device_render_);
+			factory->CreateDCRenderTarget(&props, &device_drawer_);
 		}
 	}
 
-	return device_render_;
+	return device_drawer_;
 }
 
 ID2D1SolidColorBrush *winp::thread::object::get_color_brush_(){
 	if (color_brush_ == nullptr){
-		auto render = get_device_render_();
+		auto render = get_device_drawer_();
 		if (render != nullptr){
 			render->CreateSolidColorBrush(
 				D2D1::ColorF(D2D1::ColorF::Black, 1.0f),
