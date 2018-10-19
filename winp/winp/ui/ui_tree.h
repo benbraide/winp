@@ -14,25 +14,27 @@ namespace winp::ui{
 
 		explicit tree(thread::object &thread);
 
-		explicit tree(tree &parent);
-
 		virtual ~tree();
 
-		prop::list<std::list<object *>, tree, prop::proxy_value> children;
+		virtual void add_child(object &child, const std::function<void(object &, bool, std::size_t)> &callback = nullptr);
 
-		static const unsigned __int64 child_change_id			= (1ui64 << (last_object_change_id_bit + 0x00000001ui64));
+		virtual void add_child(object &child, std::size_t index, const std::function<void(object &, bool, std::size_t)> &callback = nullptr);
 
-		static const unsigned __int64 last_tree_change_id_bit	= (last_object_change_id_bit + 0x00000003ui64);
+		virtual void remove_child(object &child, const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual void remove_child_at(std::size_t index, const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual std::size_t find_child(const object &child, const std::function<void(std::size_t)> &callback = nullptr) const;
+
+		virtual object *get_child_at(std::size_t index, const std::function<void(object *)> &callback = nullptr) const;
+
+		virtual void traverse_children(const std::function<void(object *)> &callback, bool post = true) const;
 
 	protected:
 		friend class object;
 
 		friend class message::dispatcher;
 		friend class thread::surface_manager;
-
-		void init_();
-
-		virtual void do_request_(void *buf, const std::type_info &id) override;
 
 		virtual bool validate_child_insert_(const object &child, std::size_t index) const;
 
@@ -63,12 +65,6 @@ namespace winp::ui{
 		virtual std::size_t find_child_(const object &child) const;
 
 		virtual object *get_child_at_(std::size_t index) const;
-
-		virtual void fire_ancestor_change_event_(tree *value, std::size_t index) const override;
-
-		virtual bool fire_child_change_event_(bool is_changing, object &child, std::size_t index) const;
-
-		virtual void fire_child_sibling_change_event_(object &child, std::size_t previous_index, std::size_t current_index) const;
 
 		std::list<object *> children_;
 	};

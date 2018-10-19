@@ -4,18 +4,6 @@
 
 namespace winp::message{
 	class mouse_dispatcher;
-
-	class mouse_leave_dispatcher;
-	class mouse_enter_dispatcher;
-
-	class mouse_move_dispatcher;
-	class mouse_wheel_dispatcher;
-
-	class mouse_down_dispatcher;
-	class mouse_up_dispatcher;
-	class mouse_double_click_dispatcher;
-
-	class mouse_enter_dispatcher;
 }
 
 namespace winp::ui{
@@ -38,8 +26,6 @@ namespace winp::ui{
 
 		explicit io_surface(thread::object &thread);
 
-		explicit io_surface(tree &parent);
-
 		virtual ~io_surface();
 
 		mouse_event_info mouse_event;
@@ -47,8 +33,6 @@ namespace winp::ui{
 	protected:
 		friend class message::mouse_dispatcher;
 		friend class thread::surface_manager;
-
-		virtual void do_request_(void *buf, const std::type_info &id) override;
 
 		virtual io_surface *get_io_surface_parent_() const;
 

@@ -1,62 +1,55 @@
 #pragma once
 
-#include "../property/map_property.h"
-#include "../property/pair_property.h"
-#include "../property/quad_property.h"
-
 #include "ui_tree.h"
 
 namespace winp::ui{
-	class surface;
 	class window_surface;
-
-	class surface_hit_test{
-	public:
-		using m_size_type = utility::size<int>;
-		using m_point_type = utility::point<int>;
-		using m_rect_type = utility::rect<int>;
-
-		surface_hit_test();
-
-		surface_hit_test(const surface_hit_test &copy);
-
-		surface_hit_test &operator =(const surface_hit_test &copy);
-
-		prop::variant<surface_hit_test, prop::immediate_value, m_point_type, m_rect_type> value;
-		prop::scalar<bool, surface_hit_test, prop::immediate_value> is_absolute;
-		prop::scalar<utility::hit_target, surface_hit_test, prop::proxy_value> target;
-
-	private:
-		friend class surface;
-
-		void init_();
-
-		surface *surface_ = nullptr;
-	};
 
 	class surface : public tree{
 	public:
-		using m_size_type = utility::size<int>;
-		using m_point_type = utility::point<int>;
-		using m_rect_type = utility::rect<int>;
+		using m_size_type = SIZE;
+		using m_point_type = POINT;
+		using m_rect_type = RECT;
 
 		explicit surface(thread::object &thread);
 
-		explicit surface(tree &parent);
-
 		virtual ~surface();
 
-		prop::size<surface, int> size;
-		prop::size<surface, int> client_position_offset;
+		virtual void set_size(const m_size_type &value, const std::function<void(object &, bool)> &callback = nullptr);
 
-		prop::point<surface, int> position;
-		prop::point<surface, int> absolute_position;
+		virtual void offset_size(const m_size_type &value, const std::function<void(object &, bool)> &callback = nullptr);
 
-		prop::rect<surface, int> dimension;
-		prop::rect<surface, int> absolute_dimension;
+		virtual m_size_type get_size(const std::function<void(const m_size_type &)> &callback = nullptr) const;
 
-		prop::map<m_point_type, m_point_type, surface> position_from_absolute;
-		prop::map<m_point_type, m_point_type, surface> position_to_absolute;
+		virtual m_size_type get_client_position_offset(const std::function<void(const m_size_type &)> &callback = nullptr) const;
+
+		virtual void set_position(const m_point_type &value, const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual void offset_position(const m_size_type &value, const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual m_point_type get_position(const std::function<void(const m_point_type &)> &callback = nullptr) const;
+
+		virtual void set_absolute_position(const m_point_type &value, const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual m_point_type get_absolute_position(const std::function<void(const m_point_type &)> &callback = nullptr) const;
+
+		virtual m_rect_type get_dimension(const std::function<void(const m_rect_type &)> &callback = nullptr) const;
+
+		virtual m_rect_type get_absolute_dimension(const std::function<void(const m_rect_type &)> &callback = nullptr) const;
+
+		virtual m_point_type convert_position_from_absolute_value(const m_point_type &value, const std::function<void(const m_point_type &)> &callback = nullptr) const;
+
+		virtual m_point_type convert_position_to_absolute_value(const m_point_type &value, const std::function<void(const m_point_type &)> &callback = nullptr) const;
+
+		virtual m_rect_type convert_dimension_from_absolute_value(const m_rect_type &value, const std::function<void(const m_rect_type &)> &callback = nullptr) const;
+
+		virtual m_rect_type convert_dimension_to_absolute_value(const m_rect_type &value, const std::function<void(const m_rect_type &)> &callback = nullptr) const;
+
+		virtual utility::hit_target hit_test(const m_point_type &pt, bool is_absolute, const std::function<void(utility::hit_target)> &callback = nullptr) const;
+
+		virtual utility::hit_target hit_test(const m_rect_type &rect, bool is_absolute, const std::function<void(utility::hit_target)> &callback = nullptr) const;
+
+		virtual utility::hit_target hit_test(const m_point_type &pt, const m_point_type &pos, const m_size_type &size, const std::function<void(utility::hit_target)> &callback = nullptr) const;
 
 		event::manager<surface, event::object> size_event;
 		event::manager<surface, event::object> move_event;
@@ -68,10 +61,6 @@ namespace winp::ui{
 		friend class event::draw;
 		friend class thread::surface_manager;
 
-		void init_();
-
-		virtual void do_request_(void *buf, const std::type_info &id) override;
-
 		virtual surface *get_surface_parent_() const;
 
 		virtual surface *get_root_surface_() const;
@@ -82,17 +71,21 @@ namespace winp::ui{
 
 		virtual void add_to_toplevel_();
 
-		virtual void set_size_(const m_size_type &value);
+		virtual bool set_size_(const m_size_type &value);
+
+		virtual bool offset_size_(const m_size_type &value);
 
 		virtual m_size_type get_size_() const;
 
 		virtual m_size_type get_client_position_offset_() const;
 
-		virtual void set_position_(const m_point_type &value);
+		virtual bool set_position_(const m_point_type &value);
+
+		virtual bool offset_position_(const m_size_type &value);
 
 		virtual m_point_type get_position_() const;
 
-		virtual void set_absolute_position_(const m_point_type &value);
+		virtual bool set_absolute_position_(const m_point_type &value);
 
 		virtual m_point_type get_absolute_position_() const;
 

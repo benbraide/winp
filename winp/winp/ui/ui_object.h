@@ -1,13 +1,11 @@
 #pragma once
 
 #include "../event/event_manager.h"
-
 #include "../utility/dynamic_list.h"
-#include "../property/list_property.h"
-
 #include "../thread/thread_item.h"
 
 namespace winp::event{
+	class object;
 	class draw;
 }
 
@@ -20,54 +18,7 @@ namespace winp::thread{
 }
 
 namespace winp::ui{
-	class object;
 	class tree;
-
-	class send_message{
-	public:
-		send_message();
-
-		send_message(const send_message &copy);
-
-		send_message &operator =(const send_message &copy);
-
-		prop::scalar<HWND, send_message, prop::proxy_value> target;
-		prop::scalar<LRESULT, send_message, prop::proxy_value> result;
-
-		prop::scalar<unsigned int, send_message, prop::immediate_value> code;
-		prop::scalar<WPARAM, send_message, prop::immediate_value> wparam;
-		prop::scalar<LPARAM, send_message, prop::immediate_value> lparam;
-
-	private:
-		friend class object;
-
-		void init_();
-
-		HWND target_ = nullptr;
-	};
-
-	class post_message{
-	public:
-		post_message();
-
-		post_message(const post_message &copy);
-
-		post_message &operator =(const post_message &copy);
-
-		prop::scalar<HWND, post_message, prop::proxy_value> target;
-		prop::scalar<bool, post_message, prop::proxy_value> result;
-
-		prop::scalar<unsigned int, post_message, prop::immediate_value> code;
-		prop::scalar<WPARAM, post_message, prop::immediate_value> wparam;
-		prop::scalar<LPARAM, post_message, prop::immediate_value> lparam;
-
-	private:
-		friend class object;
-
-		void init_();
-
-		HWND target_ = nullptr;
-	};
 
 	enum class event_id_type{
 		create,
@@ -83,54 +34,45 @@ namespace winp::ui{
 
 	class object : public thread::item{
 	public:
-		struct ancestor_change_info{
-			tree *ancestor;	
-			std::size_t index;
-		};
-
-		struct parent_change_info{
-			bool is_changing;
-			tree *current_parent;
-			tree *new_parent;
-			std::size_t index;
-		};
-
-		struct index_change_info{
-			bool is_changing;
-			std::size_t previous_index;
-			std::size_t current_index;
-		};
-
-		struct sibling_change_info{
-			object *sibling;
-			std::size_t previous_index;
-			std::size_t current_index;
-		};
-
 		explicit object(thread::object &thread);
-
-		explicit object(tree &parent);
 
 		virtual ~object();
 
-		prop::scalar<HWND, object, prop::proxy_value> handle;
-		prop::scalar<tree *, object, prop::proxy_value> parent;
-		prop::scalar<std::size_t, object, prop::proxy_value> index;
+		virtual void create(const std::function<void(object &, bool)> &callback = nullptr);
 
-		prop::scalar<object *, object, prop::proxy_value> previous_sibling;
-		prop::scalar<object *, object, prop::proxy_value> next_sibling;
+		virtual void destroy(const std::function<void(object &, bool)> &callback = nullptr);
 
-		prop::list<utility::dynamic_list<tree, object>, object, prop::immediate_value> ancestors;
-		prop::list<utility::dynamic_list<object, object>, object, prop::immediate_value> siblings;
+		virtual HWND get_handle(const std::function<void(HWND)> &callback = nullptr) const;
 
-		event::manager<object, event::change<void, unsigned __int64>> change_event;
+		virtual void set_parent(tree *value, const std::function<void(object &, bool, std::size_t)> &callback = nullptr);
 
-		static const unsigned __int64 ancestor_change_id		= (1ui64 << 0x00000000ui64);
-		static const unsigned __int64 parent_change_id			= (1ui64 << 0x00000001ui64);
-		static const unsigned __int64 index_change_id			= (1ui64 << 0x00000002ui64);
-		static const unsigned __int64 sibling_change_id			= (1ui64 << 0x00000003ui64);
+		virtual tree *get_parent(const std::function<void(tree *)> &callback = nullptr) const;
 
-		static const unsigned __int64 last_object_change_id_bit	= 0x00000003ui64;
+		virtual void set_index(std::size_t value, const std::function<void(object &, bool, std::size_t)> &callback = nullptr);
+
+		virtual std::size_t get_index(const std::function<void(std::size_t)> &callback = nullptr) const;
+
+		virtual void set_previous_sibling(object *target, const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual object *get_previous_sibling(const std::function<void(object *)> &callback = nullptr) const;
+
+		virtual void set_next_sibling(object *target, const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual object *get_next_sibling(const std::function<void(object *)> &callback = nullptr) const;
+
+		virtual utility::dynamic_list<tree, object> get_ancestors(const std::function<void(utility::dynamic_list<tree, object>)> &callback = nullptr) const;
+
+		virtual utility::dynamic_list<object, object> get_siblings(const std::function<void(utility::dynamic_list<object, object>)> &callback = nullptr) const;
+
+		template <typename wparam_type = WPARAM, typename lparam_type = LPARAM>
+		LRESULT send_message(UINT msg, wparam_type wparam = wparam_type(0), lparam_type lparam = lparam_type(0)){
+			return send_message_(msg, (WPARAM)wparam, (LPARAM)lparam);
+		}
+
+		template <typename wparam_type = WPARAM, typename lparam_type = LPARAM>
+		bool post_message(UINT msg, wparam_type wparam = wparam_type(0), lparam_type lparam = lparam_type(0)){
+			return post_message_(msg, (WPARAM)wparam, (LPARAM)lparam);
+		}
 
 	protected:
 		friend class tree;
@@ -138,13 +80,15 @@ namespace winp::ui{
 		friend class send_message;
 		friend class post_message;
 
+		friend class event::object;
 		friend class event::draw;
+
 		friend class message::dispatcher;
 		friend class thread::surface_manager;
 
-		void init_();
+		virtual bool create_();
 
-		virtual void do_request_(void *buf, const std::type_info &id) override;
+		virtual bool destroy_();
 
 		virtual void set_handle_(HWND value);
 
@@ -153,17 +97,6 @@ namespace winp::ui{
 		virtual void set_parent_(tree *value);
 
 		virtual tree *get_parent_() const;
-
-		template <typename target_type>
-		target_type *get_first_ancestor_of_() const{
-			target_type *ancestor = nullptr;
-			for (auto parent = get_parent_(); parent != nullptr; get_parent_of_(*parent)){
-				if ((ancestor = dynamic_cast<target_type *>(parent)) != nullptr)
-					break;
-			}
-			
-			return ancestor;
-		}
 
 		virtual bool validate_parent_change_(tree *value, std::size_t index) const;
 
@@ -181,11 +114,11 @@ namespace winp::ui{
 
 		virtual std::size_t get_index_() const;
 
-		virtual void set_previous_sibling_(object *target);
+		virtual bool set_previous_sibling_(object *target);
 
 		virtual object *get_previous_sibling_() const;
 
-		virtual void set_next_sibling_(object *target);
+		virtual bool set_next_sibling_(object *target);
 
 		virtual object *get_next_sibling_() const;
 
@@ -193,23 +126,23 @@ namespace winp::ui{
 
 		virtual bool handle_message_(message::basic &info);
 
-		virtual void fire_ancestor_change_event_(tree *value, std::size_t index) const;
+		virtual LRESULT send_message_(UINT msg, WPARAM wparam = WPARAM(0), LPARAM lparam = LPARAM(0));
 
-		virtual bool fire_parent_change_event_(bool is_changing, tree *current_value, tree *&value, std::size_t &index) const;
-
-		virtual bool fire_index_change_event_(bool is_changing, std::size_t previous_value, std::size_t &value) const;
-
-		virtual void fire_sibling_change_event_(object &sibling, std::size_t previous_index, std::size_t current_index) const;
+		virtual bool post_message_(UINT msg, WPARAM wparam = WPARAM(0), LPARAM lparam = LPARAM(0));
 
 		virtual std::size_t event_handlers_count_(event::manager_base &ev) const;
 
 		virtual void fire_event_(event::manager_base &ev, event::object &e) const;
 
-		template <typename info_type>
-		bool fire_change_event_(unsigned __int64 id, info_type &info, bool is_changing = false) const{
-			event::change<void, unsigned __int64> e(id, info, const_cast<object *>(this));
-			change_event.fire_(e);
-			return (is_changing && !e.prevent_default);
+		template <typename target_type>
+		target_type *get_first_ancestor_of_() const{
+			target_type *ancestor = nullptr;
+			for (auto parent = get_parent_(); parent != nullptr; get_parent_of_(*parent)){
+				if ((ancestor = dynamic_cast<target_type *>(parent)) != nullptr)
+					break;
+			}
+
+			return ancestor;
 		}
 
 		static tree *get_parent_of_(const object &target);
@@ -219,5 +152,8 @@ namespace winp::ui{
 		HWND handle_;
 		tree *parent_;
 		std::size_t index_;
+
+		utility::dynamic_list<tree, object> ancestor_list_;
+		utility::dynamic_list<object, object> sibling_list_;
 	};
 }

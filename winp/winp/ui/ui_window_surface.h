@@ -17,16 +17,33 @@ namespace winp::ui{
 
 		explicit window_surface(thread::object &thread);
 
-		explicit window_surface(tree &parent);
-
 		virtual ~window_surface();
 
-		prop::flag_list<DWORD, window_surface, prop::proxy_value> styles;
-		prop::flag_list<DWORD, window_surface, prop::proxy_value> extended_styles;
+		virtual void maximize(const std::function<void(object &, bool)> &callback = nullptr);
 
-		prop::scalar<bool, window_surface, prop::proxy_value> created;
-		prop::scalar<bool, window_surface, prop::proxy_value> maximized;
-		prop::scalar<bool, window_surface, prop::proxy_value> minimized;
+		virtual void restore_maximized(const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual void toggle_maximized(const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual bool is_maximized(const std::function<void(bool)> &callback = nullptr) const;
+
+		virtual void minimize(const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual void restore_minimized(const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual void toggle_minimized(const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual bool is_minimized(const std::function<void(bool)> &callback = nullptr) const;
+
+		virtual void set_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual void add_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual void remove_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual DWORD get_styles(bool is_extended, const std::function<void(DWORD)> &callback = nullptr) const;
+
+		virtual bool has_styles(DWORD value, bool is_extended, bool has_all, const std::function<void(bool)> &callback = nullptr) const;
 
 		event::manager<window_surface, event::object> create_event;
 		event::manager<window_surface, event::object> destroy_event;
@@ -35,23 +52,19 @@ namespace winp::ui{
 		friend class message::dispatcher;
 		friend class thread::surface_manager;
 
-		void init_();
+		virtual bool create_() override;
 
-		virtual void destroy_() override;
-
-		virtual void do_request_(void *buf, const std::type_info &id) override;
-
-		virtual void do_apply_(const void *value, const std::type_info &id) override;
+		virtual bool destroy_() override;
 
 		virtual WNDPROC get_default_message_entry_() const override;
 
-		virtual void set_size_(const m_size_type &value) override;
+		virtual bool set_size_(const m_size_type &value) override;
 
 		virtual m_size_type get_size_() const override;
 
 		virtual m_size_type get_client_position_offset_() const override;
 
-		virtual void set_position_(const m_point_type &value) override;
+		virtual bool set_position_(const m_point_type &value) override;
 
 		virtual m_point_type get_position_() const override;
 
@@ -71,13 +84,13 @@ namespace winp::ui{
 
 		virtual void redraw_() override;
 
-		virtual void set_visible_state_(bool state) override;
+		virtual bool set_visibility_(bool is_visible) override;
 
-		virtual bool get_visible_state_() const override;
+		virtual bool is_visible_() const override;
 
-		virtual void set_transaprent_state_(bool state) override;
+		virtual bool set_transparency_(bool is_transparent) override;
 
-		virtual bool get_transaprent_state_() const override;
+		virtual bool is_transparent_() const override;
 
 		virtual utility::hit_target hit_test_(const m_point_type &pt, bool is_absolute) const override;
 
@@ -85,23 +98,29 @@ namespace winp::ui{
 
 		virtual window_surface *get_window_surface_parent_() const;
 
-		virtual void create_();
+		virtual bool maximize_();
 
-		virtual void set_maximized_state_(bool state);
+		virtual bool restore_maximized_();
 
-		virtual bool get_maximized_state_() const;
+		virtual bool toggle_maximized_();
 
-		virtual void set_minimized_state_(bool state);
+		virtual bool is_maximized_() const;
 
-		virtual bool get_minimized_state_() const;
+		virtual bool minimize_();
 
-		virtual void set_styles_(DWORD value, bool is_extended);
+		virtual bool restore_minimized_();
 
-		virtual void add_styles_(DWORD value, bool is_extended);
+		virtual bool toggle_minimized_();
 
-		virtual void remove_styles_(DWORD value, bool is_extended);
+		virtual bool is_minimized_() const;
 
-		virtual bool has_styles_(DWORD value, bool is_extended, bool has_all = false) const;
+		virtual bool set_styles_(DWORD value, bool is_extended);
+
+		virtual bool add_styles_(DWORD value, bool is_extended);
+
+		virtual bool remove_styles_(DWORD value, bool is_extended);
+
+		virtual bool has_styles_(DWORD value, bool is_extended, bool has_all) const;
 
 		virtual DWORD get_styles_(bool is_extended) const;
 

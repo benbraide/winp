@@ -38,8 +38,8 @@ namespace winp::thread{
 
 	class surface_manager{
 	public:
-		using m_point_type = utility::point<int>;
-		using m_size_type = utility::size<int>;
+		using m_point_type = POINT;
+		using m_size_type = SIZE;
 		using map_type = std::unordered_map<HWND, ui::surface *>;
 
 		struct cache_info{

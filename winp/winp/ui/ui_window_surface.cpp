@@ -2,112 +2,172 @@
 
 winp::ui::window_surface::window_surface(thread::object &thread)
 	: io_surface(thread){
-	init_();
-}
-
-winp::ui::window_surface::window_surface(tree &parent)
-	: io_surface(thread){
-	init_();
+	create_event.thread_ = thread_;
+	destroy_event.thread_ = thread_;
 }
 
 winp::ui::window_surface::~window_surface(){
-	if (!app::object::is_shut_down){
-		owner_->queue->add([=]{
-			destroy_();
-		}, thread::queue::send_priority).get();
+	thread_->queue.add([=]{
+		destroy_();
+	}, thread::queue::send_priority).get();
+}
+
+void winp::ui::window_surface::maximize(const std::function<void(object &, bool)> &callback){
+	thread_->queue.post([=]{
+		auto result = maximize_();
+		if (callback != nullptr)
+			callback(*this, result);
+	}, thread::queue::send_priority);
+}
+
+void winp::ui::window_surface::restore_maximized(const std::function<void(object &, bool)> &callback){
+	thread_->queue.post([=]{
+		auto result = restore_maximized_();
+		if (callback != nullptr)
+			callback(*this, result);
+	}, thread::queue::send_priority);
+}
+
+void winp::ui::window_surface::toggle_maximized(const std::function<void(object &, bool)> &callback){
+	thread_->queue.post([=]{
+		auto result = toggle_maximized_();
+		if (callback != nullptr)
+			callback(*this, result);
+	}, thread::queue::send_priority);
+}
+
+bool winp::ui::window_surface::is_maximized(const std::function<void(bool)> &callback) const{
+	if (callback != nullptr){
+		thread_->queue.post([=]{ callback(is_maximized_()); }, thread::queue::send_priority);
+		return false;
 	}
+
+	return thread_->queue.add([this]{ return is_maximized_(); }, thread::queue::send_priority).get();
 }
 
-void winp::ui::window_surface::init_(){
-	auto setter = [this](const prop::base &prop, const void *value, std::size_t context){
-		if (&prop == &styles){
-			auto tval = *static_cast<const DWORD *>(value);
-			owner_->queue->post([=]{
-				set_styles_(tval, false);
-			}, thread::queue::send_priority);
-		}
-		else if (&prop == &extended_styles){
-			auto tval = *static_cast<const DWORD *>(value);
-			owner_->queue->post([=]{
-				set_styles_(tval, true);
-			}, thread::queue::send_priority);
-		}
-		else if (&prop == &created){
-			auto tval = *static_cast<const bool *>(value);
-			owner_->queue->post([=]{
-				if (tval)
-					create_();
-				else
-					destroy_();
-			}, thread::queue::send_priority);
-		}
-		else if (&prop == &maximized){
-			auto tval = *static_cast<const bool *>(value);
-			owner_->queue->post([=]{
-				set_maximized_state_(tval);
-			}, thread::queue::send_priority);
-		}
-		else if (&prop == &minimized){
-			auto tval = *static_cast<const bool *>(value);
-			owner_->queue->post([=]{
-				set_minimized_state_(tval);
-			}, thread::queue::send_priority);
-		}
-	};
-
-	auto getter = [this](const prop::base &prop, void *buf, std::size_t context){
-		if (&prop == &styles)
-			*static_cast<DWORD *>(buf) = owner_->queue->add([this]{ return get_styles_(false); }, thread::queue::send_priority).get();
-		else if (&prop == &extended_styles)
-			*static_cast<DWORD *>(buf) = owner_->queue->add([this]{ return get_styles_(true); }, thread::queue::send_priority).get();
-		else if (&prop == &created)
-			*static_cast<bool *>(buf) = owner_->queue->add([this]{ return (get_handle_() != nullptr); }, thread::queue::send_priority).get();
-		else if (&prop == &maximized)
-			*static_cast<bool *>(buf) = owner_->queue->add([this]{ return get_maximized_state_(); }, thread::queue::send_priority).get();
-		else if (&prop == &minimized)
-			*static_cast<bool *>(buf) = owner_->queue->add([this]{ return get_minimized_state_(); }, thread::queue::send_priority).get();
-	};
-
-	styles.init_(nullptr, setter, getter);
-	extended_styles.init_(nullptr, setter, getter);
-
-	created.init_(nullptr, setter, getter);
-	maximized.init_(nullptr, setter, getter);
-	minimized.init_(nullptr, setter, getter);
-
-	create_event.thread_ = owner_;
-	destroy_event.thread_ = owner_;
-
-	handle_ = nullptr;
+void winp::ui::window_surface::minimize(const std::function<void(object &, bool)> &callback){
+	thread_->queue.post([=]{
+		auto result = minimize_();
+		if (callback != nullptr)
+			callback(*this, result);
+	}, thread::queue::send_priority);
 }
 
-void winp::ui::window_surface::destroy_(){
+void winp::ui::window_surface::restore_minimized(const std::function<void(object &, bool)> &callback){
+	thread_->queue.post([=]{
+		auto result = restore_minimized_();
+		if (callback != nullptr)
+			callback(*this, result);
+	}, thread::queue::send_priority);
+}
+
+void winp::ui::window_surface::toggle_minimized(const std::function<void(object &, bool)> &callback){
+	thread_->queue.post([=]{
+		auto result = toggle_minimized_();
+		if (callback != nullptr)
+			callback(*this, result);
+	}, thread::queue::send_priority);
+}
+
+bool winp::ui::window_surface::is_minimized(const std::function<void(bool)> &callback) const{
+	if (callback != nullptr){
+		thread_->queue.post([=]{ callback(is_minimized_()); }, thread::queue::send_priority);
+		return false;
+	}
+
+	return thread_->queue.add([this]{ return is_minimized_(); }, thread::queue::send_priority).get();
+}
+
+void winp::ui::window_surface::set_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback){
+	thread_->queue.post([=]{
+		auto result = set_styles_(value, is_extended);
+		if (callback != nullptr)
+			callback(*this, result);
+	}, thread::queue::send_priority);
+}
+
+void winp::ui::window_surface::add_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback){
+	thread_->queue.post([=]{
+		auto result = add_styles_(value, is_extended);
+		if (callback != nullptr)
+			callback(*this, result);
+	}, thread::queue::send_priority);
+}
+
+void winp::ui::window_surface::remove_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback){
+	thread_->queue.post([=]{
+		auto result = remove_styles_(value, is_extended);
+		if (callback != nullptr)
+			callback(*this, result);
+	}, thread::queue::send_priority);
+}
+
+DWORD winp::ui::window_surface::get_styles(bool is_extended, const std::function<void(DWORD)> &callback) const{
+	if (callback != nullptr){
+		thread_->queue.post([=]{ callback(get_styles_(is_extended)); }, thread::queue::send_priority);
+		return false;
+	}
+
+	return thread_->queue.add([=]{ return get_styles_(is_extended); }, thread::queue::send_priority).get();
+}
+
+bool winp::ui::window_surface::has_styles(DWORD value, bool is_extended, bool has_all, const std::function<void(bool)> &callback) const{
+	if (callback != nullptr){
+		thread_->queue.post([=]{ callback(has_styles_(value, is_extended, has_all)); }, thread::queue::send_priority);
+		return false;
+	}
+
+	return thread_->queue.add([=]{ return has_styles_(value, is_extended, has_all); }, thread::queue::send_priority).get();
+}
+
+bool winp::ui::window_surface::create_(){
+	if (get_handle_() != nullptr)
+		return true;//Already created
+
+	auto parent_handle = get_first_window_ancestor_handle_();
+	if (parent_handle == nullptr && get_parent_() != nullptr)
+		return false;
+
+	auto styles = (styles_ | get_persistent_styles_());
+	auto extended_styles = (extended_styles_ | get_persistent_extended_styles_());
+
+	thread_->windows_manager_.cache_.handle = nullptr;
+	thread_->windows_manager_.cache_.object = this;
+
+	auto offset_from_window_ancestor = get_offset_from_ancestor_of_<window_surface>(m_point_type{});
+	auto result = CreateWindowExW(
+		extended_styles,
+		get_class_name_(),
+		get_window_text_(),
+		styles,
+		(position_.x + offset_from_window_ancestor.x),
+		(position_.y + offset_from_window_ancestor.y),
+		size_.cx,
+		size_.cy,
+		parent_handle,
+		nullptr,
+		get_instance_(),
+		this
+	);
+
+	return (result != nullptr);
+}
+
+bool winp::ui::window_surface::destroy_(){
 	auto handle = get_handle_();
-	if (handle != nullptr)
-		DestroyWindow(handle);
-}
-
-void winp::ui::window_surface::do_request_(void *buf, const std::type_info &id){
-	if (id == typeid(window_surface *))
-		*static_cast<window_surface **>(buf) = this;
-	else
-		io_surface::do_request_(buf, id);
-}
-
-void winp::ui::window_surface::do_apply_(const void *value, const std::type_info &id){
-
+	return ((handle == nullptr) ? true : (DestroyWindow(handle) != FALSE));
 }
 
 WNDPROC winp::ui::window_surface::get_default_message_entry_() const{
 	return DefWindowProcW;
 }
 
-void winp::ui::window_surface::set_size_(const m_size_type &value){
+bool winp::ui::window_surface::set_size_(const m_size_type &value){
 	auto handle = get_handle_();
 	if (handle == nullptr)
-		io_surface::set_size_(value);
-	else
-		SetWindowPos(handle, nullptr, 0, 0, value.width, value.height, (SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE));
+		return io_surface::set_size_(value);
+	
+	return (SetWindowPos(handle, nullptr, 0, 0, value.cx, value.cy, (SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE)) != FALSE);
 }
 
 winp::ui::surface::m_size_type winp::ui::window_surface::get_size_() const{
@@ -134,12 +194,12 @@ winp::ui::surface::m_size_type winp::ui::window_surface::get_client_position_off
 	return m_size_type{ (client_offset.x - window_rect.left), (client_offset.y - window_rect.top) };
 }
 
-void winp::ui::window_surface::set_position_(const m_point_type &value){
+bool winp::ui::window_surface::set_position_(const m_point_type &value){
 	auto handle = get_handle_();
 	if (handle == nullptr)
-		io_surface::set_position_(value);
-	else
-		SetWindowPos(handle, nullptr, value.x, value.y, 0, 0, (SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE));
+		return io_surface::set_position_(value);
+	
+	return (SetWindowPos(handle, nullptr, value.x, value.y, 0, 0, (SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE)) != FALSE);
 }
 
 winp::ui::surface::m_point_type winp::ui::window_surface::get_position_() const{
@@ -174,10 +234,8 @@ winp::ui::surface::m_rect_type winp::ui::window_surface::get_dimension_() const{
 	RECT dimension{};
 	GetWindowRect(handle, &dimension);
 
-	m_rect_type value{ dimension.left, dimension.top, dimension.right, dimension.bottom };
 	auto parent = get_surface_parent_();
-
-	return ((parent == nullptr) ? value : parent->convert_dimension_from_absolute_value_(value));
+	return ((parent == nullptr) ? dimension : parent->convert_dimension_from_absolute_value_(dimension));
 }
 
 winp::ui::surface::m_rect_type winp::ui::window_surface::get_absolute_dimension_() const{
@@ -188,7 +246,7 @@ winp::ui::surface::m_rect_type winp::ui::window_surface::get_absolute_dimension_
 	RECT dimension{};
 	GetWindowRect(handle, &dimension);
 
-	return m_rect_type{ dimension.left, dimension.top, dimension.right, dimension.bottom };
+	return dimension;
 }
 
 winp::ui::surface::m_point_type winp::ui::window_surface::convert_position_from_absolute_value_(const m_point_type &value) const{
@@ -199,7 +257,7 @@ winp::ui::surface::m_point_type winp::ui::window_surface::convert_position_from_
 	POINT p{ value.x, value.y };
 	ScreenToClient(handle, &p);
 
-	return m_point_type{ p.x, p.y };
+	return p;
 }
 
 winp::ui::surface::m_point_type winp::ui::window_surface::convert_position_to_absolute_value_(const m_point_type &value) const{
@@ -210,7 +268,7 @@ winp::ui::surface::m_point_type winp::ui::window_surface::convert_position_to_ab
 	POINT p{ value.x, value.y };
 	ClientToScreen(handle, &p);
 
-	return m_point_type{ p.x, p.y };
+	return p;
 }
 
 winp::ui::surface::m_rect_type winp::ui::window_surface::convert_dimension_from_absolute_value_(const m_rect_type &value) const{
@@ -221,7 +279,7 @@ winp::ui::surface::m_rect_type winp::ui::window_surface::convert_dimension_from_
 	RECT r{ value.left, value.top, value.right, value.bottom };
 	MapWindowPoints(HWND_DESKTOP, handle, reinterpret_cast<POINT *>(&r), (sizeof(RECT) / sizeof(POINT)));
 
-	return m_rect_type{ r.left, r.top, r.right, r.bottom };
+	return r;
 }
 
 winp::ui::surface::m_rect_type winp::ui::window_surface::convert_dimension_to_absolute_value_(const m_rect_type &value) const{
@@ -232,7 +290,7 @@ winp::ui::surface::m_rect_type winp::ui::window_surface::convert_dimension_to_ab
 	RECT r{ value.left, value.top, value.right, value.bottom };
 	MapWindowPoints(handle, HWND_DESKTOP, reinterpret_cast<POINT *>(&r), (sizeof(RECT) / sizeof(POINT)));
 
-	return m_rect_type{ r.left, r.top, r.right, r.bottom };
+	return r;
 }
 
 void winp::ui::window_surface::redraw_(){
@@ -241,34 +299,33 @@ void winp::ui::window_surface::redraw_(){
 		InvalidateRect(handle, nullptr, TRUE);
 }
 
-void winp::ui::window_surface::set_visible_state_(bool state){
+bool winp::ui::window_surface::set_visibility_(bool is_visible){
 	auto handle = get_handle_();
 	if (handle == nullptr){
-		if (state)
-			add_styles_(WS_VISIBLE, false);
-		else
-			remove_styles_(WS_VISIBLE, false);
+		if (is_visible)
+			return add_styles_(WS_VISIBLE, false);
+		return remove_styles_(WS_VISIBLE, false);
 	}
-	else if ((IsWindowVisible(handle) == FALSE) == state)
-		ShowWindow(handle, (state ? SW_SHOW : SW_HIDE));
+	
+	if ((IsWindowVisible(handle) == FALSE) == is_visible)
+		return (ShowWindow(handle, (is_visible ? SW_SHOW : SW_HIDE)) != FALSE);
+
+	return true;
 }
 
-bool winp::ui::window_surface::get_visible_state_() const{
+bool winp::ui::window_surface::is_visible_() const{
 	auto handle = get_handle_();
 	if (handle == nullptr)
-		return has_styles_(WS_VISIBLE, false);
+		return has_styles_(WS_VISIBLE, false, true);
 	return (IsWindowVisible(handle) != FALSE);
 }
 
-void winp::ui::window_surface::set_transaprent_state_(bool state){
-	if (state)
-		add_styles_(WS_EX_TRANSPARENT, true);
-	else
-		remove_styles_(WS_EX_TRANSPARENT, true);
+bool winp::ui::window_surface::set_transparency_(bool is_transparent){
+	return (is_transparent ? add_styles_(WS_EX_TRANSPARENT, true) : remove_styles_(WS_EX_TRANSPARENT, true));
 }
 
-bool winp::ui::window_surface::get_transaprent_state_() const{
-	return has_styles_(WS_EX_TRANSPARENT, true);
+bool winp::ui::window_surface::is_transparent_() const{
+	return has_styles_(WS_EX_TRANSPARENT, true, true);
 }
 
 winp::utility::hit_target winp::ui::window_surface::hit_test_(const m_point_type &pt, bool is_absolute) const{
@@ -326,78 +383,75 @@ winp::ui::window_surface *winp::ui::window_surface::get_window_surface_parent_()
 	return dynamic_cast<window_surface *>(get_parent_());
 }
 
-void winp::ui::window_surface::create_(){
-	if (get_handle_() != nullptr)
-		return;//Already created
-
-	auto parent_handle = get_first_window_ancestor_handle_();
-	if (parent_handle == nullptr && get_parent_() != nullptr){
-		throw_(error_value_type::window_parent_not_created);
-		return;
-	}
-
-	auto styles = (styles_ | get_persistent_styles_());
-	auto extended_styles = (extended_styles_ | get_persistent_extended_styles_());
-
-	owner_->windows_manager_.cache_.handle = nullptr;
-	owner_->windows_manager_.cache_.object = this;
-
-	auto offset_from_window_ancestor = get_offset_from_ancestor_of_<window_surface>(m_point_type{});
-	CreateWindowExW(
-		extended_styles,
-		get_class_name_(),
-		get_window_text_(),
-		styles,
-		(position_.x + offset_from_window_ancestor.x),
-		(position_.y + offset_from_window_ancestor.y),
-		size_.width,
-		size_.height,
-		parent_handle,
-		nullptr,
-		get_instance_(),
-		this
-	);
-}
-
-void winp::ui::window_surface::set_maximized_state_(bool state){
-	auto handle = get_handle_();
-	if (handle == nullptr){
-		if (state)
-			add_styles_(WS_MAXIMIZE, false);
-		else
-			remove_styles_(WS_MAXIMIZE, false);
-	}
-	else if ((IsZoomed(handle) == FALSE) == state)
-		ShowWindow(handle, (state ? SW_MAXIMIZE : SW_RESTORE));
-}
-
-bool winp::ui::window_surface::get_maximized_state_() const{
+bool winp::ui::window_surface::maximize_(){
 	auto handle = get_handle_();
 	if (handle == nullptr)
-		return has_styles_(WS_MAXIMIZE, false);
+		return add_styles_(WS_MAXIMIZE, false);
+
+	if (IsZoomed(handle) == FALSE)
+		return (ShowWindow(handle, SW_MAXIMIZE) != FALSE);
+
+	return true;
+}
+
+bool winp::ui::window_surface::restore_maximized_(){
+	auto handle = get_handle_();
+	if (handle == nullptr)
+		return remove_styles_(WS_MAXIMIZE, false);
+
+	if (IsZoomed(handle) != FALSE)
+		return (ShowWindow(handle, SW_RESTORE) != FALSE);
+
+	return true;
+}
+
+bool winp::ui::window_surface::toggle_maximized_(){
+	return (is_maximized_() ? restore_maximized_() : maximize_());
+}
+
+bool winp::ui::window_surface::is_maximized_() const{
+	auto handle = get_handle_();
+	if (handle == nullptr)
+		return has_styles_(WS_MAXIMIZE, false, true);
+
 	return (IsZoomed(handle) != FALSE);
 }
 
-void winp::ui::window_surface::set_minimized_state_(bool state){
-	auto handle = get_handle_();
-	if (handle == nullptr){
-		if (state)
-			add_styles_(WS_MINIMIZE, false);
-		else
-			remove_styles_(WS_MINIMIZE, false);
-	}
-	else if ((IsIconic(handle) == FALSE) == state)
-		ShowWindow(handle, (state ? SW_MINIMIZE : SW_RESTORE));
-}
-
-bool winp::ui::window_surface::get_minimized_state_() const{
+bool winp::ui::window_surface::minimize_(){
 	auto handle = get_handle_();
 	if (handle == nullptr)
-		return has_styles_(WS_MINIMIZE, false);
+		return add_styles_(WS_MINIMIZE, false);
+
+	if (IsIconic(handle) == FALSE)
+		return (ShowWindow(handle, SW_MINIMIZE) != FALSE);
+
+	return true;
+}
+
+bool winp::ui::window_surface::restore_minimized_(){
+	auto handle = get_handle_();
+	if (handle == nullptr)
+		return remove_styles_(WS_MINIMIZE, false);
+
+	if (IsIconic(handle) != FALSE)
+		return (ShowWindow(handle, SW_RESTORE) != FALSE);
+
+	return true;
+}
+
+bool winp::ui::window_surface::toggle_minimized_(){
+	return (is_minimized_() ? restore_minimized_() : minimize_());
+}
+
+bool winp::ui::window_surface::is_minimized_() const{
+	auto handle = get_handle_();
+	if (handle == nullptr)
+		return has_styles_(WS_MINIMIZE, false, true);
+
 	return (IsIconic(handle) != FALSE);
 }
 
-void winp::ui::window_surface::set_styles_(DWORD value, bool is_extended){
+bool winp::ui::window_surface::set_styles_(DWORD value, bool is_extended){
 	DWORD diff;
 	HWND handle;
 
@@ -418,9 +472,11 @@ void winp::ui::window_surface::set_styles_(DWORD value, bool is_extended){
 		SetWindowLongPtrW(handle, (is_extended ? GWL_EXSTYLE : GWL_STYLE), value);
 		SetWindowPos(handle, nullptr, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 	}
+
+	return true;
 }
 
-void winp::ui::window_surface::add_styles_(DWORD value, bool is_extended){
+bool winp::ui::window_surface::add_styles_(DWORD value, bool is_extended){
 	DWORD *target;
 	if (is_extended){
 		target = &extended_styles_;
@@ -432,10 +488,12 @@ void winp::ui::window_surface::add_styles_(DWORD value, bool is_extended){
 	}
 
 	if (value != 0u && (*target & value) != value)
-		set_styles_((*target | value), is_extended);
+		return set_styles_((*target | value), is_extended);
+
+	return true;
 }
 
-void winp::ui::window_surface::remove_styles_(DWORD value, bool is_extended){
+bool winp::ui::window_surface::remove_styles_(DWORD value, bool is_extended){
 	DWORD *target;
 	if (is_extended){
 		target = &extended_styles_;
@@ -447,7 +505,9 @@ void winp::ui::window_surface::remove_styles_(DWORD value, bool is_extended){
 	}
 
 	if (value != 0u && (*target & value) != 0u)
-		set_styles_((*target & ~value), is_extended);
+		return set_styles_((*target & ~value), is_extended);
+
+	return true;
 }
 
 bool winp::ui::window_surface::has_styles_(DWORD value, bool is_extended, bool has_all) const{

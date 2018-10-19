@@ -2,7 +2,7 @@
 #include "message_dispatcher.h"
 
 void winp::message::dispatcher::dispatch_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result, bool call_default) const{
-	message::basic info(&target, message::basic::info_type{
+	message::basic info(target, message::basic::info_type{
 		msg,
 		wparam, 
 		lparam
@@ -13,10 +13,10 @@ void winp::message::dispatcher::dispatch_(ui::surface &target, UINT msg, WPARAM 
 		if (window_target != nullptr)
 			result = CallWindowProcW(get_default_message_entry_of_(*window_target), window_target->get_handle_(), msg, wparam, lparam);
 		else
-			result = info.result;
+			result = info.get_result();
 	}
 	else
-		result = info.result;
+		result = info.get_result();
 }
 
 winp::message::dispatcher::event_result_type winp::message::dispatcher::fire_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const{
@@ -43,6 +43,18 @@ std::list<winp::ui::object *> &winp::message::dispatcher::get_children_of_(ui::t
 	return target.children_;
 }
 
+bool winp::message::dispatcher::default_prevented_of(event::object &e){
+	return e.default_prevented_();
+}
+
+bool winp::message::dispatcher::propagation_stopped_of(event::object &e){
+	return e.propagation_stopped_();
+}
+
+bool winp::message::dispatcher::result_set_of(event::object &e){
+	return e.result_set_();
+}
+
 void winp::message::create_destroy_dispatcher::dispatch_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result, bool call_default) const{
 	fire_event_(target, msg, wparam, lparam, result);
 	if (call_default){
@@ -61,7 +73,7 @@ winp::message::dispatcher::event_result_type winp::message::create_destroy_dispa
 	if (window_target == nullptr)
 		return event_result_type::nil;
 
-	event::object e(&target);
+	event::object e(target);
 	if (msg == WM_CREATE)
 		fire_event_of_(*window_target, window_target->create_event, e);
 	else
@@ -91,11 +103,11 @@ winp::message::dispatcher::event_result_type winp::message::draw_dispatcher::fir
 	if (msg != WM_ERASEBKGND && get_children_of_(target).empty() && event_handlers_count_of_(target, visible_target->draw_event) == 0u)
 		return event_result_type::nil;//No handlers, no offspring -- do default
 
-	event::draw e(&target, event::message::info_type{ msg, wparam, lparam });
-	return fire_event_(e, dynamic_cast<ui::visible_surface *>(&target), msg, wparam, lparam, result, utility::point<int>{});
+	event::draw e(target, event::message::info_type{ msg, wparam, lparam });
+	return fire_event_(e, dynamic_cast<ui::visible_surface *>(&target), msg, wparam, lparam, result, POINT{});
 }
 
-winp::message::dispatcher::event_result_type winp::message::draw_dispatcher::fire_event_(event::draw &e, ui::tree *target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result, utility::point<int> offset) const{
+winp::message::dispatcher::event_result_type winp::message::draw_dispatcher::fire_event_(event::draw &e, ui::tree *target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result, POINT offset) const{
 	if (target == nullptr)
 		return event_result_type::nil;
 
@@ -104,12 +116,10 @@ winp::message::dispatcher::event_result_type winp::message::draw_dispatcher::fir
 		e.set_target_(visible_target, offset);
 		fire_event_of_(*visible_target, visible_target->draw_event, e);
 
-		if (msg == WM_ERASEBKGND && !e.prevent_default){
+		if (msg == WM_ERASEBKGND && !default_prevented_of(e)){
 			auto drawer = e.get_drawer_();
-			if (drawer != nullptr){
-				ui::visible_surface::m_rgba_type color = visible_target->background_color;
-				drawer->Clear(D2D1::ColorF(color.red, color.green, color.blue, color.alpha));
-			}
+			if (drawer != nullptr)
+				drawer->Clear(visible_target->get_background_color_());
 		}
 	}
 
@@ -118,5 +128,5 @@ winp::message::dispatcher::event_result_type winp::message::draw_dispatcher::fir
 			fire_event_(e, target, msg, wparam, lparam, result, offset);
 	}
 
-	return (e.prevent_default ? event_result_type::prevent_default : event_result_type::nil);
+	return (default_prevented_of(e) ? event_result_type::prevent_default : event_result_type::nil);
 }

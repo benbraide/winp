@@ -1,30 +1,30 @@
 #include "../app/app_object.h"
 
-winp::thread::queue::queue(object &owner)
-	: owner_(&owner){
-	this->owner.init_(nullptr, nullptr, [this](const prop::base &, void *buf, std::size_t){
-		*static_cast<const object **>(buf) = owner_;
-	});
+winp::thread::queue::queue(object &thread)
+	: thread_(thread){}
+
+void winp::thread::queue::post(const callback_type &task, int priority, unsigned __int64 id){
+	add_(task, priority, id);
 }
 
-void winp::thread::queue::post(const callback_type &task, int priority){
-	add_(task, priority);
+winp::thread::object *winp::thread::queue::get_thread() const{
+	return &thread_;
 }
 
-winp::thread::queue::added_info_type winp::thread::queue::add_(const callback_type &task, int priority){
-	if (app::object::is_shut_down)
+winp::thread::queue::added_info_type winp::thread::queue::add_(const callback_type &task, int priority, unsigned __int64 id){
+	if (app::object::is_shut_down())
 		return added_info_type{ nullptr, nullptr };
 
 	bool was_empty;
-	std::list<callback_type> *list;
-	callback_type *it;
+	std::list<list_item_info> *list;
+	list_item_info *it;
 
 	{//Scoped
 		std::lock_guard<std::mutex> guard(lock_);
 
 		was_empty = is_empty_();
 		list = &list_[priority];
-		it = &list->emplace_back(task);
+		it = &list->emplace_back(list_item_info{ id, task });
 	}
 
 	if (was_empty)
@@ -34,10 +34,8 @@ winp::thread::queue::added_info_type winp::thread::queue::add_(const callback_ty
 }
 
 void winp::thread::queue::pop_all_send_priorities_(std::list<callback_type> &list){
-	if (!owner_->inside){
-		app::object::error = prop::default_error_mapper::value_type::thread_context_mismatch;
+	if (app::object::is_shut_down())
 		return;
-	}
 
 	std::lock_guard<std::mutex> guard(lock_);
 
@@ -46,25 +44,18 @@ void winp::thread::queue::pop_all_send_priorities_(std::list<callback_type> &lis
 		return;
 
 	auto it = list_.find(send_priority);
-	if (it == list_.end())
-		return;
-
-	if (it->second.empty()){
-		list_.erase(it);
-		return;
+	if (it == list_.end() && !it->second.empty()){
+		for (auto &entry : it->second)
+			list.push_back(entry.callback);
 	}
 
-	for (auto &entry : it->second)
-		list.push_back(entry);
-
-	list_.erase(it);
+	if (it != list_.end())
+		list_.erase(it);
 }
 
 winp::thread::queue::callback_type winp::thread::queue::pop_send_priority_(){
-	if (!owner_->inside){
-		app::object::error = prop::default_error_mapper::value_type::thread_context_mismatch;
+	if (app::object::is_shut_down())
 		return nullptr;
-	}
 
 	std::lock_guard<std::mutex> guard(lock_);
 	if (list_.empty())
@@ -85,15 +76,13 @@ winp::thread::queue::callback_type winp::thread::queue::pop_send_priority_(){
 	if (it->second.empty())
 		list_.erase(it);
 
-	return task;
+	return task.callback;
 }
 
 winp::thread::queue::callback_type winp::thread::queue::pop_(){
 	callback_type task;
-	if (!owner_->inside){
-		app::object::error = prop::default_error_mapper::value_type::thread_context_mismatch;
+	if (app::object::is_shut_down())
 		return task;
-	}
 
 	std::lock_guard<std::mutex> guard(lock_);
 	if (list_.empty())
@@ -101,10 +90,12 @@ winp::thread::queue::callback_type winp::thread::queue::pop_(){
 
 	for (auto it = list_.begin(); it != list_.end(); ++it){
 		if (!it->second.empty()){
-			task = *it->second.begin();
+			task = it->second.begin()->callback;
 			it->second.erase(it->second.begin());
+
 			if (it->second.empty())
 				list_.erase(it);
+
 			break;
 		}
 	}
@@ -113,6 +104,9 @@ winp::thread::queue::callback_type winp::thread::queue::pop_(){
 }
 
 void winp::thread::queue::wait_for_tasks_(){
+	if (app::object::is_shut_down())
+		return;
+
 	std::unique_lock<std::mutex> guard(lock_);
 	cv_.wait(guard, [this]{
 		return !is_empty_();
@@ -120,6 +114,9 @@ void winp::thread::queue::wait_for_tasks_(){
 }
 
 bool winp::thread::queue::is_empty_() const{
+	if (app::object::is_shut_down())
+		return true;
+
 	for (auto &item : list_){
 		if (!item.second.empty())
 			return false;
@@ -129,5 +126,5 @@ bool winp::thread::queue::is_empty_() const{
 }
 
 bool winp::thread::queue::is_inside_thread_context_() const{
-	return owner_->inside;
+	return thread_.is_thread_context();
 }

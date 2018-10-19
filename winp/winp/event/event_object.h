@@ -1,11 +1,9 @@
 #pragma once
 
 #include "../utility/windows.h"
-#include "../property/scalar_property.h"
-#include "../property/variant_property.h"
-#include "../property/quad_property.h"
 
 namespace winp::message{
+	class dispatcher;
 	class draw_dispatcher;
 }
 
@@ -28,28 +26,62 @@ namespace winp::event{
 			static constexpr unsigned int nil						= (0 << 0x0000);
 			static constexpr unsigned int default_prevented			= (1 << 0x0000);
 			static constexpr unsigned int propagation_stopped		= (1 << 0x0001);
-			static constexpr unsigned int result_set				= (1 << 0x0004);
+			static constexpr unsigned int result_set				= (1 << 0x0002);
 		};
 
-		explicit object(ui::object *target);
+		explicit object(thread::object &thread);
+
+		explicit object(ui::object &target);
+
+		object(ui::object &target, ui::object &context);
 
 		virtual ~object();
 
-		prop::scalar<ui::object *, object, prop::proxy_value> owner;
-		prop::scalar<ui::object *, object, prop::proxy_value> target;
+		virtual ui::object *get_target() const;
 
-		prop::scalar<bool, object, prop::proxy_value> prevent_default;
-		prop::scalar<bool, object, prop::proxy_value> stop_propagation;
+		virtual ui::object *get_context() const;
+
+		template <typename value_type>
+		void set_result(value_type value){
+			set_result((LRESULT)value);
+		}
+
+		virtual void set_result(LRESULT value);
+
+		virtual void set_result(bool value);
+
+		virtual LRESULT get_result() const;
+
+		virtual void prevent_default();
+
+		virtual void do_default();
+
+		virtual void stop_propagation();
 
 	protected:
 		friend class ui::object;
 		friend class thread::object;
+		friend class winp::message::dispatcher;
 		template <class, class> friend class manager;
+
+		virtual void set_result_(LRESULT value);
+
+		virtual LRESULT get_result_() const;
 
 		virtual bool bubble_();
 
-		ui::object *owner_;
+		virtual void do_default_();
+
+		virtual bool default_prevented_() const;
+
+		virtual bool propagation_stopped_() const;
+
+		virtual bool result_set_() const;
+
 		ui::object *target_;
+		ui::object *context_;
+
+		thread::object &thread_;
 		unsigned int state_;
 	};
 
@@ -61,7 +93,9 @@ namespace winp::event{
 			LPARAM lparam;
 		};
 
-		message(ui::object *target, const info_type &info);
+		message(ui::object &target, const info_type &info);
+
+		message(ui::object &target, ui::object &context, const info_type &info);
 
 		virtual ~message();
 
@@ -69,8 +103,6 @@ namespace winp::event{
 		friend class ui::object;
 		friend class thread::object;
 		template <class, class> friend class manager;
-
-		virtual LRESULT get_result_() const;
 
 		info_type info_;
 	};
@@ -83,34 +115,19 @@ namespace winp::event{
 
 		template <typename... arg_types>
 		explicit typed(arg_types &&... args)
-			: base_type(std::forward<arg_types>(args)...){
-			auto setter = [this](const prop::base &prop, const void *value, std::size_t context){
-				if (&prop == &result){
-					m_base_type::state_ |= base_type::state_type::template result_set;
-					result_ = *static_cast<const m_result_type *>(value);
-				}
-			};
-
-			auto getter = [this](const prop::base &prop, void *buf, std::size_t context){
-				if (&prop == &result)
-					*static_cast<m_result_type *>(buf) = result_;
-				else if (&prop == &result_set)
-					*static_cast<bool *>(buf) = ((base_type::state_ & base_type::state_type::template propagation_stopped) != 0u);
-			};
-
-			result.init_(nullptr, setter, getter);
-			result_set.init_(nullptr, nullptr, getter);
-		}
+			: base_type(std::forward<arg_types>(args)...){}
 
 		virtual ~typed() = default;
-
-		prop::scalar<m_result_type, typed, prop::proxy_value> result;
-		prop::scalar<bool, typed, prop::proxy_value> result_set;
 
 	protected:
 		friend class ui::object;
 		friend class thread::object;
 		template <class, class> friend class manager;
+
+		virtual void set_result_(LRESULT value) override{
+			result_ = (m_result_type)value;
+			base_type::state_ |= object::state_type::result_set;
+		}
 
 		virtual LRESULT get_result_() const override{
 			return (LRESULT)result_;
@@ -137,65 +154,30 @@ namespace winp::event{
 		template <class, class> friend class manager;
 	};
 
-	template <class result_type, class id_type>
-	class change : public typed<object, result_type>{
-	public:
-		using m_typed_base_type = typed<object, result_type>;
-		using m_result_type = result_type;
-		using m_id_type = id_type;
-
-		template <typename info_type, typename... arg_types>
-		change(const id_type &id, info_type &info, arg_types &&... args)
-			: m_typed_base_type(std::forward<arg_types>(args)...), id_(id){
-			init_(&info);
-		}
-
-		template <typename info_type, typename... arg_types>
-		change(const id_type &id, info_type *info, arg_types &&... args)
-			: m_typed_base_type(std::forward<arg_types>(args)...), id_(id){
-			init_(info);
-		}
-
-		prop::scalar<id_type, change, prop::proxy_value> id;
-		prop::variant<change, prop::immediate_value> info;
-
-	protected:
-		template <typename info_type>
-		void init_(info_type *info){
-			auto getter = [this](const prop::base &prop, void *buf, std::size_t context){
-				if (&prop == &id)
-					*static_cast<id_type *>(buf) = id_;
-			};
-
-			id.init_(nullptr, nullptr, getter);
-			this->info.m_value_ = (void *)info;
-		}
-
-		id_type id_;
-	};
-
 	class draw : public message{
 	public:
-		using m_rect_type = utility::rect<int>;
+		using m_rect_type = RECT;
 
-		draw(ui::object *target, const info_type &info);
+		draw(ui::object &target, const info_type &info);
+
+		draw(ui::object &target, ui::object &context, const info_type &info);
 
 		virtual ~draw();
 
-		prop::scalar<ID2D1RenderTarget *, draw, prop::proxy_value> drawer;
-		prop::scalar<ID2D1SolidColorBrush *, draw, prop::proxy_value> color_brush;
+		virtual ID2D1RenderTarget *get_drawer();
 
-		prop::scalar<HDC, draw, prop::proxy_value> device;
-		prop::scalar<m_rect_type, draw, prop::proxy_value> region;
+		virtual ID2D1SolidColorBrush *get_color_brush();
 
-		prop::scalar<bool, draw, prop::proxy_value> erase_background;
+		virtual HDC get_device();
+
+		virtual m_rect_type get_region();
+
+		virtual bool erase_background();
 
 	protected:
 		friend class winp::message::draw_dispatcher;
 
-		void init_();
-
-		virtual void set_target_(ui::object *target, utility::point<int> &offset);
+		virtual void set_target_(ui::object *target, POINT &offset);
 
 		virtual void begin_();
 
@@ -213,7 +195,7 @@ namespace winp::event{
 		ID2D1SolidColorBrush *color_brush_ = nullptr;
 
 		PAINTSTRUCT struct_{};
-		utility::point<int> current_offset_{};
+		POINT current_offset_{};
 
 		int initial_device_state_id_ = -1;
 		std::function<void()> cleaner_;
@@ -221,7 +203,7 @@ namespace winp::event{
 
 	class mouse : public message{
 	public:
-		using m_point_type = utility::point<int>;
+		using m_point_type = POINT;
 
 		enum class button_type{
 			nil,
@@ -230,13 +212,17 @@ namespace winp::event{
 			right,
 		};
 
-		mouse(ui::object *target, const info_type &info, const m_point_type &offset, button_type button);
+		mouse(ui::object &target, const info_type &info, const m_point_type &offset, button_type button);
+
+		mouse(ui::object &target, ui::object &context, const info_type &info, const m_point_type &offset, button_type button);
 
 		virtual ~mouse();
 
-		prop::scalar<m_point_type, mouse, prop::proxy_value> position;
-		prop::scalar<m_point_type, mouse, prop::proxy_value> offset;
-		prop::scalar<button_type, mouse, prop::proxy_value> button;
+		virtual m_point_type get_position() const;
+
+		virtual m_point_type get_offset() const;
+
+		virtual button_type get_button() const;
 
 	protected:
 		virtual m_point_type get_position_() const;

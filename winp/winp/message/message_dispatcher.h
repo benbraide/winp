@@ -32,6 +32,12 @@ namespace winp::message{
 		static WNDPROC get_default_message_entry_of_(ui::window_surface &target);
 
 		static std::list<ui::object *> &get_children_of_(ui::tree &target);
+
+		static bool default_prevented_of(event::object &e);
+
+		static bool propagation_stopped_of(event::object &e);
+
+		static bool result_set_of(event::object &e);
 	};
 
 	class create_destroy_dispatcher : public dispatcher{
@@ -47,6 +53,6 @@ namespace winp::message{
 
 		virtual event_result_type fire_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const override;
 
-		virtual event_result_type fire_event_(event::draw &e, ui::tree *target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result, utility::point<int> offset) const;
+		virtual event_result_type fire_event_(event::draw &e, ui::tree *target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result, POINT offset) const;
 	};
 }

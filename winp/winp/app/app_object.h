@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <memory>
+#include <unordered_map>
 
 #include "../thread/thread_object.h"
 #include "../ui/ui_window_surface.h"
@@ -18,38 +19,27 @@ namespace winp::app{
 
 		static void shut_down();
 
+		static bool is_shut_down();
+
 		static int run(bool shut_down_after = true);
 
-		static bool is_native_handle(HWND handle);
+		static m_thread_type *get_main_thread();
 
-		static prop::list<std::list<m_thread_type *>, object, prop::proxy_value> threads;
-		static prop::scalar<m_thread_type *, object, prop::proxy_value> current_thread;
-		static prop::scalar<m_thread_type *, object, prop::proxy_value> main_thread;
-
-		static prop::scalar<bool, object, prop::proxy_value> is_shut_down;
-		static thread_local prop::error<object> error;
-
-		static std::mutex lock;
+		static m_thread_type *get_current_thread();
 
 	protected:
 		friend class thread::object;
 		friend class thread::surface_manager;
 
-		static std::size_t add_thread_(m_thread_type &thread);
+		static void add_thread_(m_thread_type &thread);
 
-		static bool remove_thread_(m_thread_type &thread);
-
-		static bool remove_thread_at_(std::size_t index);
-
-		static std::size_t find_thread_(const m_thread_type &thread);
-
-		static m_thread_type *get_thread_at_(std::size_t index);
+		static void remove_thread_(m_thread_type &thread);
 
 		static std::shared_ptr<thread::object> main_thread_;
-		static std::list<m_thread_type *> threads_;
-		static std::atomic_bool is_shut_down_;
+		static std::unordered_map<DWORD, m_thread_type *> threads_;
 
+		static std::atomic_bool is_shut_down_;
 		static WNDCLASSEXW class_info_;
-		static thread_local m_thread_type *current_thread_;
+		static std::mutex lock_;
 	};
 }

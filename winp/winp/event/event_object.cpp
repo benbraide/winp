@@ -1,51 +1,91 @@
 #include "../app/app_object.h"
 
-winp::event::object::object(ui::object *target)
-	: owner_(target), target_(target), state_(state_type::nil){
-	auto setter = [this](const prop::base &prop, const void *value, std::size_t context){
-		if (&prop == &prevent_default)
-			state_ = (*static_cast<const bool *>(value) ? (state_ | state_type::default_prevented) : state_);
-		else if (&prop == &stop_propagation)
-			state_ = (*static_cast<const bool *>(value) ? (state_ | state_type::propagation_stopped) : state_);
-	};
+winp::event::object::object(thread::object &thread)
+	: target_(nullptr), context_(nullptr), thread_(thread), state_(state_type::nil){}
 
-	auto getter = [this](const prop::base &prop, void *buf, std::size_t context){
-		if (&prop == &owner)
-			*static_cast<ui::object **>(buf) = owner_;
-		else if (&prop == &this->target)
-			*static_cast<ui::object **>(buf) = target_;
-		else if (&prop == &prevent_default)
-			*static_cast<bool *>(buf) = ((state_ & state_type::default_prevented) != 0u);
-		else if (&prop == &stop_propagation)
-			*static_cast<bool *>(buf) = ((state_ & state_type::propagation_stopped) != 0u);
-	};
+winp::event::object::object(ui::object &target)
+	: target_(&target), context_(&target), thread_(*target.thread_), state_(state_type::nil){}
 
-	owner.init_(nullptr, nullptr, getter);
-	this->target.init_(nullptr, nullptr, getter);
-
-	prevent_default.init_(nullptr, setter, getter);
-	stop_propagation.init_(nullptr, setter, getter);
-}
+winp::event::object::object(ui::object &target, ui::object &context)
+	: target_(&target), context_(&context), thread_(*target.thread_), state_(state_type::nil){}
 
 winp::event::object::~object() = default;
 
-bool winp::event::object::bubble_(){
-	return (((state_ & state_type::propagation_stopped) == 0u) && (owner_ != nullptr) && (owner_ = owner_->parent) != nullptr);
+winp::ui::object *winp::event::object::get_target() const{
+	return (thread_.is_thread_context() ? target_: nullptr);
 }
 
-winp::event::message::message(ui::object *target, const info_type &info)
-	: object(target), info_(info){}
+winp::ui::object *winp::event::object::get_context() const{
+	return (thread_.is_thread_context() ? context_ : nullptr);
+}
 
-winp::event::message::~message() = default;
+void winp::event::object::set_result(LRESULT value){
+	if (thread_.is_thread_context())
+		set_result_(value);
+}
 
-LRESULT winp::event::message::get_result_() const{
+void winp::event::object::set_result(bool value){
+	set_result(value ? TRUE : FALSE);
+}
+
+LRESULT winp::event::object::get_result() const{
+	return (thread_.is_thread_context() ? get_result_() : LRESULT());
+}
+
+void winp::event::object::prevent_default(){
+	if (thread_.is_thread_context())
+		state_ |= state_type::default_prevented;
+}
+
+void winp::event::object::do_default(){
+	if (thread_.is_thread_context() && (state_ & state_type::default_prevented) == 0u){
+		state_ |= state_type::default_prevented;
+		do_default_();
+	}
+}
+
+void winp::event::object::stop_propagation(){
+	if (thread_.is_thread_context())
+		state_ |= state_type::propagation_stopped;
+}
+
+void winp::event::object::set_result_(LRESULT value){}
+
+LRESULT winp::event::object::get_result_() const{
 	return LRESULT();
 }
 
-winp::event::draw::draw(ui::object *target, const info_type &info)
-	: message(target, info){
-	init_();
+bool winp::event::object::bubble_(){
+	return (((state_ & state_type::propagation_stopped) == 0u) && (context_ != nullptr) && (context_ = context_->get_parent_()) != nullptr);
 }
+
+void winp::event::object::do_default_(){}
+
+bool winp::event::object::default_prevented_() const{
+	return ((state_ & state_type::default_prevented) != 0u);
+}
+
+bool winp::event::object::propagation_stopped_() const{
+	return ((state_ & state_type::propagation_stopped) != 0u);
+}
+
+bool winp::event::object::result_set_() const{
+	return ((state_ & state_type::result_set) != 0u);
+}
+
+winp::event::message::message(ui::object &target, const info_type &info)
+	: object(target), info_(info){}
+
+winp::event::message::message(ui::object &target, ui::object &context, const info_type &info)
+	: object(target, context), info_(info){}
+
+winp::event::message::~message() = default;
+
+winp::event::draw::draw(ui::object &target, const info_type &info)
+	: message(target, info){}
+
+winp::event::draw::draw(ui::object &target, ui::object &context, const info_type &info)
+	: message(target, context, info){}
 
 winp::event::draw::~draw(){
 	if (struct_.hdc != nullptr)
@@ -57,32 +97,29 @@ winp::event::draw::~draw(){
 	struct_ = PAINTSTRUCT{};
 }
 
-void winp::event::draw::init_(){
-	auto getter = [this](const prop::base &prop, void *buf, std::size_t context){
-		if (&prop == &drawer)
-			*static_cast<ID2D1RenderTarget **>(buf) = get_drawer_();
-		else if (&prop == &color_brush)
-			*static_cast<ID2D1SolidColorBrush **>(buf) = get_color_brush_();
-		else if (&prop == &device)
-			*static_cast<HDC *>(buf) = get_device_();
-		else if (&prop == &region)
-			*static_cast<m_rect_type *>(buf) = get_region_();
-		else if (&prop == &erase_background)
-			*static_cast<bool *>(buf) = erase_background_();
-	};
-
-	drawer.init_(nullptr, nullptr, getter);
-	color_brush.init_(nullptr, nullptr, getter);
-
-	device.init_(nullptr, nullptr, getter);
-	region.init_(nullptr, nullptr, getter);
-
-	erase_background.init_(nullptr, nullptr, getter);
+ID2D1RenderTarget *winp::event::draw::get_drawer(){
+	return (thread_.is_thread_context() ? get_drawer_() : nullptr);
 }
 
-void winp::event::draw::set_target_(ui::object *target, utility::point<int> &offset){
+ID2D1SolidColorBrush *winp::event::draw::get_color_brush(){
+	return (thread_.is_thread_context() ? get_color_brush_() : nullptr);
+}
+
+HDC winp::event::draw::get_device(){
+	return (thread_.is_thread_context() ? get_device_() : nullptr);
+}
+
+winp::event::draw::m_rect_type winp::event::draw::get_region(){
+	return (thread_.is_thread_context() ? get_region_() : m_rect_type{});
+}
+
+bool winp::event::draw::erase_background(){
+	return (thread_.is_thread_context() ? erase_background_() : false);
+}
+
+void winp::event::draw::set_target_(ui::object *target, POINT &offset){
 	auto surface_target = dynamic_cast<ui::surface *>(target);
-	if (surface_target == nullptr || target == owner_)
+	if (surface_target == nullptr || target == context_)
 		return;//Do nothing
 
 	auto poffset = surface_target->get_position_();
@@ -134,7 +171,7 @@ void winp::event::draw::begin_(){
 
 ID2D1RenderTarget *winp::event::draw::get_drawer_(){
 	auto device = get_device_();
-	if (device != nullptr && drawer_ == nullptr && (drawer_ = target_->owner_->get_device_drawer_()) != nullptr){
+	if (device != nullptr && drawer_ == nullptr && (drawer_ = target_->thread_->get_device_drawer()) != nullptr){
 		auto target_rect = dynamic_cast<ui::surface *>(target_)->get_dimension_();
 		RECT target_native_rect{
 			target_rect.left,
@@ -156,7 +193,7 @@ ID2D1RenderTarget *winp::event::draw::get_drawer_(){
 
 ID2D1SolidColorBrush *winp::event::draw::get_color_brush_(){
 	auto render = get_drawer_();
-	if (render != nullptr && color_brush_ == nullptr && (color_brush_ = target_->owner_->get_color_brush_()) != nullptr)
+	if (render != nullptr && color_brush_ == nullptr && (color_brush_ = target_->thread_->get_color_brush()) != nullptr)
 		color_brush_->SetColor(D2D1::ColorF(D2D1::ColorF::Black, 1.0f));
 
 	return color_brush_;
@@ -169,7 +206,7 @@ HDC winp::event::draw::get_device_(){
 
 winp::event::draw::m_rect_type winp::event::draw::get_region_(){
 	begin_();
-	return m_rect_type{ struct_.rcPaint.left, struct_.rcPaint.top, struct_.rcPaint.right, struct_.rcPaint.bottom };
+	return struct_.rcPaint;
 }
 
 bool winp::event::draw::erase_background_(){
@@ -177,23 +214,25 @@ bool winp::event::draw::erase_background_(){
 	return (struct_.fErase != FALSE);
 }
 
-winp::event::mouse::mouse(ui::object *target, const info_type &info, const m_point_type &offset, button_type button)
-	: message(target, info), offset_(offset), button_(button){
-	auto getter = [this](const prop::base &prop, void *buf, std::size_t context){
-		if (&prop == &position)
-			*static_cast<m_point_type *>(buf) = get_position_();
-		else if (&prop == &this->offset)
-			*static_cast<m_point_type *>(buf) = offset_;
-		else if (&prop == &this->button)
-			*static_cast<button_type *>(buf) = button_;
-	};
+winp::event::mouse::mouse(ui::object &target, const info_type &info, const m_point_type &offset, button_type button)
+	: message(target, info), offset_(offset), button_(button){}
 
-	position.init_(nullptr, nullptr, getter);
-	this->offset.init_(nullptr, nullptr, getter);
-	this->button.init_(nullptr, nullptr, getter);
-}
+winp::event::mouse::mouse(ui::object &target, ui::object &context, const info_type &info, const m_point_type &offset, button_type button)
+	: message(target, context, info), offset_(offset), button_(button){}
 
 winp::event::mouse::~mouse() = default;
+
+winp::event::mouse::m_point_type winp::event::mouse::get_position() const{
+	return (thread_.is_thread_context() ? get_position_() : m_point_type{});
+}
+
+winp::event::mouse::m_point_type winp::event::mouse::get_offset() const{
+	return (thread_.is_thread_context() ? offset_ : m_point_type{});
+}
+
+winp::event::mouse::button_type winp::event::mouse::get_button() const{
+	return (thread_.is_thread_context() ? button_ : button_type::nil);
+}
 
 winp::event::mouse::m_point_type winp::event::mouse::get_position_() const{
 	auto position = ::GetMessagePos();

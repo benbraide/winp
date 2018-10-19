@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../utility/windows.h"
-#include "../property/scalar_property.h"
 
 namespace winp::thread{
 	class item;
@@ -17,18 +16,18 @@ namespace winp::message{
 	public:
 		using m_default_callback_type = std::function<void(object &)>;
 
-		explicit object(ui::object *target);
+		explicit object(ui::object &target);
 
 		virtual ~object();
 
-		prop::scalar<ui::object *, object, prop::proxy_value> owner;
-		prop::scalar<ui::object *, object, prop::proxy_value> target;
+		virtual ui::object *get_target() const;
 
 	protected:
 		friend class ui::object;
 		friend class thread::object;
 
-		ui::object *owner_;
+		virtual bool is_thread_context_() const;
+
 		ui::object *target_;
 	};
 
@@ -40,12 +39,21 @@ namespace winp::message{
 			LPARAM lparam;
 		};
 
-		basic(ui::object *target, const info_type &info);
+		basic(ui::object &target, const info_type &info);
 
 		virtual ~basic();
 
-		prop::scalar<info_type *, basic, prop::proxy_value> info;
-		prop::scalar<LRESULT, basic, prop::proxy_value> result;
+		virtual info_type get_info() const;
+
+		template <typename value_type>
+		void set_result(value_type value){
+			if (is_thread_context_())
+				result_ = (LRESULT)value;
+		}
+
+		virtual void set_result(bool value);
+
+		virtual LRESULT get_result() const;
 
 	protected:
 		friend class thread::item;

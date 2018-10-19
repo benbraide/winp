@@ -2,31 +2,48 @@
 
 #include "ui_surface.h"
 
-namespace winp::ui{
-	class visible_surface : public surface{
-	public:
-		using m_rgba_type = utility::rgba<float>;//9GiFQvPq9KfmxgG
+namespace winp::message{
+	class draw_dispatcher;
+}
 
-		enum class visibility{
-			visible,
-			hidden,
-			transparent,
+namespace winp::ui{
+	class visible_surface : public surface{//9GiFQvPq9KfmxgG
+	public:
+		struct m_colorf{
+			float r;
+			float g;
+			float b;
+			float a;
 		};
 
 		explicit visible_surface(thread::object &thread);
 
-		explicit visible_surface(tree &parent);
-
 		virtual ~visible_surface();
 
-		prop::scalar<bool, visible_surface, prop::proxy_value> visible;
-		prop::scalar<bool, visible_surface, prop::proxy_value> transparent;
+		virtual void show(const std::function<void(object &, bool)> &callback = nullptr);
 
-		prop::scalar<m_rgba_type, visible_surface, prop::proxy_value> background_color;
+		virtual void show(int how, const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual void hide(const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual void set_visibility(bool is_visible, const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual bool is_visible(const std::function<void(bool)> &callback = nullptr) const;
+
+		virtual void set_transparency(bool is_transparent, const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual bool is_transparent(const std::function<void(bool)> &callback = nullptr) const;
+
+		virtual void set_background_color(const D2D1::ColorF &value, const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual D2D1::ColorF get_background_color(const std::function<void(const D2D1::ColorF &)> &callback = nullptr) const;
+
+		static m_colorf convert_from_d2d1_colorf(const D2D1::ColorF &value);
+
+		static D2D1::ColorF convert_to_d2d1_colorf(const m_colorf &value);
 
 		event::manager<visible_surface, event::object> show_event;
 		event::manager<visible_surface, event::object> hide_event;
-
 		event::manager<visible_surface, event::draw> draw_event;
 
 		/*static const unsigned int state_nil					= (0 << 0x0000);
@@ -34,13 +51,8 @@ namespace winp::ui{
 		static const unsigned int state_transparent			= (1 << 0x0001);*/
 
 	protected:
+		friend class message::draw_dispatcher;
 		friend class thread::surface_manager;
-
-		void init_();
-
-		virtual void do_request_(void *buf, const std::type_info &id) override;
-
-		virtual void do_apply_(const void *value, const std::type_info &id) override;
 
 		virtual visible_surface *get_visible_surface_parent_() const;
 
@@ -54,21 +66,17 @@ namespace winp::ui{
 
 		virtual void redraw_();
 
-		virtual void set_visible_state_(bool state);
+		virtual bool set_visibility_(bool is_visible);
 
-		virtual bool get_visible_state_() const;
+		virtual bool is_visible_() const;
 
-		virtual void set_transaprent_state_(bool state);
+		virtual bool set_transparency_(bool is_transparent);
 
-		virtual bool get_transaprent_state_() const;
+		virtual bool is_transparent_() const;
 
-		virtual void set_background_color_(const D2D1::ColorF &value);
+		virtual bool set_background_color_(const D2D1::ColorF &value);
 
-		virtual void set_background_color_(const m_rgba_type &value);
-
-		virtual D2D1::ColorF get_background_color_() const;
-
-		virtual m_rgba_type get_converted_background_color_() const;
+		virtual const D2D1::ColorF &get_background_color_() const;
 
 		//unsigned int state_ = state_nil;
 		D2D1::ColorF background_color_;
