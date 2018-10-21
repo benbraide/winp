@@ -9,7 +9,7 @@ winp::ui::window_surface::window_surface(thread::object &thread)
 winp::ui::window_surface::~window_surface(){
 	thread_->queue.add([=]{
 		destroy_();
-	}, thread::queue::send_priority).get();
+	}, thread::queue::send_priority, id_).get();
 }
 
 void winp::ui::window_surface::maximize(const std::function<void(object &, bool)> &callback){
@@ -17,7 +17,7 @@ void winp::ui::window_surface::maximize(const std::function<void(object &, bool)
 		auto result = maximize_();
 		if (callback != nullptr)
 			callback(*this, result);
-	}, thread::queue::send_priority);
+	}, thread::queue::send_priority, id_);
 }
 
 void winp::ui::window_surface::restore_maximized(const std::function<void(object &, bool)> &callback){
@@ -25,7 +25,7 @@ void winp::ui::window_surface::restore_maximized(const std::function<void(object
 		auto result = restore_maximized_();
 		if (callback != nullptr)
 			callback(*this, result);
-	}, thread::queue::send_priority);
+	}, thread::queue::send_priority, id_);
 }
 
 void winp::ui::window_surface::toggle_maximized(const std::function<void(object &, bool)> &callback){
@@ -33,16 +33,16 @@ void winp::ui::window_surface::toggle_maximized(const std::function<void(object 
 		auto result = toggle_maximized_();
 		if (callback != nullptr)
 			callback(*this, result);
-	}, thread::queue::send_priority);
+	}, thread::queue::send_priority, id_);
 }
 
 bool winp::ui::window_surface::is_maximized(const std::function<void(bool)> &callback) const{
 	if (callback != nullptr){
-		thread_->queue.post([=]{ callback(is_maximized_()); }, thread::queue::send_priority);
+		thread_->queue.post([=]{ callback(is_maximized_()); }, thread::queue::send_priority, id_);
 		return false;
 	}
 
-	return thread_->queue.add([this]{ return is_maximized_(); }, thread::queue::send_priority).get();
+	return thread_->queue.add([this]{ return is_maximized_(); }, thread::queue::send_priority, id_).get();
 }
 
 void winp::ui::window_surface::minimize(const std::function<void(object &, bool)> &callback){
@@ -50,7 +50,7 @@ void winp::ui::window_surface::minimize(const std::function<void(object &, bool)
 		auto result = minimize_();
 		if (callback != nullptr)
 			callback(*this, result);
-	}, thread::queue::send_priority);
+	}, thread::queue::send_priority, id_);
 }
 
 void winp::ui::window_surface::restore_minimized(const std::function<void(object &, bool)> &callback){
@@ -58,7 +58,7 @@ void winp::ui::window_surface::restore_minimized(const std::function<void(object
 		auto result = restore_minimized_();
 		if (callback != nullptr)
 			callback(*this, result);
-	}, thread::queue::send_priority);
+	}, thread::queue::send_priority, id_);
 }
 
 void winp::ui::window_surface::toggle_minimized(const std::function<void(object &, bool)> &callback){
@@ -66,16 +66,16 @@ void winp::ui::window_surface::toggle_minimized(const std::function<void(object 
 		auto result = toggle_minimized_();
 		if (callback != nullptr)
 			callback(*this, result);
-	}, thread::queue::send_priority);
+	}, thread::queue::send_priority, id_);
 }
 
 bool winp::ui::window_surface::is_minimized(const std::function<void(bool)> &callback) const{
 	if (callback != nullptr){
-		thread_->queue.post([=]{ callback(is_minimized_()); }, thread::queue::send_priority);
+		thread_->queue.post([=]{ callback(is_minimized_()); }, thread::queue::send_priority, id_);
 		return false;
 	}
 
-	return thread_->queue.add([this]{ return is_minimized_(); }, thread::queue::send_priority).get();
+	return thread_->queue.add([this]{ return is_minimized_(); }, thread::queue::send_priority, id_).get();
 }
 
 void winp::ui::window_surface::set_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback){
@@ -83,7 +83,7 @@ void winp::ui::window_surface::set_styles(DWORD value, bool is_extended, const s
 		auto result = set_styles_(value, is_extended);
 		if (callback != nullptr)
 			callback(*this, result);
-	}, thread::queue::send_priority);
+	}, thread::queue::send_priority, id_);
 }
 
 void winp::ui::window_surface::add_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback){
@@ -91,7 +91,7 @@ void winp::ui::window_surface::add_styles(DWORD value, bool is_extended, const s
 		auto result = add_styles_(value, is_extended);
 		if (callback != nullptr)
 			callback(*this, result);
-	}, thread::queue::send_priority);
+	}, thread::queue::send_priority, id_);
 }
 
 void winp::ui::window_surface::remove_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback){
@@ -99,25 +99,25 @@ void winp::ui::window_surface::remove_styles(DWORD value, bool is_extended, cons
 		auto result = remove_styles_(value, is_extended);
 		if (callback != nullptr)
 			callback(*this, result);
-	}, thread::queue::send_priority);
+	}, thread::queue::send_priority, id_);
 }
 
 DWORD winp::ui::window_surface::get_styles(bool is_extended, const std::function<void(DWORD)> &callback) const{
 	if (callback != nullptr){
-		thread_->queue.post([=]{ callback(get_styles_(is_extended)); }, thread::queue::send_priority);
+		thread_->queue.post([=]{ callback(get_styles_(is_extended)); }, thread::queue::send_priority, id_);
 		return false;
 	}
 
-	return thread_->queue.add([=]{ return get_styles_(is_extended); }, thread::queue::send_priority).get();
+	return thread_->queue.add([=]{ return get_styles_(is_extended); }, thread::queue::send_priority, id_).get();
 }
 
 bool winp::ui::window_surface::has_styles(DWORD value, bool is_extended, bool has_all, const std::function<void(bool)> &callback) const{
 	if (callback != nullptr){
-		thread_->queue.post([=]{ callback(has_styles_(value, is_extended, has_all)); }, thread::queue::send_priority);
+		thread_->queue.post([=]{ callback(has_styles_(value, is_extended, has_all)); }, thread::queue::send_priority, id_);
 		return false;
 	}
 
-	return thread_->queue.add([=]{ return has_styles_(value, is_extended, has_all); }, thread::queue::send_priority).get();
+	return thread_->queue.add([=]{ return has_styles_(value, is_extended, has_all); }, thread::queue::send_priority, id_).get();
 }
 
 bool winp::ui::window_surface::create_(){
@@ -245,6 +245,17 @@ winp::ui::surface::m_rect_type winp::ui::window_surface::get_absolute_dimension_
 
 	RECT dimension{};
 	GetWindowRect(handle, &dimension);
+
+	return dimension;
+}
+
+winp::ui::surface::m_rect_type winp::ui::window_surface::get_client_dimension_() const{
+	auto handle = get_handle_();
+	if (handle == nullptr)
+		return io_surface::get_client_dimension_();
+
+	RECT dimension{};
+	GetClientRect(handle, &dimension);
 
 	return dimension;
 }

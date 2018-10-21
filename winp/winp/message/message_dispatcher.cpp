@@ -2,24 +2,40 @@
 #include "message_dispatcher.h"
 
 void winp::message::dispatcher::dispatch_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result, bool call_default) const{
+	do_dispatch_(target, msg, wparam, lparam, result, call_default);
+	post_dispatch_(target, msg, wparam, lparam, result);
+}
+
+void winp::message::dispatcher::do_dispatch_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result, bool call_default) const{
+	auto event_response = fire_event_(target, msg, wparam, lparam, result);
+	if (event_response == event_result_type::prevent_default)
+		return;//Skip default handling
+
 	message::basic info(target, message::basic::info_type{
 		msg,
 		wparam, 
 		lparam
 	});
 
-	if (!target.handle_message_(info) && call_default){
-		auto window_target = dynamic_cast<ui::window_surface *>(&target);
-		if (window_target != nullptr)
-			result = CallWindowProcW(get_default_message_entry_of_(*window_target), window_target->get_handle_(), msg, wparam, lparam);
-		else
-			result = info.get_result();
-	}
-	else
-		result = info.get_result();
+	auto object_response = target.handle_message_(info);
+	if (object_response == event_result_type::prevent_default)
+		return;//Skip further handling
+
+	if (object_response == event_result_type::result_set && event_response != event_result_type::result_set)
+		result = info.get_result();//Update result
+
+	auto entry = get_default_message_entry_of_(target);
+	if (entry != nullptr && object_response != event_result_type::result_set && event_response != event_result_type::result_set)
+		result = CallWindowProcW(entry, get_handle_of_(target), msg, wparam, lparam);
+	else if (entry != nullptr)//Result already set
+		CallWindowProcW(entry, get_handle_of_(target), msg, wparam, lparam);
 }
 
 winp::message::dispatcher::event_result_type winp::message::dispatcher::fire_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const{
+	return event_result_type::nil;
+}
+
+winp::message::dispatcher::event_result_type winp::message::dispatcher::post_dispatch_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const{
 	return event_result_type::nil;
 }
 
@@ -35,7 +51,7 @@ HWND winp::message::dispatcher::get_handle_of_(ui::surface &target){
 	return target.get_handle_();
 }
 
-WNDPROC winp::message::dispatcher::get_default_message_entry_of_(ui::window_surface &target){
+WNDPROC winp::message::dispatcher::get_default_message_entry_of_(ui::surface &target){
 	return target.get_default_message_entry_();
 }
 
@@ -43,29 +59,24 @@ std::list<winp::ui::object *> &winp::message::dispatcher::get_children_of_(ui::t
 	return target.children_;
 }
 
-bool winp::message::dispatcher::default_prevented_of(event::object &e){
+void winp::message::dispatcher::set_flag_of_(event::object &e, unsigned int flag){
+	e.state_ |= flag;
+}
+
+void winp::message::dispatcher::remove_flag_of_(event::object &e, unsigned int flag){
+	e.state_ &= ~flag;
+}
+
+bool winp::message::dispatcher::default_prevented_of_(event::object &e){
 	return e.default_prevented_();
 }
 
-bool winp::message::dispatcher::propagation_stopped_of(event::object &e){
+bool winp::message::dispatcher::propagation_stopped_of_(event::object &e){
 	return e.propagation_stopped_();
 }
 
-bool winp::message::dispatcher::result_set_of(event::object &e){
+bool winp::message::dispatcher::result_set_of_(event::object &e){
 	return e.result_set_();
-}
-
-void winp::message::create_destroy_dispatcher::dispatch_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result, bool call_default) const{
-	fire_event_(target, msg, wparam, lparam, result);
-	if (call_default){
-		auto window_target = dynamic_cast<ui::window_surface *>(&target);
-		if (window_target != nullptr)
-			result = CallWindowProcW(get_default_message_entry_of_(*window_target), get_handle_of_(target), msg, wparam, lparam);
-		else
-			result = 0;
-	}
-	else
-		result = 0;
 }
 
 winp::message::dispatcher::event_result_type winp::message::create_destroy_dispatcher::fire_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const{
@@ -79,20 +90,7 @@ winp::message::dispatcher::event_result_type winp::message::create_destroy_dispa
 	else
 		fire_event_of_(*window_target, window_target->destroy_event, e);
 
-	result = 0;
 	return event_result_type::nil;
-}
-
-void winp::message::draw_dispatcher::dispatch_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result, bool call_default) const{
-	if (fire_event_(target, msg, wparam, lparam, result) != event_result_type::prevent_default && call_default){
-		auto window_target = dynamic_cast<ui::window_surface *>(&target);
-		if (window_target != nullptr)
-			result = CallWindowProcW(get_default_message_entry_of_(*window_target), get_handle_of_(target), msg, wparam, lparam);
-		else
-			result = 0;
-	}
-	else
-		result = 0;
 }
 
 winp::message::dispatcher::event_result_type winp::message::draw_dispatcher::fire_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const{
@@ -100,33 +98,33 @@ winp::message::dispatcher::event_result_type winp::message::draw_dispatcher::fir
 	if (visible_target == nullptr)
 		return event_result_type::nil;
 
-	if (msg != WM_ERASEBKGND && get_children_of_(target).empty() && event_handlers_count_of_(target, visible_target->draw_event) == 0u)
-		return event_result_type::nil;//No handlers, no offspring -- do default
+	if (e_ == nullptr){//Initialize
+		e_ = std::make_shared<event::draw>(target, event::message::info_type{ msg, wparam, lparam });
+		offset_ = POINT{};
+	}
 
-	event::draw e(target, event::message::info_type{ msg, wparam, lparam });
-	return fire_event_(e, dynamic_cast<ui::visible_surface *>(&target), msg, wparam, lparam, result, POINT{});
+	e_->set_target_(visible_target, offset_);
+	fire_event_of_(*visible_target, visible_target->draw_event, *e_);
+
+	if (msg == WM_ERASEBKGND && !default_prevented_of_(*e_)){
+		auto drawer = e_->get_drawer_();
+		if (drawer != nullptr)
+			drawer->Clear(visible_target->get_background_color_());
+	}
+
+	return (default_prevented_of_(*e_) ? event_result_type::prevent_default : event_result_type::nil);
 }
 
-winp::message::dispatcher::event_result_type winp::message::draw_dispatcher::fire_event_(event::draw &e, ui::tree *target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result, POINT offset) const{
-	if (target == nullptr)
-		return event_result_type::nil;
+winp::message::dispatcher::event_result_type winp::message::draw_dispatcher::post_dispatch_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const{
+	ui::surface *child_target;
+	auto saved_offset = offset_;
 
-	auto visible_target = dynamic_cast<ui::visible_surface *>(target);
-	if (visible_target != nullptr){
-		e.set_target_(visible_target, offset);
-		fire_event_of_(*visible_target, visible_target->draw_event, e);
-
-		if (msg == WM_ERASEBKGND && !default_prevented_of(e)){
-			auto drawer = e.get_drawer_();
-			if (drawer != nullptr)
-				drawer->Clear(visible_target->get_background_color_());
-		}
+	for (auto child : get_children_of_(target)){
+		if ((child_target = dynamic_cast<ui::surface *>(child)) != nullptr && dynamic_cast<ui::window_surface *>(child) == nullptr)
+			dispatch_(*child_target, msg, wparam, lparam, result, false);
+		offset_ = saved_offset;//Restore saved offset
 	}
 
-	for (auto child : get_children_of_(*target)){
-		if ((target = dynamic_cast<ui::tree *>(child)) != nullptr && dynamic_cast<ui::window_surface *>(child) == nullptr)
-			fire_event_(e, target, msg, wparam, lparam, result, offset);
-	}
-
-	return (default_prevented_of(e) ? event_result_type::prevent_default : event_result_type::nil);
+	e_ = nullptr;//Reset event
+	return event_result_type::nil;
 }

@@ -23,6 +23,8 @@ namespace winp::thread{
 
 		virtual object &get_thread();
 
+		virtual void use_context(const queue::callback_type &task, int priority = queue::send_priority);
+
 	protected:
 		friend class object;
 		friend class app::object;
@@ -30,5 +32,6 @@ namespace winp::thread{
 		item();
 
 		object *thread_;
+		unsigned __int64 id_;
 	};
 }

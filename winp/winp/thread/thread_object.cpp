@@ -3,10 +3,10 @@
 winp::thread::object::object(const std::function<void(object &)> &entry, const std::function<void(object &)> &exit)
 	: queue(*this){
 	std::thread([=]{
-		init_();
-
 		id_ = std::this_thread::get_id();
 		local_id_ = GetCurrentThreadId();
+
+		init_();
 
 		is_exiting_ = false;
 		if (entry != nullptr)
@@ -25,13 +25,19 @@ winp::thread::object::object(const std::function<void(object &)> &entry, const s
 
 winp::thread::object::object(bool)
 	: queue(*this){
-	init_();
-
 	id_ = std::this_thread::get_id();
 	local_id_ = GetCurrentThreadId();
+
+	init_();
 }
 
 winp::thread::object::~object(){
+	if (!is_thread_context()){//Stop thread if running
+		queue.add([=]{
+			is_exiting_ = true;
+		}, thread::queue::send_priority).get();
+	}
+
 	app::object::remove_thread_(*this);
 }
 
@@ -83,6 +89,7 @@ int winp::thread::object::run(){
 	for (auto &task : sent_task_list)
 		task();//Execute initially sent tasks
 
+	is_exiting_ = false;
 	while (!is_exiting_ && !windows_manager_.toplevel_map_.empty()){
 		if ((sent_task = get_next_sent_task_()) == nullptr){
 			if (task_was_run_){//Check for possible message in queue. If none then execute task
@@ -104,13 +111,15 @@ int winp::thread::object::run(){
 				value = static_cast<int>(msg.wParam);
 				break;
 			}
+
+			windows_manager_.dispatch_message_(msg);
 		}
 		else//Execute sent task
 			sent_task();
 	}
 
 	is_exiting_ = true;
-	while (!app::object::is_shut_down_ && run_task_()){}//Execute remaining tasks
+	while (run_task_()){}//Execute remaining tasks
 
 	return value;
 }
@@ -157,6 +166,10 @@ ID2D1SolidColorBrush *winp::thread::object::get_color_brush() const{
 	return (is_thread_context() ? color_brush_ : nullptr);
 }
 
+void winp::thread::object::add_to_black_list_(unsigned __int64 id){
+	queue.add_to_black_list_(id);
+}
+
 bool winp::thread::object::run_task_(){
 	auto task = get_next_task_();
 	if (task == nullptr)
@@ -165,6 +178,10 @@ bool winp::thread::object::run_task_(){
 	task();
 
 	return true;
+}
+
+void winp::thread::object::run_all_tasks_(){
+	while (run_task_()){}
 }
 
 void winp::thread::object::get_all_sent_tasks_(std::list<m_callback_type> &list){

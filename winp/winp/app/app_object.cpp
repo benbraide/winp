@@ -24,15 +24,30 @@ void winp::app::object::init(){
 }
 
 void winp::app::object::shut_down(){
-	is_shut_down_ = true;
+	std::unordered_map<DWORD, m_thread_type *> threads;
+	{//Scoped
+		std::lock_guard<std::mutex> guard(lock_);
+		if (!is_shut_down_){
+			is_shut_down_ = true;
+			threads = std::move(threads_);
+
+		}
+	}
+
+	for (auto &thread : threads){
+		thread.second->post_message(0u);
+		thread.second->run_all_tasks_();
+	}
+	
 }
 
 bool winp::app::object::is_shut_down(){
+	std::lock_guard<std::mutex> guard(lock_);
 	return is_shut_down_;
 }
 
 int winp::app::object::run(bool shut_down_after){
-	if (is_shut_down_)
+	if (main_thread_ == nullptr || !main_thread_->is_thread_context() || is_shut_down())
 		return -1;
 
 	auto result = main_thread_->run();
@@ -47,34 +62,31 @@ winp::app::object::m_thread_type *winp::app::object::get_main_thread(){
 }
 
 winp::app::object::m_thread_type *winp::app::object::get_current_thread(){
+	std::lock_guard<std::mutex> guard(lock_);
 	if (is_shut_down_)
 		return nullptr;
 
-	std::lock_guard<std::mutex> guard(lock_);
 	auto it = threads_.find(GetCurrentThreadId());
-
 	return ((it == threads_.end()) ? nullptr : it->second);
 }
 
 void winp::app::object::add_thread_(m_thread_type &thread){
-	if (!is_shut_down_){
-		std::lock_guard<std::mutex> guard(lock_);
+	std::lock_guard<std::mutex> guard(lock_);
+	if (!is_shut_down_)
 		threads_[thread.local_id_] = &thread;
-	}
 }
 
 void winp::app::object::remove_thread_(m_thread_type &thread){
-	if (!is_shut_down_){
-		std::lock_guard<std::mutex> guard(lock_);
+	std::lock_guard<std::mutex> guard(lock_);
+	if (!is_shut_down_)
 		threads_.erase(thread.local_id_);
-	}
 }
 
 std::shared_ptr<winp::thread::object> winp::app::object::main_thread_;
 
 std::unordered_map<DWORD, winp::app::object::m_thread_type *> winp::app::object::threads_;
 
-std::atomic_bool winp::app::object::is_shut_down_ = false;
+bool winp::app::object::is_shut_down_ = false;
 
 WNDCLASSEXW winp::app::object::class_info_{};
 

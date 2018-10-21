@@ -74,6 +74,8 @@ namespace winp::ui{
 
 		virtual m_rect_type get_absolute_dimension_() const override;
 
+		virtual m_rect_type get_client_dimension_() const override;
+
 		virtual m_point_type convert_position_from_absolute_value_(const m_point_type &value) const override;
 
 		virtual m_point_type convert_position_to_absolute_value_(const m_point_type &value) const override;

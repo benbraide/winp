@@ -3,6 +3,8 @@
 #include <memory>
 #include <unordered_map>
 
+#include "../utility/random_number.h"
+
 #include "thread_queue.h"
 #include "surface_manager.h"
 
@@ -78,7 +80,11 @@ namespace winp::thread{
 
 		void init_();
 
+		void add_to_black_list_(unsigned __int64 id);
+
 		virtual bool run_task_();
+
+		virtual void run_all_tasks_();
 
 		virtual void get_all_sent_tasks_(std::list<m_callback_type> &list);
 
@@ -100,5 +106,7 @@ namespace winp::thread{
 
 		ID2D1DCRenderTarget *device_drawer_ = nullptr;
 		ID2D1SolidColorBrush *color_brush_ = nullptr;
+
+		utility::random_integral_number random_generator_;
 	};
 }

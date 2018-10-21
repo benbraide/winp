@@ -88,6 +88,9 @@ winp::event::draw::draw(ui::object &target, ui::object &context, const info_type
 	: message(target, context, info){}
 
 winp::event::draw::~draw(){
+	if (drawer_ != nullptr)
+		drawer_->EndDraw();
+
 	if (struct_.hdc != nullptr)
 		RestoreDC(struct_.hdc, initial_device_state_id_);
 
@@ -172,20 +175,15 @@ void winp::event::draw::begin_(){
 ID2D1RenderTarget *winp::event::draw::get_drawer_(){
 	auto device = get_device_();
 	if (device != nullptr && drawer_ == nullptr && (drawer_ = target_->thread_->get_device_drawer()) != nullptr){
-		auto target_rect = dynamic_cast<ui::surface *>(target_)->get_dimension_();
-		RECT target_native_rect{
-			target_rect.left,
-			target_rect.top,
-			target_rect.right,
-			target_rect.bottom
-		};
+		auto target_rect = dynamic_cast<ui::surface *>(target_)->get_client_dimension_();
 
-		OffsetRect(&target_native_rect, current_offset_.x, current_offset_.y);
+		OffsetRect(&target_rect, current_offset_.x, current_offset_.y);
 		OffsetClipRgn(struct_.hdc, current_offset_.x, current_offset_.y);
 		IntersectClipRect(struct_.hdc, current_offset_.x, current_offset_.y, (target_rect.right + current_offset_.x), (target_rect.bottom + current_offset_.y));
 
-		dynamic_cast<ID2D1DCRenderTarget *>(drawer_)->BindDC(device, &target_native_rect);
+		drawer_->BindDC(device, &target_rect);
 		drawer_->SetTransform(D2D1::IdentityMatrix());
+		drawer_->BeginDraw();
 	}
 
 	return drawer_;

@@ -10,18 +10,19 @@ namespace winp::thread{
 
 namespace winp::message{
 	class dispatcher{
+	public:
+		using event_result_type = event::event_result_type;
+
 	protected:
 		friend class thread::surface_manager;
 
-		enum class event_result_type{
-			nil,
-			result_set,
-			prevent_default,
-		};
-
 		virtual void dispatch_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result, bool call_default) const;
 
+		virtual void do_dispatch_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result, bool call_default) const;
+
 		virtual event_result_type fire_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const;
+
+		virtual event_result_type post_dispatch_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const;
 
 		static std::size_t event_handlers_count_of_(ui::surface &target, event::manager_base &ev);
 
@@ -29,30 +30,33 @@ namespace winp::message{
 
 		static HWND get_handle_of_(ui::surface &target);
 
-		static WNDPROC get_default_message_entry_of_(ui::window_surface &target);
+		static WNDPROC get_default_message_entry_of_(ui::surface &target);
 
 		static std::list<ui::object *> &get_children_of_(ui::tree &target);
 
-		static bool default_prevented_of(event::object &e);
+		static void set_flag_of_(event::object &e, unsigned int flag);
 
-		static bool propagation_stopped_of(event::object &e);
+		static void remove_flag_of_(event::object &e, unsigned int flag);
 
-		static bool result_set_of(event::object &e);
+		static bool default_prevented_of_(event::object &e);
+
+		static bool propagation_stopped_of_(event::object &e);
+
+		static bool result_set_of_(event::object &e);
 	};
 
 	class create_destroy_dispatcher : public dispatcher{
 	protected:
-		virtual void dispatch_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result, bool call_default) const override;
-
 		virtual event_result_type fire_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const override;
 	};
 
 	class draw_dispatcher : public dispatcher{
 	protected:
-		virtual void dispatch_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result, bool call_default) const override;
-
 		virtual event_result_type fire_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const override;
 
-		virtual event_result_type fire_event_(event::draw &e, ui::tree *target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result, POINT offset) const;
+		virtual event_result_type post_dispatch_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, LRESULT &result) const override;
+
+		mutable std::shared_ptr<event::draw> e_;
+		mutable POINT offset_{};
 	};
 }

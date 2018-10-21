@@ -122,9 +122,7 @@ namespace winp::ui{
 
 		virtual object *get_next_sibling_() const;
 
-		virtual bool handles_message_(UINT msg) const;
-
-		virtual bool handle_message_(message::basic &info);
+		virtual event::event_result_type handle_message_(message::basic &info);
 
 		virtual LRESULT send_message_(UINT msg, WPARAM wparam = WPARAM(0), LPARAM lparam = LPARAM(0));
 

@@ -17,6 +17,12 @@ namespace winp::ui{
 }
 
 namespace winp::event{
+	enum class event_result_type{
+		nil,
+		result_set,
+		prevent_default,
+	};
+
 	template <class owner_type, class object_type>
 	class manager;
 
@@ -191,7 +197,7 @@ namespace winp::event{
 
 		virtual bool erase_background_();
 
-		ID2D1RenderTarget *drawer_ = nullptr;
+		ID2D1DCRenderTarget *drawer_ = nullptr;
 		ID2D1SolidColorBrush *color_brush_ = nullptr;
 
 		PAINTSTRUCT struct_{};

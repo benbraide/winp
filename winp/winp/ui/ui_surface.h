@@ -59,6 +59,7 @@ namespace winp::ui{
 		friend class window_surface;
 
 		friend class event::draw;
+		friend class message::dispatcher;
 		friend class thread::surface_manager;
 
 		virtual surface *get_surface_parent_() const;
@@ -92,6 +93,8 @@ namespace winp::ui{
 		virtual m_rect_type get_dimension_() const;
 
 		virtual m_rect_type get_absolute_dimension_() const;
+
+		virtual m_rect_type get_client_dimension_() const;
 
 		virtual m_point_type convert_position_from_absolute_value_(const m_point_type &value) const;
 

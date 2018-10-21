@@ -38,7 +38,7 @@ namespace winp::app{
 		static std::shared_ptr<thread::object> main_thread_;
 		static std::unordered_map<DWORD, m_thread_type *> threads_;
 
-		static std::atomic_bool is_shut_down_;
+		static bool is_shut_down_;
 		static WNDCLASSEXW class_info_;
 		static std::mutex lock_;
 	};
