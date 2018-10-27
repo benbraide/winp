@@ -98,6 +98,12 @@ namespace winp::ui{
 
 		virtual utility::hit_target hit_test_(const m_rect_type &rect, bool is_absolute) const override;
 
+		virtual void destruct_();
+
+		virtual bool pre_create_();
+
+		virtual void post_create_();
+
 		virtual window_surface *get_window_surface_parent_() const;
 
 		virtual bool maximize_();

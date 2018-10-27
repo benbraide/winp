@@ -11,6 +11,7 @@ namespace winp::event{
 
 namespace winp::message{
 	class dispatcher;
+	class mouse_dispatcher;
 }
 
 namespace winp::thread{
@@ -64,14 +65,28 @@ namespace winp::ui{
 
 		virtual utility::dynamic_list<object, object> get_siblings(const std::function<void(utility::dynamic_list<object, object>)> &callback = nullptr) const;
 
-		template <typename wparam_type = WPARAM, typename lparam_type = LPARAM>
-		LRESULT send_message(UINT msg, wparam_type wparam = wparam_type(0), lparam_type lparam = lparam_type(0)){
-			return send_message_(msg, (WPARAM)wparam, (LPARAM)lparam);
+		LRESULT send_message(UINT msg, const std::function<void(LRESULT)> &callback = nullptr);
+
+		template <typename wparam_type = WPARAM>
+		LRESULT send_message(UINT msg, wparam_type wparam, const std::function<void(LRESULT)> &callback = nullptr){
+			return do_send_message_(msg, (WPARAM)wparam, 0, callback);
 		}
 
 		template <typename wparam_type = WPARAM, typename lparam_type = LPARAM>
-		bool post_message(UINT msg, wparam_type wparam = wparam_type(0), lparam_type lparam = lparam_type(0)){
-			return post_message_(msg, (WPARAM)wparam, (LPARAM)lparam);
+		LRESULT send_message(UINT msg, wparam_type wparam, lparam_type lparam, const std::function<void(LRESULT)> &callback = nullptr){
+			return do_send_message_(msg, (WPARAM)wparam, (LPARAM)lparam, callback);
+		}
+
+		void post_message(UINT msg, const std::function<void(bool)> &callback = nullptr);
+
+		template <typename wparam_type = WPARAM>
+		void post_message(UINT msg, wparam_type wparam, const std::function<void(bool)> &callback = nullptr){
+			do_post_message_(msg, (WPARAM)wparam, 0, callback);
+		}
+
+		template <typename wparam_type = WPARAM, typename lparam_type = LPARAM>
+		void post_message(UINT msg, wparam_type wparam, lparam_type lparam, const std::function<void(bool)> &callback = nullptr){
+			do_post_message_(msg, (WPARAM)wparam, (LPARAM)lparam, callback);
 		}
 
 	protected:
@@ -84,6 +99,7 @@ namespace winp::ui{
 		friend class event::draw;
 
 		friend class message::dispatcher;
+		friend class message::mouse_dispatcher;
 		friend class thread::surface_manager;
 
 		virtual bool create_();
@@ -124,9 +140,13 @@ namespace winp::ui{
 
 		virtual event::event_result_type handle_message_(message::basic &info);
 
-		virtual LRESULT send_message_(UINT msg, WPARAM wparam = WPARAM(0), LPARAM lparam = LPARAM(0));
+		virtual LRESULT do_send_message_(UINT msg, WPARAM wparam, LPARAM lparam, const std::function<void(LRESULT)> &callback);
 
-		virtual bool post_message_(UINT msg, WPARAM wparam = WPARAM(0), LPARAM lparam = LPARAM(0));
+		virtual LRESULT send_message_(UINT msg, WPARAM wparam, LPARAM lparam);
+
+		virtual void do_post_message_(UINT msg, WPARAM wparam, LPARAM lparam, const std::function<void(bool)> &callback);
+
+		virtual bool post_message_(UINT msg, WPARAM wparam, LPARAM lparam);
 
 		virtual std::size_t event_handlers_count_(event::manager_base &ev) const;
 

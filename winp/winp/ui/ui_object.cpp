@@ -130,6 +130,14 @@ winp::utility::dynamic_list<winp::ui::object, winp::ui::object> winp::ui::object
 	return sibling_list_;
 }
 
+LRESULT winp::ui::object::send_message(UINT msg, const std::function<void(LRESULT)> &callback){
+	return do_send_message_(msg, 0, 0, callback);
+}
+
+void winp::ui::object::post_message(UINT msg, const std::function<void(bool)> &callback){
+	do_post_message_(msg, 0, 0, callback);
+}
+
 bool winp::ui::object::create_(){
 	return true;
 }
@@ -281,24 +289,40 @@ winp::event::event_result_type winp::ui::object::handle_message_(message::basic 
 	return event::event_result_type::nil;
 }
 
+LRESULT winp::ui::object::do_send_message_(UINT msg, WPARAM wparam, LPARAM lparam, const std::function<void(LRESULT)> &callback){
+	if (callback != nullptr){
+		thread_->queue.post([=]{ callback(send_message_(msg, wparam, lparam)); }, thread::queue::send_priority, id_);
+		return 0;
+	}
+
+	return thread_->queue.add([=]{ return send_message_(msg, wparam, lparam); }, thread::queue::send_priority, id_).get();
+}
+
 LRESULT winp::ui::object::send_message_(UINT msg, WPARAM wparam, LPARAM lparam){
 	auto handle = get_handle_();
 	if (handle != nullptr)
 		return SendMessageW(handle, msg, wparam, lparam);
 
-	return thread_->queue.add([&]() -> LRESULT{
-		message::basic::info_type info;
-		{//Populate info
-			info.code = msg;
-			info.wparam = wparam;
-			info.lparam = lparam;
-		}
+	message::basic::info_type info;
+	{//Populate info
+		info.code = msg;
+		info.wparam = wparam;
+		info.lparam = lparam;
+	}
 
-		message::basic msg(*this, info);
-		handle_message_(msg);
+	message::basic e(*this, info);
+	handle_message_(e);
 
-		return msg.get_result();
-	}, thread::queue::send_priority, id_).get();
+	return e.get_result();
+}
+
+void winp::ui::object::do_post_message_(UINT msg, WPARAM wparam, LPARAM lparam, const std::function<void(bool)> &callback){
+	thread_->queue.post([=]{
+		if (callback == nullptr)
+			post_message_(msg, wparam, lparam);
+		else//Send response
+			callback(post_message_(msg, wparam, lparam));
+	}, thread::queue::send_priority, id_);
 }
 
 bool winp::ui::object::post_message_(UINT msg, WPARAM wparam, LPARAM lparam){
@@ -306,17 +330,15 @@ bool winp::ui::object::post_message_(UINT msg, WPARAM wparam, LPARAM lparam){
 	if (handle != nullptr)
 		return (PostMessageW(handle, msg, wparam, lparam) != FALSE);
 
-	thread_->queue.post([=]{
-		message::basic::info_type info;
-		{//Populate info
-			info.code = msg;
-			info.wparam = wparam;
-			info.lparam = lparam;
-		}
+	message::basic::info_type info;
+	{//Populate info
+		info.code = msg;
+		info.wparam = wparam;
+		info.lparam = lparam;
+	}
 
-		message::basic msg(*this, info);
-		handle_message_(msg);
-	}, thread::queue::send_priority, id_);
+	message::basic e(*this, info);
+	handle_message_(e);
 
 	return true;
 }

@@ -183,7 +183,7 @@ void winp::ui::surface::set_message_entry_(LONG_PTR value){}
 
 void winp::ui::surface::add_to_toplevel_(){
 	if (get_parent_() == nullptr)
-		thread_->windows_manager_.toplevel_map_[get_handle_()] = this;
+		thread_->surface_manager_.toplevel_map_[get_handle_()] = this;
 }
 
 bool winp::ui::surface::set_size_(const m_size_type &value){

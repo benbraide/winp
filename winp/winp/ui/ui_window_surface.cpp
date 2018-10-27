@@ -7,9 +7,7 @@ winp::ui::window_surface::window_surface(thread::object &thread)
 }
 
 winp::ui::window_surface::~window_surface(){
-	thread_->queue.add([=]{
-		destroy_();
-	}, thread::queue::send_priority, id_).get();
+	destruct_();
 }
 
 void winp::ui::window_surface::maximize(const std::function<void(object &, bool)> &callback){
@@ -124,6 +122,9 @@ bool winp::ui::window_surface::create_(){
 	if (get_handle_() != nullptr)
 		return true;//Already created
 
+	if (!pre_create_())
+		return false;
+
 	auto parent_handle = get_first_window_ancestor_handle_();
 	if (parent_handle == nullptr && get_parent_() != nullptr)
 		return false;
@@ -131,8 +132,8 @@ bool winp::ui::window_surface::create_(){
 	auto styles = (styles_ | get_persistent_styles_());
 	auto extended_styles = (extended_styles_ | get_persistent_extended_styles_());
 
-	thread_->windows_manager_.cache_.handle = nullptr;
-	thread_->windows_manager_.cache_.object = this;
+	thread_->surface_manager_.cache_.handle = nullptr;
+	thread_->surface_manager_.cache_.object = this;
 
 	auto offset_from_window_ancestor = get_offset_from_ancestor_of_<window_surface>(m_point_type{});
 	auto result = CreateWindowExW(
@@ -150,7 +151,10 @@ bool winp::ui::window_surface::create_(){
 		this
 	);
 
-	return (result != nullptr);
+	if (result != nullptr)
+		post_create_();
+
+	return (get_handle_() != nullptr);
 }
 
 bool winp::ui::window_surface::destroy_(){
@@ -389,6 +393,18 @@ winp::utility::hit_target winp::ui::window_surface::hit_test_(const m_rect_type 
 
 	return ((first_pt_inside || second_pt_inside) ? utility::hit_target::intersect : utility::hit_target::nil);
 }
+
+void winp::ui::window_surface::destruct_(){
+	thread_->queue.add([=]{
+		destroy_();
+	}, thread::queue::send_priority, id_).get();
+}
+
+bool winp::ui::window_surface::pre_create_(){
+	return true;
+}
+
+void winp::ui::window_surface::post_create_(){}
 
 winp::ui::window_surface *winp::ui::window_surface::get_window_surface_parent_() const{
 	return dynamic_cast<window_surface *>(get_parent_());

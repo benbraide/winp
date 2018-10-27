@@ -1,13 +1,13 @@
 #include "../app/app_object.h"
 
-winp::event::object::object(thread::object &thread)
-	: target_(nullptr), context_(nullptr), thread_(thread), state_(state_type::nil){}
+winp::event::object::object(thread::object &thread, const callback_type &default_handler)
+	: target_(nullptr), context_(nullptr), thread_(thread), state_(state_type::nil), default_handler_(default_handler){}
 
-winp::event::object::object(ui::object &target)
-	: target_(&target), context_(&target), thread_(*target.thread_), state_(state_type::nil){}
+winp::event::object::object(ui::object &target, const callback_type &default_handler)
+	: target_(&target), context_(&target), thread_(*target.thread_), state_(state_type::nil), default_handler_(default_handler){}
 
-winp::event::object::object(ui::object &target, ui::object &context)
-	: target_(&target), context_(&context), thread_(*target.thread_), state_(state_type::nil){}
+winp::event::object::object(ui::object &target, ui::object &context, const callback_type &default_handler)
+	: target_(&target), context_(&context), thread_(*target.thread_), state_(state_type::nil), default_handler_(default_handler){}
 
 winp::event::object::~object() = default;
 
@@ -59,7 +59,12 @@ bool winp::event::object::bubble_(){
 	return (((state_ & state_type::propagation_stopped) == 0u) && (context_ != nullptr) && (context_ = context_->get_parent_()) != nullptr);
 }
 
-void winp::event::object::do_default_(){}
+void winp::event::object::do_default_(){
+	if (default_handler_ != nullptr && !default_prevented_()){
+		default_handler_(*this);
+		state_ |= state_type::default_prevented;
+	}
+}
 
 bool winp::event::object::default_prevented_() const{
 	return ((state_ & state_type::default_prevented) != 0u);
@@ -73,19 +78,19 @@ bool winp::event::object::result_set_() const{
 	return ((state_ & state_type::result_set) != 0u);
 }
 
-winp::event::message::message(ui::object &target, const info_type &info)
-	: object(target), info_(info){}
+winp::event::message::message(ui::object &target, const callback_type &default_handler, const info_type &info)
+	: object(target, default_handler), info_(info){}
 
-winp::event::message::message(ui::object &target, ui::object &context, const info_type &info)
-	: object(target, context), info_(info){}
+winp::event::message::message(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
+	: object(target, context, default_handler), info_(info){}
 
 winp::event::message::~message() = default;
 
-winp::event::draw::draw(ui::object &target, const info_type &info)
-	: message(target, info){}
+winp::event::draw::draw(ui::object &target, const callback_type &default_handler, const info_type &info)
+	: message(target, default_handler, info){}
 
-winp::event::draw::draw(ui::object &target, ui::object &context, const info_type &info)
-	: message(target, context, info){}
+winp::event::draw::draw(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
+	: message(target, context, default_handler, info){}
 
 winp::event::draw::~draw(){
 	if (drawer_ != nullptr)
@@ -212,11 +217,11 @@ bool winp::event::draw::erase_background_(){
 	return (struct_.fErase != FALSE);
 }
 
-winp::event::mouse::mouse(ui::object &target, const info_type &info, const m_point_type &offset, button_type button)
-	: message(target, info), offset_(offset), button_(button){}
+winp::event::mouse::mouse(ui::object &target, const callback_type &default_handler, const info_type &info, const m_point_type &offset, button_type button)
+	: message(target, default_handler, info), offset_(offset), button_(button){}
 
-winp::event::mouse::mouse(ui::object &target, ui::object &context, const info_type &info, const m_point_type &offset, button_type button)
-	: message(target, context, info), offset_(offset), button_(button){}
+winp::event::mouse::mouse(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info, const m_point_type &offset, button_type button)
+	: message(target, context, default_handler, info), offset_(offset), button_(button){}
 
 winp::event::mouse::~mouse() = default;
 

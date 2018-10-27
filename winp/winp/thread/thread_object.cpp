@@ -35,8 +35,11 @@ winp::thread::object::~object(){
 	if (!is_thread_context()){//Stop thread if running
 		queue.add([=]{
 			is_exiting_ = true;
+			run_all_tasks_();
 		}, thread::queue::send_priority).get();
 	}
+	else
+		run_all_tasks_();
 
 	app::object::remove_thread_(*this);
 }
@@ -83,14 +86,14 @@ int winp::thread::object::run(){
 	auto task_was_run_ = true;
 
 	message_hwnd_ = CreateWindowExW(0, app::object::class_info_.lpszClassName, L"", 0, 0, 0, 0, 0, HWND_MESSAGE, nullptr, GetModuleHandleW(nullptr), nullptr);
-	windows_manager_.prepare_for_run_();
+	surface_manager_.prepare_for_run_();
 
 	get_all_sent_tasks_(sent_task_list);
 	for (auto &task : sent_task_list)
 		task();//Execute initially sent tasks
 
 	is_exiting_ = false;
-	while (!is_exiting_ && !windows_manager_.toplevel_map_.empty()){
+	while (!is_exiting_ && !surface_manager_.toplevel_map_.empty()){
 		if ((sent_task = get_next_sent_task_()) == nullptr){
 			if (task_was_run_){//Check for possible message in queue. If none then execute task
 				auto peek_status = PeekMessageW(&msg, nullptr, 0u, 0u, PM_NOREMOVE);
@@ -102,7 +105,7 @@ int winp::thread::object::run(){
 			else
 				task_was_run_ = true;
 
-			if (GetMessageW(&msg, nullptr, 0u, 0u) == -1 || is_exiting_){
+			if (is_exiting_ || GetMessageW(&msg, nullptr, 0u, 0u) == -1 || is_exiting_){
 				value = -2;
 				break;
 			}
@@ -112,7 +115,7 @@ int winp::thread::object::run(){
 				break;
 			}
 
-			windows_manager_.dispatch_message_(msg);
+			surface_manager_.dispatch_message_(msg);
 		}
 		else//Execute sent task
 			sent_task();

@@ -1,10 +1,13 @@
 #pragma once
 
+#include <functional>
+
 #include "../utility/windows.h"
 
 namespace winp::message{
 	class dispatcher;
 	class draw_dispatcher;
+	class mouse_dispatcher;
 }
 
 namespace winp::thread{
@@ -28,6 +31,8 @@ namespace winp::event{
 
 	class object{
 	public:
+		using callback_type = std::function<void(object &)>;
+
 		struct state_type{
 			static constexpr unsigned int nil						= (0 << 0x0000);
 			static constexpr unsigned int default_prevented			= (1 << 0x0000);
@@ -35,11 +40,11 @@ namespace winp::event{
 			static constexpr unsigned int result_set				= (1 << 0x0002);
 		};
 
-		explicit object(thread::object &thread);
+		object(thread::object &thread, const callback_type &default_handler);
 
-		explicit object(ui::object &target);
+		object(ui::object &target, const callback_type &default_handler);
 
-		object(ui::object &target, ui::object &context);
+		object(ui::object &target, ui::object &context, const callback_type &default_handler);
 
 		virtual ~object();
 
@@ -76,6 +81,16 @@ namespace winp::event{
 
 		virtual bool bubble_();
 
+		template <typename target_type>
+		bool bubble_to_type_(){
+			while (bubble_()){
+				if (dynamic_cast<target_type *>(context_) != nullptr)
+					return true;
+			}
+
+			return false;
+		}
+
 		virtual void do_default_();
 
 		virtual bool default_prevented_() const;
@@ -89,6 +104,8 @@ namespace winp::event{
 
 		thread::object &thread_;
 		unsigned int state_;
+
+		callback_type default_handler_;
 	};
 
 	class message : public object{
@@ -99,9 +116,9 @@ namespace winp::event{
 			LPARAM lparam;
 		};
 
-		message(ui::object &target, const info_type &info);
+		message(ui::object &target, const callback_type &default_handler, const info_type &info);
 
-		message(ui::object &target, ui::object &context, const info_type &info);
+		message(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info);
 
 		virtual ~message();
 
@@ -164,9 +181,9 @@ namespace winp::event{
 	public:
 		using m_rect_type = RECT;
 
-		draw(ui::object &target, const info_type &info);
+		draw(ui::object &target, const callback_type &default_handler, const info_type &info);
 
-		draw(ui::object &target, ui::object &context, const info_type &info);
+		draw(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info);
 
 		virtual ~draw();
 
@@ -218,9 +235,9 @@ namespace winp::event{
 			right,
 		};
 
-		mouse(ui::object &target, const info_type &info, const m_point_type &offset, button_type button);
+		mouse(ui::object &target, const callback_type &default_handler, const info_type &info, const m_point_type &offset, button_type button);
 
-		mouse(ui::object &target, ui::object &context, const info_type &info, const m_point_type &offset, button_type button);
+		mouse(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info, const m_point_type &offset, button_type button);
 
 		virtual ~mouse();
 
@@ -231,6 +248,8 @@ namespace winp::event{
 		virtual button_type get_button() const;
 
 	protected:
+		friend class winp::message::mouse_dispatcher;
+
 		virtual m_point_type get_position_() const;
 
 		m_point_type offset_;

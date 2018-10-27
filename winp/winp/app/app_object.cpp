@@ -21,24 +21,22 @@ void winp::app::object::init(){
 	class_info_.cbClsExtra = 0;
 
 	RegisterClassExW(&class_info_);
+	message_entry_list_[std::hash_value(WINP_CLASS_WUUID)] = DefWindowProcW;
+
+	INITCOMMONCONTROLSEX info{
+		sizeof(INITCOMMONCONTROLSEX),
+		(ICC_STANDARD_CLASSES | ICC_WIN95_CLASSES | ICC_USEREX_CLASSES | ICC_LINK_CLASS | ICC_DATE_CLASSES | ICC_COOL_CLASSES | ICC_ANIMATE_CLASS)
+	};
+	InitCommonControlsEx(&info);
 }
 
 void winp::app::object::shut_down(){
-	std::unordered_map<DWORD, m_thread_type *> threads;
-	{//Scoped
-		std::lock_guard<std::mutex> guard(lock_);
-		if (!is_shut_down_){
-			is_shut_down_ = true;
-			threads = std::move(threads_);
-
-		}
+	std::lock_guard<std::mutex> guard(lock_);
+	if (!is_shut_down_){
+		is_shut_down_ = true;
+		for (auto &thread : threads_)//Wake all sleeping threads
+			thread.second->post_message(0u);
 	}
-
-	for (auto &thread : threads){
-		thread.second->post_message(0u);
-		thread.second->run_all_tasks_();
-	}
-	
 }
 
 bool winp::app::object::is_shut_down(){
@@ -70,6 +68,21 @@ winp::app::object::m_thread_type *winp::app::object::get_current_thread(){
 	return ((it == threads_.end()) ? nullptr : it->second);
 }
 
+WNDPROC winp::app::object::get_default_message_entry(const wchar_t *class_name){
+	std::lock_guard<std::mutex> guard(lock_);
+
+	auto key = std::hash_value(class_name);
+	auto it = message_entry_list_.find(key);
+	if (it != message_entry_list_.end())
+		return it->second;
+
+	WNDCLASSEXW class_info{ sizeof(WNDCLASSEXW) };
+	if (GetClassInfoExW(nullptr, class_name, &class_info) == FALSE)
+		return nullptr;
+
+	return (message_entry_list_[key] = class_info.lpfnWndProc);
+}
+
 void winp::app::object::add_thread_(m_thread_type &thread){
 	std::lock_guard<std::mutex> guard(lock_);
 	if (!is_shut_down_)
@@ -89,5 +102,7 @@ std::unordered_map<DWORD, winp::app::object::m_thread_type *> winp::app::object:
 bool winp::app::object::is_shut_down_ = false;
 
 WNDCLASSEXW winp::app::object::class_info_{};
+
+std::unordered_map<std::size_t, WNDPROC> winp::app::object::message_entry_list_;
 
 std::mutex winp::app::object::lock_;

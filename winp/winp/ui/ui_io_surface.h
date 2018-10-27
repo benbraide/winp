@@ -21,6 +21,7 @@ namespace winp::ui{
 			event::manager<io_surface, event::mouse> double_click;
 
 			event::manager<io_surface, event::mouse> drag;
+			event::manager<io_surface, event::mouse> drag_begin;
 			event::manager<io_surface, event::mouse> drag_end;
 		};
 

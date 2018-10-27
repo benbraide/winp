@@ -7,7 +7,7 @@ namespace winp::message{
 }
 
 namespace winp::ui{
-	class visible_surface : public surface{//9GiFQvPq9KfmxgG
+	class visible_surface : public surface{
 	public:
 		struct m_colorf{
 			float r;
@@ -46,23 +46,11 @@ namespace winp::ui{
 		event::manager<visible_surface, event::object> hide_event;
 		event::manager<visible_surface, event::draw> draw_event;
 
-		/*static const unsigned int state_nil					= (0 << 0x0000);
-		static const unsigned int state_visible				= (1 << 0x0000);
-		static const unsigned int state_transparent			= (1 << 0x0001);*/
-
 	protected:
 		friend class message::draw_dispatcher;
 		friend class thread::surface_manager;
 
 		virtual visible_surface *get_visible_surface_parent_() const;
-
-		/*virtual void toggle_state_(unsigned int value, bool set);
-
-		virtual void set_state_(unsigned int value);
-
-		virtual void remove_state_(unsigned int value);
-
-		virtual bool has_state_(unsigned int value) const;*/
 
 		virtual void redraw_();
 
@@ -78,7 +66,6 @@ namespace winp::ui{
 
 		virtual const D2D1::ColorF &get_background_color_() const;
 
-		//unsigned int state_ = state_nil;
 		D2D1::ColorF background_color_;
 	};
 }

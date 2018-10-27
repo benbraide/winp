@@ -61,27 +61,24 @@ winp::thread::queue::callback_type winp::thread::queue::pop_send_priority_(){
 	if (app::object::is_shut_down())
 		return nullptr;
 
-	list_item_info task{};
 	std::lock_guard<std::mutex> guard(lock_);
-	do{
-		if (list_.empty() || app::object::is_shut_down())
-			return nullptr;
+	if (list_.empty() || app::object::is_shut_down())
+		return nullptr;
 
-		auto it = list_.find(send_priority);
-		if (it == list_.end())
-			return nullptr;
+	auto it = list_.find(send_priority);
+	if (it == list_.end())
+		return nullptr;
 
-		if (it->second.empty()){
-			list_.erase(it);
-			return nullptr;
-		}
+	if (it->second.empty()){
+		list_.erase(it);
+		return nullptr;
+	}
 
-		task = *it->second.begin();
-		it->second.erase(it->second.begin());
+	auto task = *it->second.begin();
+	it->second.erase(it->second.begin());
 
-		if (it->second.empty())
-			list_.erase(it);
-	} while (is_black_listed_(task.id));
+	if (it->second.empty())
+		list_.erase(it);
 
 	return task.callback;
 }
@@ -90,24 +87,22 @@ winp::thread::queue::callback_type winp::thread::queue::pop_(){
 	if (app::object::is_shut_down())
 		return nullptr;
 
-	list_item_info task{};
 	std::lock_guard<std::mutex> guard(lock_);
-	do{
-		if (list_.empty() || app::object::is_shut_down())
-			return nullptr;
+	if (list_.empty() || app::object::is_shut_down())
+		return nullptr;
 
-		for (auto it = list_.begin(); it != list_.end(); ++it){
-			if (!it->second.empty()){
-				task = *it->second.begin();
-				it->second.erase(it->second.begin());
+	list_item_info task{};
+	for (auto it = list_.begin(); it != list_.end(); ++it){
+		if (!it->second.empty()){
+			task = *it->second.begin();
+			it->second.erase(it->second.begin());
 
-				if (it->second.empty())
-					list_.erase(it);
+			if (it->second.empty())
+				list_.erase(it);
 
-				break;
-			}
+			break;
 		}
-	} while (is_black_listed_(task.id));
+	}
 
 	return task.callback;
 }

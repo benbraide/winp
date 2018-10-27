@@ -7,16 +7,19 @@
 
 #include "thread_item.h"
 
-#define WINP_WM_MOUSELEAVE		(WM_APP + 1)
-#define WINP_WM_MOUSEENTER		(WM_APP + 2)
+#define WINP_WM_MOUSELEAVE		(WM_APP + 0x1)
+#define WINP_WM_MOUSEENTER		(WM_APP + 0x2)
 
-#define WINP_WM_MOUSEDOWN		(WM_APP + 3)
-#define WINP_WM_MOUSEUP			(WM_APP + 4)
-#define WINP_WM_MOUSEDBLCLK		(WM_APP + 5)
+#define WINP_WM_MOUSEMOVE		(WM_APP + 0x3)
+#define WINP_WM_MOUSEWHEEL		(WM_APP + 0x4)
 
-#define WINP_WM_MOUSEDRAG		(WM_APP + 6)
-#define WINP_WM_MOUSEDRAGBEGIN	(WM_APP + 7)
-#define WINP_WM_MOUSEDRAGEND	(WM_APP + 8)
+#define WINP_WM_MOUSEDOWN		(WM_APP + 0x5)
+#define WINP_WM_MOUSEUP			(WM_APP + 0x6)
+#define WINP_WM_MOUSEDBLCLK		(WM_APP + 0x7)
+
+#define WINP_WM_MOUSEDRAG		(WM_APP + 0x8)
+#define WINP_WM_MOUSEDRAGBEGIN	(WM_APP + 0x9)
+#define WINP_WM_MOUSEDRAGEND	(WM_APP + 0xA)
 
 namespace winp::app{
 	class object;
@@ -107,7 +110,7 @@ namespace winp::thread{
 
 		LRESULT mouse_dbl_click_(ui::io_surface &target, UINT msg, DWORD mouse_position, WPARAM wparam, LPARAM lparam, UINT button, bool prevent_default);
 
-		LRESULT mouse_wheel_(ui::io_surface &target, DWORD mouse_position, WPARAM wparam, LPARAM lparam, bool prevent_default);
+		LRESULT mouse_wheel_(ui::io_surface &target, UINT msg, DWORD mouse_position, WPARAM wparam, LPARAM lparam, bool prevent_default);
 
 		LRESULT capture_released_(ui::io_surface &target, WPARAM wparam, LPARAM lparam);
 

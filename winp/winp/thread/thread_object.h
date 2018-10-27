@@ -99,7 +99,7 @@ namespace winp::thread{
 		bool is_exiting_ = false;
 
 		HWND message_hwnd_ = nullptr;
-		surface_manager windows_manager_;
+		surface_manager surface_manager_;
 
 		ID2D1Factory *draw_factory_ = nullptr;
 		IDWriteFactory *write_factory_ = nullptr;
