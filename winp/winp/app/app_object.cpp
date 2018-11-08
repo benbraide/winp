@@ -5,7 +5,6 @@ void winp::app::object::init(){
 		return;//Already initialized
 
 	main_thread_.reset(new thread::object(true));
-	thread::surface_manager::init_dispatchers_();
 
 	class_info_.cbSize = sizeof(WNDCLASSEXW);
 	class_info_.hInstance = GetModuleHandleW(nullptr);

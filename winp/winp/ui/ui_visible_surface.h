@@ -6,6 +6,10 @@ namespace winp::message{
 	class draw_dispatcher;
 }
 
+namespace winp::event{
+	class draw_dispatcher;
+}
+
 namespace winp::ui{
 	class visible_surface : public surface{
 	public:
@@ -47,12 +51,15 @@ namespace winp::ui{
 		event::manager<visible_surface, event::draw> draw_event;
 
 	protected:
+		friend class non_window::child;
+
 		friend class message::draw_dispatcher;
+		friend class event::draw_dispatcher;
 		friend class thread::surface_manager;
 
 		virtual visible_surface *get_visible_surface_parent_() const;
 
-		virtual void redraw_();
+		virtual void redraw_(const m_rect_type &region);
 
 		virtual bool set_visibility_(bool is_visible);
 
@@ -65,6 +72,10 @@ namespace winp::ui{
 		virtual bool set_background_color_(const D2D1::ColorF &value);
 
 		virtual const D2D1::ColorF &get_background_color_() const;
+
+		virtual void handle_background_erase_event_(event::draw &e);
+
+		virtual void handle_paint_event_(event::draw &e);
 
 		D2D1::ColorF background_color_;
 	};

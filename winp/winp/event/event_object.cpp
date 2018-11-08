@@ -1,13 +1,13 @@
 #include "../app/app_object.h"
 
-winp::event::object::object(thread::object &thread, const callback_type &default_handler)
-	: target_(nullptr), context_(nullptr), thread_(thread), state_(state_type::nil), default_handler_(default_handler){}
+winp::event::object::object(thread::object &thread, const callback_type &default_handler, const info_type &info)
+	: target_(nullptr), context_(nullptr), thread_(thread), state_(state_type::nil), default_handler_(default_handler), info_(info){}
 
-winp::event::object::object(ui::object &target, const callback_type &default_handler)
-	: target_(&target), context_(&target), thread_(*target.thread_), state_(state_type::nil), default_handler_(default_handler){}
+winp::event::object::object(ui::object &target, const callback_type &default_handler, const info_type &info)
+	: target_(&target), context_(&target), thread_(*target.thread_), state_(state_type::nil), default_handler_(default_handler), info_(info){}
 
-winp::event::object::object(ui::object &target, ui::object &context, const callback_type &default_handler)
-	: target_(&target), context_(&context), thread_(*target.thread_), state_(state_type::nil), default_handler_(default_handler){}
+winp::event::object::object(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
+	: target_(&target), context_(&context), thread_(*target.thread_), state_(state_type::nil), default_handler_(default_handler), info_(info){}
 
 winp::event::object::~object() = default;
 
@@ -17,6 +17,10 @@ winp::ui::object *winp::event::object::get_target() const{
 
 winp::ui::object *winp::event::object::get_context() const{
 	return (thread_.is_thread_context() ? context_ : nullptr);
+}
+
+const winp::event::object::info_type *winp::event::object::get_info() const{
+	return (thread_.is_thread_context() ? &info_ : nullptr);
 }
 
 void winp::event::object::set_result(LRESULT value){
@@ -78,19 +82,11 @@ bool winp::event::object::result_set_() const{
 	return ((state_ & state_type::result_set) != 0u);
 }
 
-winp::event::message::message(ui::object &target, const callback_type &default_handler, const info_type &info)
-	: object(target, default_handler), info_(info){}
-
-winp::event::message::message(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
-	: object(target, context, default_handler), info_(info){}
-
-winp::event::message::~message() = default;
-
 winp::event::draw::draw(ui::object &target, const callback_type &default_handler, const info_type &info)
-	: message(target, default_handler, info){}
+	: object(target, default_handler, info){}
 
 winp::event::draw::draw(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
-	: message(target, context, default_handler, info){}
+	: object(target, context, default_handler, info){}
 
 winp::event::draw::~draw(){
 	if (drawer_ != nullptr)
@@ -218,10 +214,10 @@ bool winp::event::draw::erase_background_(){
 }
 
 winp::event::mouse::mouse(ui::object &target, const callback_type &default_handler, const info_type &info, const m_point_type &offset, button_type button)
-	: message(target, default_handler, info), offset_(offset), button_(button){}
+	: object(target, default_handler, info), offset_(offset), button_(button){}
 
 winp::event::mouse::mouse(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info, const m_point_type &offset, button_type button)
-	: message(target, context, default_handler, info), offset_(offset), button_(button){}
+	: object(target, context, default_handler, info), offset_(offset), button_(button){}
 
 winp::event::mouse::~mouse() = default;
 

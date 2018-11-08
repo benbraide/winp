@@ -6,6 +6,8 @@
 
 #include "../thread/thread_object.h"
 #include "../control/control_object.h"
+#include "../message/message_dispatcher.h"
+#include "../non_window/child_non_window.h"
 
 #define WINP_CLASS_UUID		 "{DABED3E8-D8A5-48FC-B80B-B17C167FA9B0}"
 #define WINP_CLASS_WUUID	L"{DABED3E8-D8A5-48FC-B80B-B17C167FA9B0}"

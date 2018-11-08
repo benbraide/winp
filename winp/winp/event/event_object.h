@@ -17,6 +17,7 @@ namespace winp::thread{
 
 namespace winp::ui{
 	class object;
+	class visible_surface;
 }
 
 namespace winp::event{
@@ -40,17 +41,25 @@ namespace winp::event{
 			static constexpr unsigned int result_set				= (1 << 0x0002);
 		};
 
-		object(thread::object &thread, const callback_type &default_handler);
+		struct info_type{
+			unsigned int code;
+			WPARAM wparam;
+			LPARAM lparam;
+		};
 
-		object(ui::object &target, const callback_type &default_handler);
+		object(thread::object &thread, const callback_type &default_handler, const info_type &info);
 
-		object(ui::object &target, ui::object &context, const callback_type &default_handler);
+		object(ui::object &target, const callback_type &default_handler, const info_type &info);
+
+		object(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info);
 
 		virtual ~object();
 
 		virtual ui::object *get_target() const;
 
 		virtual ui::object *get_context() const;
+
+		virtual const info_type *get_info() const;
 
 		template <typename value_type>
 		void set_result(value_type value){
@@ -106,39 +115,22 @@ namespace winp::event{
 		unsigned int state_;
 
 		callback_type default_handler_;
-	};
-
-	class message : public object{
-	public:
-		struct info_type{
-			unsigned int code;
-			WPARAM wparam;
-			LPARAM lparam;
-		};
-
-		message(ui::object &target, const callback_type &default_handler, const info_type &info);
-
-		message(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info);
-
-		virtual ~message();
-
-	protected:
-		friend class ui::object;
-		friend class thread::object;
-		template <class, class> friend class manager;
-
 		info_type info_;
 	};
 
-	template <class base_type, class result_type>
-	class typed : public base_type{
+	template <class result_type>
+	class typed : public object{
 	public:
-		using m_base_type = base_type;
 		using m_result_type = result_type;
 
-		template <typename... arg_types>
-		explicit typed(arg_types &&... args)
-			: base_type(std::forward<arg_types>(args)...){}
+		typed(thread::object &thread, const callback_type &default_handler, const info_type &info)
+			: object(thread, default_handler, info){}
+
+		typed(ui::object &target, const callback_type &default_handler, const info_type &info)
+			: object(target, default_handler, info){}
+
+		typed(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
+			: object(target, context, default_handler, info){}
 
 		virtual ~typed() = default;
 
@@ -159,15 +151,19 @@ namespace winp::event{
 		m_result_type result_ = m_result_type();
 	};
 
-	template <class base_type>
-	class typed<base_type, void> : public base_type{
+	template <>
+	class typed<void> : public object{
 	public:
-		using m_base_type = base_type;
 		using m_result_type = void;
 
-		template <typename... arg_types>
-		explicit typed(arg_types &&... args)
-			: base_type(std::forward<arg_types>(args)...){}
+		typed(thread::object &thread, const callback_type &default_handler, const info_type &info)
+			: object(thread, default_handler, info){}
+
+		typed(ui::object &target, const callback_type &default_handler, const info_type &info)
+			: object(target, default_handler, info){}
+
+		typed(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
+			: object(target, context, default_handler, info){}
 
 		virtual ~typed() = default;
 
@@ -177,7 +173,7 @@ namespace winp::event{
 		template <class, class> friend class manager;
 	};
 
-	class draw : public message{
+	class draw : public object{
 	public:
 		using m_rect_type = RECT;
 
@@ -198,6 +194,7 @@ namespace winp::event{
 		virtual bool erase_background();
 
 	protected:
+		friend class ui::visible_surface;
 		friend class winp::message::draw_dispatcher;
 
 		virtual void set_target_(ui::object *target, POINT &offset);
@@ -224,7 +221,7 @@ namespace winp::event{
 		std::function<void()> cleaner_;
 	};
 
-	class mouse : public message{
+	class mouse : public object{
 	public:
 		using m_point_type = POINT;
 

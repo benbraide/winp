@@ -285,9 +285,7 @@ winp::ui::object *winp::ui::object::get_next_sibling_() const{
 	return ((parent_ == nullptr) ? nullptr : parent_->get_child_at_(get_index_() + 1u));
 }
 
-winp::event::event_result_type winp::ui::object::handle_message_(message::basic &info){
-	return event::event_result_type::nil;
-}
+void winp::ui::object::handle_event_(event::object &e){}
 
 LRESULT winp::ui::object::do_send_message_(UINT msg, WPARAM wparam, LPARAM lparam, const std::function<void(LRESULT)> &callback){
 	if (callback != nullptr){
@@ -303,15 +301,19 @@ LRESULT winp::ui::object::send_message_(UINT msg, WPARAM wparam, LPARAM lparam){
 	if (handle != nullptr)
 		return SendMessageW(handle, msg, wparam, lparam);
 
-	message::basic::info_type info;
+	auto surface_self = dynamic_cast<surface *>(this);
+	if (surface_self != nullptr)//Perform dispatch
+		return thread_->surface_manager_.find_dispatcher_(msg)->dispatch_(*surface_self, msg, wparam, lparam, false);
+
+	event::object::info_type info;
 	{//Populate info
 		info.code = msg;
 		info.wparam = wparam;
 		info.lparam = lparam;
 	}
 
-	message::basic e(*this, info);
-	handle_message_(e);
+	event::object e(*this, nullptr, info);
+	handle_event_(e);
 
 	return e.get_result();
 }
@@ -330,15 +332,21 @@ bool winp::ui::object::post_message_(UINT msg, WPARAM wparam, LPARAM lparam){
 	if (handle != nullptr)
 		return (PostMessageW(handle, msg, wparam, lparam) != FALSE);
 
-	message::basic::info_type info;
+	auto surface_self = dynamic_cast<surface *>(this);
+	if (surface_self != nullptr){//Perform dispatch
+		thread_->surface_manager_.find_dispatcher_(msg)->dispatch_(*surface_self, msg, wparam, lparam, false);
+		return true;
+	}
+
+	event::object::info_type info;
 	{//Populate info
 		info.code = msg;
 		info.wparam = wparam;
 		info.lparam = lparam;
 	}
 
-	message::basic e(*this, info);
-	handle_message_(e);
+	event::object e(*this, nullptr, info);
+	handle_event_(e);
 
 	return true;
 }
@@ -351,10 +359,10 @@ void winp::ui::object::fire_event_(event::manager_base &ev, event::object &e) co
 	ev.fire_generic_(e);
 }
 
-winp::ui::tree *winp::ui::object::get_parent_of_(const object &target){
-	return target.get_parent_();
+winp::message::dispatcher *winp::ui::object::find_dispatcher_(UINT msg){
+	return thread_->surface_manager_.find_dispatcher_(msg);
 }
 
-winp::message::dispatcher *winp::ui::object::find_dispatcher_(UINT msg){
-	return thread::surface_manager::find_dispatcher_(msg);
+winp::ui::tree *winp::ui::object::get_parent_of_(const object &target){
+	return target.get_parent_();
 }

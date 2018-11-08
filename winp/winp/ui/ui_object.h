@@ -7,6 +7,7 @@
 namespace winp::event{
 	class object;
 	class draw;
+	class dispatcher;
 }
 
 namespace winp::message{
@@ -97,6 +98,7 @@ namespace winp::ui{
 
 		friend class event::object;
 		friend class event::draw;
+		friend class event::dispatcher;
 
 		friend class message::dispatcher;
 		friend class message::mouse_dispatcher;
@@ -138,7 +140,7 @@ namespace winp::ui{
 
 		virtual object *get_next_sibling_() const;
 
-		virtual event::event_result_type handle_message_(message::basic &info);
+		virtual void handle_event_(event::object &e);
 
 		virtual LRESULT do_send_message_(UINT msg, WPARAM wparam, LPARAM lparam, const std::function<void(LRESULT)> &callback);
 
@@ -152,6 +154,8 @@ namespace winp::ui{
 
 		virtual void fire_event_(event::manager_base &ev, event::object &e) const;
 
+		message::dispatcher *find_dispatcher_(UINT msg);
+
 		template <typename target_type>
 		target_type *get_first_ancestor_of_() const{
 			target_type *ancestor = nullptr;
@@ -164,8 +168,6 @@ namespace winp::ui{
 		}
 
 		static tree *get_parent_of_(const object &target);
-
-		static message::dispatcher *find_dispatcher_(UINT msg);
 
 		HWND handle_;
 		tree *parent_;

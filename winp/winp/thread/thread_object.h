@@ -20,11 +20,6 @@ namespace winp::message{
 	class object;
 }
 
-namespace winp::ui{
-	class surface;
-	class window_surface;
-}
-
 namespace winp::thread{
 	class object{
 	public:
@@ -72,6 +67,7 @@ namespace winp::thread{
 		friend class item;
 		friend class post_message;
 
+		friend class ui::object;
 		friend class ui::surface;
 		friend class ui::window_surface;
 		friend class surface_manager;

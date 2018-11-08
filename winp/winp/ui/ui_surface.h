@@ -2,6 +2,10 @@
 
 #include "ui_tree.h"
 
+namespace winp::non_window{
+	class child;
+}
+
 namespace winp::ui{
 	class window_surface;
 
@@ -57,6 +61,7 @@ namespace winp::ui{
 	protected:
 		friend class surface_hit_test;
 		friend class window_surface;
+		friend class non_window::child;
 
 		friend class event::draw;
 		friend class message::dispatcher;

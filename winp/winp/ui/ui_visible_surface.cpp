@@ -91,54 +91,38 @@ winp::ui::visible_surface *winp::ui::visible_surface::get_visible_surface_parent
 	return dynamic_cast<visible_surface *>(get_parent_());
 }
 
-/*
-void winp::ui::visible_surface::toggle_state_(unsigned int value, bool set){
-	if (set)
-		set_state_(value);
-	else
-		remove_state_(value);
-}
-
-void winp::ui::visible_surface::set_state_(unsigned int value){
-	state_ |= value;
-}
-
-void winp::ui::visible_surface::remove_state_(unsigned int value){
-	state_ &= ~value;
-}
-
-bool winp::ui::visible_surface::has_state_(unsigned int value) const{
-	return ((state_ & value) == value);
-}*/
-
-void winp::ui::visible_surface::redraw_(){}
+void winp::ui::visible_surface::redraw_(const m_rect_type &region){}
 
 bool winp::ui::visible_surface::set_visibility_(bool is_visible){
-	//toggle_state_(state_visible, state);
 	return false;
 }
 
 bool winp::ui::visible_surface::is_visible_() const{
-	//return has_state_(state_visible);
 	return false;
 }
 
 bool winp::ui::visible_surface::set_transparency_(bool is_transparent){
-	//toggle_state_(state_transparent, state);
 	return false;
 }
 
 bool winp::ui::visible_surface::is_transparent_() const{
-	//return has_state_(state_transparent);
 	return false;
 }
 
 bool winp::ui::visible_surface::set_background_color_(const D2D1::ColorF &value){
 	background_color_ = value;
-	redraw_();
+	redraw_(m_rect_type{});
 	return true;
 }
 
 const D2D1::ColorF &winp::ui::visible_surface::get_background_color_() const{
 	return background_color_;
 }
+
+void winp::ui::visible_surface::handle_background_erase_event_(event::draw &e){
+	auto drawer = e.get_drawer_();
+	if (drawer != nullptr)
+		drawer->Clear(get_background_color_());
+}
+
+void winp::ui::visible_surface::handle_paint_event_(event::draw &e){}

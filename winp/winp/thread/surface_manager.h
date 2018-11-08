@@ -114,11 +114,9 @@ namespace winp::thread{
 
 		LRESULT capture_released_(ui::io_surface &target, WPARAM wparam, LPARAM lparam);
 
-		static void init_dispatchers_();
+		message::dispatcher *find_dispatcher_(UINT msg);
 
 		static void track_mouse_leave_(HWND target, UINT flags);
-
-		static message::dispatcher *find_dispatcher_(UINT msg);
 
 		static LRESULT CALLBACK entry_(HWND handle, UINT msg, WPARAM wparam, LPARAM lparam);
 
@@ -129,10 +127,9 @@ namespace winp::thread{
 
 		mutable cache_info cache_{};
 		HHOOK hook_handle_ = nullptr;
-
 		mouse_info mouse_info_{};
 
-		static std::shared_ptr<message::dispatcher> default_dispatcher_;
-		static std::unordered_map<UINT, std::shared_ptr<message::dispatcher>> dispatchers_;
+		std::shared_ptr<message::dispatcher> default_dispatcher_;
+		std::unordered_map<UINT, std::shared_ptr<message::dispatcher>> dispatchers_;
 	};
 }

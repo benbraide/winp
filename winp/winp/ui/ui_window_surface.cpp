@@ -308,9 +308,14 @@ winp::ui::surface::m_rect_type winp::ui::window_surface::convert_dimension_to_ab
 	return r;
 }
 
-void winp::ui::window_surface::redraw_(){
+void winp::ui::window_surface::redraw_(const m_rect_type &region){
 	auto handle = get_handle_();
-	if (handle != nullptr)
+	if (handle == nullptr)
+		return;
+
+	if (region.left < region.right || region.top < region.bottom)
+		InvalidateRect(handle, &region, TRUE);
+	else
 		InvalidateRect(handle, nullptr, TRUE);
 }
 
