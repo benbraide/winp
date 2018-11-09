@@ -1,5 +1,10 @@
 #include "../app/app_object.h"
 
+winp::ui::window_surface::window_surface(){
+	create_event.thread_ = thread_;
+	destroy_event.thread_ = thread_;
+}
+
 winp::ui::window_surface::window_surface(thread::object &thread)
 	: io_surface(thread){
 	create_event.thread_ = thread_;

@@ -15,6 +15,8 @@ namespace winp::ui{
 			minimized,
 		};
 
+		window_surface();
+
 		explicit window_surface(thread::object &thread);
 
 		virtual ~window_surface();

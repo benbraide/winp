@@ -25,6 +25,8 @@ namespace winp::ui{
 			event::manager<io_surface, event::mouse> drag_end;
 		};
 
+		io_surface();
+
 		explicit io_surface(thread::object &thread);
 
 		virtual ~io_surface();
@@ -34,6 +36,8 @@ namespace winp::ui{
 	protected:
 		friend class message::mouse_dispatcher;
 		friend class thread::surface_manager;
+
+		void init_();
 
 		virtual io_surface *get_io_surface_parent_() const;
 

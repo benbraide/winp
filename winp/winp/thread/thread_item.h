@@ -1,5 +1,7 @@
 #pragma once
 
+#include <exception>
+
 #include "../message/message_object.h"
 
 #include "thread_queue.h"
@@ -15,6 +17,8 @@ namespace winp::thread{
 	public:
 		using m_message_type = message::object;
 
+		item();
+
 		explicit item(object &thread);
 
 		virtual ~item();
@@ -28,8 +32,6 @@ namespace winp::thread{
 	protected:
 		friend class object;
 		friend class app::object;
-
-		item();
 
 		object *thread_;
 		unsigned __int64 id_;

@@ -17,6 +17,8 @@ namespace winp::ui{
 			float a;
 		};
 
+		visible_surface();
+
 		explicit visible_surface(thread::object &thread);
 
 		virtual ~visible_surface();
@@ -53,6 +55,8 @@ namespace winp::ui{
 		friend class event::draw_dispatcher;
 		friend class event::draw_handler;
 		friend class thread::surface_manager;
+
+		void init_();
 
 		virtual visible_surface *get_visible_surface_parent_() const;
 

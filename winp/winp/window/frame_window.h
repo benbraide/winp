@@ -5,6 +5,8 @@
 namespace winp::window{
 	class frame : public ui::window_surface{
 	public:
+		frame();
+
 		explicit frame(thread::object &thread);
 
 		explicit frame(ui::window_surface &parent);

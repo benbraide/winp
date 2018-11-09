@@ -36,6 +36,8 @@ namespace winp::ui{
 
 	class object : public thread::item{
 	public:
+		object();
+
 		explicit object(thread::object &thread);
 
 		virtual ~object();
@@ -103,6 +105,8 @@ namespace winp::ui{
 		friend class message::dispatcher;
 		friend class message::mouse_dispatcher;
 		friend class thread::surface_manager;
+
+		void init_();
 
 		virtual bool create_();
 

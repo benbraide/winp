@@ -1,17 +1,13 @@
 #include "ui_visible_surface.h"
 
+winp::ui::visible_surface::visible_surface()
+	: background_color_(0){
+	init_();
+}
+
 winp::ui::visible_surface::visible_surface(thread::object &thread)
 	: surface(thread), background_color_(0){
-	show_event.thread_ = thread_;
-	hide_event.thread_ = thread_;
-	draw_event.thread_ = thread_;
-
-	auto sys_color = GetSysColor(COLOR_WINDOW);
-	background_color_ = D2D1::ColorF(
-		(GetRValue(sys_color) / 255.0f),
-		(GetGValue(sys_color) / 255.0f),
-		(GetBValue(sys_color) / 255.0f)
-	);
+	init_();
 }
 
 winp::ui::visible_surface::~visible_surface() = default;
@@ -85,6 +81,19 @@ winp::ui::visible_surface::m_colorf winp::ui::visible_surface::convert_from_d2d1
 
 D2D1::ColorF winp::ui::visible_surface::convert_to_d2d1_colorf(const m_colorf &value){
 	return D2D1::ColorF(value.r, value.g, value.b, value.a);
+}
+
+void winp::ui::visible_surface::init_(){
+	show_event.thread_ = thread_;
+	hide_event.thread_ = thread_;
+	draw_event.thread_ = thread_;
+
+	auto sys_color = GetSysColor(COLOR_WINDOW);
+	background_color_ = D2D1::ColorF(
+		(GetRValue(sys_color) / 255.0f),
+		(GetGValue(sys_color) / 255.0f),
+		(GetBValue(sys_color) / 255.0f)
+	);
 }
 
 winp::ui::visible_surface *winp::ui::visible_surface::get_visible_surface_parent_() const{

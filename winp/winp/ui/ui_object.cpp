@@ -1,26 +1,13 @@
 #include "../app/app_object.h"
 
+winp::ui::object::object()
+	: handle_(nullptr), parent_(nullptr), index_(static_cast<std::size_t>(-1)){
+	init_();
+}
+
 winp::ui::object::object(thread::object &thread)
 	: item(thread), handle_(nullptr), parent_(nullptr), index_(static_cast<std::size_t>(-1)){
-	ancestor_list_.init_([this](){//begin
-		return thread_->queue.add([this]() -> tree *{ return get_parent_(); }, thread::queue::send_priority, id_).get();
-	}, [this](tree *current){//next
-		return thread_->queue.add([&]() -> tree *{ return current->get_parent_(); }, thread::queue::send_priority, id_).get();
-	});
-
-	sibling_list_.init_([this]() -> object *{//begin
-		return thread_->queue.add([this]{ return ((parent_ == nullptr) ? nullptr : parent_->get_child_at_(0)); }, thread::queue::send_priority, id_).get();
-	}, [this](object *current){//next
-		return thread_->queue.add([&]() -> object *{
-			if (parent_ == nullptr || current->get_parent_() != parent_)
-				return nullptr;
-
-			std::size_t index = current->get_index_();
-			auto value = parent_->get_child_at_(index + 1u);
-
-			return ((value == this) ? parent_->get_child_at_(index + 2u) : value);
-		}, thread::queue::send_priority, id_).get();
-	});
+	init_();
 }
 
 winp::ui::object::~object() = default;
@@ -136,6 +123,28 @@ LRESULT winp::ui::object::send_message(UINT msg, const std::function<void(LRESUL
 
 void winp::ui::object::post_message(UINT msg, const std::function<void(bool)> &callback){
 	do_post_message_(msg, 0, 0, callback);
+}
+
+void winp::ui::object::init_(){
+	ancestor_list_.init_([this](){//begin
+		return thread_->queue.add([this]() -> tree *{ return get_parent_(); }, thread::queue::send_priority, id_).get();
+	}, [this](tree *current){//next
+		return thread_->queue.add([&]() -> tree *{ return current->get_parent_(); }, thread::queue::send_priority, id_).get();
+	});
+
+	sibling_list_.init_([this]() -> object *{//begin
+		return thread_->queue.add([this]{ return ((parent_ == nullptr) ? nullptr : parent_->get_child_at_(0)); }, thread::queue::send_priority, id_).get();
+	}, [this](object *current){//next
+		return thread_->queue.add([&]() -> object *{
+			if (parent_ == nullptr || current->get_parent_() != parent_)
+				return nullptr;
+
+			std::size_t index = current->get_index_();
+			auto value = parent_->get_child_at_(index + 1u);
+
+			return ((value == this) ? parent_->get_child_at_(index + 2u) : value);
+		}, thread::queue::send_priority, id_).get();
+	});
 }
 
 bool winp::ui::object::create_(){

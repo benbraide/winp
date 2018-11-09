@@ -12,6 +12,8 @@ namespace winp::ui{
 			std::size_t index;
 		};
 
+		tree();
+
 		explicit tree(thread::object &thread);
 
 		virtual ~tree();

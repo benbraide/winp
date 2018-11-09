@@ -1,5 +1,7 @@
 #include "ui_tree.h"
 
+winp::ui::tree::tree() = default;
+
 winp::ui::tree::tree(thread::object &thread)
 	: object(thread){}
 

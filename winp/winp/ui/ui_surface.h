@@ -15,6 +15,8 @@ namespace winp::ui{
 		using m_point_type = POINT;
 		using m_rect_type = RECT;
 
+		surface();
+
 		explicit surface(thread::object &thread);
 
 		virtual ~surface();
