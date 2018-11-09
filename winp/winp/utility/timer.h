@@ -9,8 +9,20 @@
 #include "../thread/thread_object.h"
 
 namespace winp::utility{
+	class timer_object{
+	public:
+		timer_object();
+
+		explicit timer_object(thread::object &thread);
+
+		virtual ~timer_object();
+
+	protected:
+		thread::object &thread_;
+	};
+
 	template <class precision_type = std::chrono::nanoseconds>
-	class timer_interval{
+	class timer_interval : public timer_object{
 	public:
 		using m_precision_type = precision_type;
 
@@ -23,8 +35,10 @@ namespace winp::utility{
 		using guard_type = std::lock_guard<lock_type>;
 		using unique_guard_type = std::unique_lock<lock_type>;
 
+		timer_interval() = default;
+
 		explicit timer_interval(thread::object &thread)
-			: thread_(thread){}
+			: timer_object(thread){}
 
 		~timer_interval(){
 			stop(true);
@@ -101,8 +115,6 @@ namespace winp::utility{
 
 	private:
 		template <class> friend class timer;
-
-		thread::object &thread_;
 
 		bool running_ = false;
 		bool notify_exit_ = false;
