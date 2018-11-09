@@ -29,23 +29,34 @@ namespace winp::app{
 
 		static m_thread_type *get_current_thread();
 
+		static m_thread_type *get_or_create_thread();
+
 		static WNDPROC get_default_message_entry(const wchar_t *class_name);
 
 	protected:
 		friend class thread::object;
 		friend class thread::surface_manager;
 
+		static void init_();
+
 		static void add_thread_(m_thread_type &thread);
 
-		static void remove_thread_(m_thread_type &thread);
+		static void add_main_thread_(m_thread_type &thread);
 
-		static std::shared_ptr<thread::object> main_thread_;
+		static void remove_thread_(DWORD id);
+
+		static m_thread_type *find_thread_(DWORD id);
+
 		static std::unordered_map<DWORD, m_thread_type *> threads_;
+		static std::unordered_map<DWORD, std::shared_ptr<m_thread_type>> created_threads_;
 
+		static bool is_initialized_;
 		static bool is_shut_down_;
-		static WNDCLASSEXW class_info_;
 
+		static WNDCLASSEXW class_info_;
 		static std::unordered_map<std::size_t, WNDPROC> message_entry_list_;
 		static std::mutex lock_;
+
+		static DWORD main_thread_id_;
 	};
 }

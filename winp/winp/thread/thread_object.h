@@ -27,7 +27,9 @@ namespace winp::thread{
 		using m_callback_type = queue::callback_type;
 		using m_app_type = app::object;
 
-		explicit object(const std::function<void(object &)> &entry = nullptr, const std::function<void(object &)> &exit = nullptr);
+		object();
+
+		explicit object(const std::function<void(object &)> &entry, const std::function<void(object &)> &exit = nullptr);
 
 		virtual ~object();
 
@@ -74,7 +76,7 @@ namespace winp::thread{
 
 		explicit object(bool);
 
-		void init_();
+		void init_(bool is_main = false);
 
 		void add_to_black_list_(unsigned __int64 id);
 
@@ -87,6 +89,8 @@ namespace winp::thread{
 		virtual m_callback_type get_next_sent_task_();
 
 		virtual m_callback_type get_next_task_();
+
+		object *ref_ = nullptr;
 
 		std::thread::id id_;
 		DWORD local_id_ = 0;

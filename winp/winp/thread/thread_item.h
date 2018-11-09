@@ -1,7 +1,5 @@
 #pragma once
 
-#include <exception>
-
 #include "../message/message_object.h"
 
 #include "thread_queue.h"

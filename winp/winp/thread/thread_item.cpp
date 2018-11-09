@@ -1,9 +1,8 @@
 #include "../app/app_object.h"
 
 winp::thread::item::item()
-	: thread_(nullptr), id_(0u){
-	if ((thread_ = app::object::get_current_thread()) == nullptr)
-		throw std::runtime_error("Current thread has no associated object.");
+	: thread_(app::object::get_or_create_thread()), id_(0u){
+	id_ = thread_->random_generator_(1ui64, std::numeric_limits<unsigned __int64>::max());
 }
 
 winp::thread::item::item(object &thread)
