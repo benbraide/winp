@@ -285,8 +285,6 @@ winp::ui::object *winp::ui::object::get_next_sibling_() const{
 	return ((parent_ == nullptr) ? nullptr : parent_->get_child_at_(get_index_() + 1u));
 }
 
-void winp::ui::object::handle_event_(event::object &e){}
-
 LRESULT winp::ui::object::do_send_message_(UINT msg, WPARAM wparam, LPARAM lparam, const std::function<void(LRESULT)> &callback){
 	if (callback != nullptr){
 		thread_->queue.post([=]{ callback(send_message_(msg, wparam, lparam)); }, thread::queue::send_priority, id_);
@@ -305,6 +303,10 @@ LRESULT winp::ui::object::send_message_(UINT msg, WPARAM wparam, LPARAM lparam){
 	if (surface_self != nullptr)//Perform dispatch
 		return thread_->surface_manager_.find_dispatcher_(msg)->dispatch_(*surface_self, msg, wparam, lparam, false);
 
+	auto handler = dynamic_cast<event::unhandled_handler *>(this);
+	if (handler == nullptr)
+		return 0;
+
 	event::object::info_type info;
 	{//Populate info
 		info.code = msg;
@@ -313,7 +315,7 @@ LRESULT winp::ui::object::send_message_(UINT msg, WPARAM wparam, LPARAM lparam){
 	}
 
 	event::object e(*this, nullptr, info);
-	handle_event_(e);
+	handler->handle_unhandled_event_(e);
 
 	return e.get_result();
 }
@@ -338,6 +340,10 @@ bool winp::ui::object::post_message_(UINT msg, WPARAM wparam, LPARAM lparam){
 		return true;
 	}
 
+	auto handler = dynamic_cast<event::unhandled_handler *>(this);
+	if (handler == nullptr)
+		return false;
+
 	event::object::info_type info;
 	{//Populate info
 		info.code = msg;
@@ -346,7 +352,7 @@ bool winp::ui::object::post_message_(UINT msg, WPARAM wparam, LPARAM lparam){
 	}
 
 	event::object e(*this, nullptr, info);
-	handle_event_(e);
+	handler->handle_unhandled_event_(e);
 
 	return true;
 }

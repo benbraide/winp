@@ -140,8 +140,6 @@ namespace winp::ui{
 
 		virtual object *get_next_sibling_() const;
 
-		virtual void handle_event_(event::object &e);
-
 		virtual LRESULT do_send_message_(UINT msg, WPARAM wparam, LPARAM lparam, const std::function<void(LRESULT)> &callback);
 
 		virtual LRESULT send_message_(UINT msg, WPARAM wparam, LPARAM lparam);

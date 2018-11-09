@@ -21,6 +21,9 @@ namespace winp::ui{
 }
 
 namespace winp::event{
+	class draw_dispatcher;
+	class draw_handler;
+
 	enum class event_result_type{
 		nil,
 		result_set,
@@ -196,6 +199,9 @@ namespace winp::event{
 	protected:
 		friend class ui::visible_surface;
 		friend class winp::message::draw_dispatcher;
+
+		friend class draw_dispatcher;
+		friend class draw_handler;;
 
 		virtual void set_target_(ui::object *target, POINT &offset);
 

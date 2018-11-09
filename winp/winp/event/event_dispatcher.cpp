@@ -1,7 +1,9 @@
 #include "../app/app_object.h"
 
 void winp::event::dispatcher::dispatch_(object &e){
-	e.get_context()->handle_event_(e);
+	auto handler = dynamic_cast<unhandled_handler *>(e.get_context());
+	if (handler != nullptr)
+		handler->handle_unhandled_event_(e);
 }
 
 void winp::event::create_destroy_dispatcher::dispatch_(object &e){
@@ -17,7 +19,7 @@ void winp::event::create_destroy_dispatcher::dispatch_(object &e){
 }
 
 void winp::event::draw_dispatcher::dispatch_(object &e){
-	auto handler = dynamic_cast<ui::visible_surface *>(e.get_context());
+	auto handler = dynamic_cast<draw_handler *>(e.get_context());
 	if (handler != nullptr){
 		switch (e.get_info()->code){
 		case WM_ERASEBKGND:
@@ -30,6 +32,16 @@ void winp::event::draw_dispatcher::dispatch_(object &e){
 		default:
 			break;
 		}
+	}
+	else if (e.get_info()->code == WM_ERASEBKGND && dynamic_cast<unhandled_handler *>(e.get_context()) == nullptr){//Do default painting
+		auto visible_surface = dynamic_cast<ui::visible_surface *>(e.get_context());
+		if (visible_surface != nullptr){
+			auto drawer = dynamic_cast<draw &>(e).get_drawer_();
+			if (drawer != nullptr)
+				drawer->Clear(visible_surface->get_background_color_());
+		}
+		else//Visible surface is required
+			dispatcher::dispatch_(e);
 	}
 	else//Events are not subscribed to
 		dispatcher::dispatch_(e);

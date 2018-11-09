@@ -118,11 +118,3 @@ bool winp::ui::visible_surface::set_background_color_(const D2D1::ColorF &value)
 const D2D1::ColorF &winp::ui::visible_surface::get_background_color_() const{
 	return background_color_;
 }
-
-void winp::ui::visible_surface::handle_background_erase_event_(event::draw &e){
-	auto drawer = e.get_drawer_();
-	if (drawer != nullptr)
-		drawer->Clear(get_background_color_());
-}
-
-void winp::ui::visible_surface::handle_paint_event_(event::draw &e){}

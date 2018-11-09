@@ -2,12 +2,9 @@
 
 #include "ui_surface.h"
 
-namespace winp::message{
-	class draw_dispatcher;
-}
-
 namespace winp::event{
 	class draw_dispatcher;
+	class draw_handler;
 }
 
 namespace winp::ui{
@@ -53,8 +50,8 @@ namespace winp::ui{
 	protected:
 		friend class non_window::child;
 
-		friend class message::draw_dispatcher;
 		friend class event::draw_dispatcher;
+		friend class event::draw_handler;
 		friend class thread::surface_manager;
 
 		virtual visible_surface *get_visible_surface_parent_() const;
@@ -72,10 +69,6 @@ namespace winp::ui{
 		virtual bool set_background_color_(const D2D1::ColorF &value);
 
 		virtual const D2D1::ColorF &get_background_color_() const;
-
-		virtual void handle_background_erase_event_(event::draw &e);
-
-		virtual void handle_paint_event_(event::draw &e);
 
 		D2D1::ColorF background_color_;
 	};
