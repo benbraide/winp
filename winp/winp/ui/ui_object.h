@@ -21,6 +21,7 @@ namespace winp::thread{
 
 namespace winp::ui{
 	class tree;
+	class window_surface;
 
 	enum class event_id_type{
 		create,
@@ -94,6 +95,7 @@ namespace winp::ui{
 
 	protected:
 		friend class tree;
+		friend class window_surface;
 
 		friend class send_message;
 		friend class post_message;

@@ -58,6 +58,8 @@ namespace winp::ui{
 
 		virtual bool destroy_() override;
 
+		virtual void parent_changed_(tree *previous_parent, std::size_t previous_index) override;
+
 		virtual WNDPROC get_default_message_entry_() const override;
 
 		virtual bool set_size_(const m_size_type &value) override;

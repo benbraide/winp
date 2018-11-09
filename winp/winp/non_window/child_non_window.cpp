@@ -8,15 +8,36 @@ winp::non_window::child::child(ui::io_surface &parent)
 winp::non_window::child::~child() = default;
 
 bool winp::non_window::child::validate_parent_change_(tree *value, std::size_t index) const{
-	return (value != nullptr && get_parent_() == nullptr/* && value->*/);
+	return (value != nullptr && io_surface::validate_parent_change_(value, index));
 }
 
 void winp::non_window::child::parent_changed_(tree *previous_parent, std::size_t previous_index){
 	io_surface::parent_changed_(previous_parent, previous_index);
+	if (!is_visible_())
+		return;
+
+	m_point_type offset;
+	auto reg = get_dimension_();
+
+	ui::window_surface *window_parent = nullptr;
+	for (auto parent = dynamic_cast<ui::surface *>(previous_parent); parent != nullptr && (window_parent = dynamic_cast<ui::window_surface *>(parent)) == nullptr; parent = get_surface_parent_()){
+		offset = parent->get_position_();
+		reg.left += offset.x;
+		reg.top += offset.y;
+		reg.right += offset.x;
+		reg.bottom += offset.y;
+	}
+
+	if (window_parent != nullptr)//Redraw previous parent
+		static_cast<ui::visible_surface *>(window_parent)->redraw_(reg);
+
 	redraw_(m_rect_type{});
 }
 
 void winp::non_window::child::redraw_(const m_rect_type &region){
+	if (!is_visible_())
+		return;
+
 	m_point_type offset;
 	auto reg = ((region.left < region.right || region.top < region.bottom) ? region : get_dimension_());
 

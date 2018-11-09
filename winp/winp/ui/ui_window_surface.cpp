@@ -167,6 +167,22 @@ bool winp::ui::window_surface::destroy_(){
 	return ((handle == nullptr) ? true : (DestroyWindow(handle) != FALSE));
 }
 
+void winp::ui::window_surface::parent_changed_(tree *previous_parent, std::size_t previous_index){
+	io_surface::parent_changed_(previous_parent, previous_index);
+	if (get_handle_() == nullptr)
+		return;//Not created
+
+	auto parent = get_parent_();
+	if (parent == nullptr){
+		SetParent(get_handle_(), nullptr);
+		set_styles_(((get_styles_(false) | WS_POPUP) & ~WS_CHILD), false);
+	}
+	else{
+		set_styles_(((get_styles_(false) | WS_CHILD) & ~WS_POPUP), false);
+		SetParent(get_handle_(), parent->get_handle_());
+	}
+}
+
 WNDPROC winp::ui::window_surface::get_default_message_entry_() const{
 	return DefWindowProcW;
 }
