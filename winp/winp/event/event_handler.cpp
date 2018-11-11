@@ -1,6 +1,15 @@
 #include "../app/app_object.h"
 
-void winp::event::unhandled_handler::handle_unhandled_event_(object &e){}
+void winp::event::unhandled_handler::handle_unhandled_event_(object &e){
+	if (e.get_info()->code == WM_ERASEBKGND){
+		auto visible_surface = dynamic_cast<ui::visible_surface *>(this);
+		if (visible_surface != nullptr && !visible_surface->is_transparent_()){
+			auto drawer = dynamic_cast<draw &>(e).get_drawer_();
+			if (drawer != nullptr)
+				drawer->Clear(visible_surface->get_background_color_());
+		}
+	}
+}
 
 void winp::event::create_destroy_handler::handle_create_event_(object &e){}
 
@@ -8,7 +17,7 @@ void winp::event::create_destroy_handler::handle_destroy_event_(object &e){}
 
 void winp::event::draw_handler::handle_background_erase_event_(draw &e){
 	auto visible_surface = dynamic_cast<ui::visible_surface *>(this);
-	if (visible_surface != nullptr){
+	if (visible_surface != nullptr && !visible_surface->is_transparent_()){
 		auto drawer = dynamic_cast<draw &>(e).get_drawer_();
 		if (drawer != nullptr)
 			drawer->Clear(visible_surface->get_background_color_());

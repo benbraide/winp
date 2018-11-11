@@ -4,6 +4,7 @@
 
 namespace winp::event{
 	class draw_dispatcher;
+	class unhandled_handler;
 	class draw_handler;
 }
 
@@ -53,6 +54,7 @@ namespace winp::ui{
 		friend class non_window::child;
 
 		friend class event::draw_dispatcher;
+		friend class event::unhandled_handler;
 		friend class event::draw_handler;
 		friend class thread::surface_manager;
 

@@ -24,6 +24,7 @@ namespace winp::ui{
 
 namespace winp::event{
 	class draw_dispatcher;
+	class unhandled_handler;
 	class draw_handler;
 
 	enum class event_result_type{
@@ -203,7 +204,8 @@ namespace winp::event{
 		friend class winp::message::draw_dispatcher;
 
 		friend class draw_dispatcher;
-		friend class draw_handler;;
+		friend class unhandled_handler;
+		friend class draw_handler;
 
 		virtual void set_target_(ui::object *target, POINT &offset);
 
