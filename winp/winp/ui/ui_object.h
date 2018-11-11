@@ -23,18 +23,6 @@ namespace winp::ui{
 	class tree;
 	class window_surface;
 
-	enum class event_id_type{
-		create,
-		destroy,
-		close,
-		change,
-		size,
-		move,
-		show,
-		hide,
-		fail,
-	};
-
 	class object : public thread::item{
 	public:
 		object();

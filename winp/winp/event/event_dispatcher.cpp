@@ -95,3 +95,39 @@ void winp::event::mouse_dispatcher::dispatch_(object &e){
 	else//Events are not subscribed to
 		dispatcher::dispatch_(e);
 }
+
+void winp::event::focus_dispatcher::dispatch_(object &e){
+	auto handler = dynamic_cast<focus_handler *>(e.get_context());
+	if (handler != nullptr){
+		if (e.get_info()->code == WM_SETFOCUS)
+			handler->handle_set_focus_event_(e);
+		else//Destroy event
+			handler->handle_kill_focus_event_(e);
+	}
+	else//Events are not subscribed to
+		dispatcher::dispatch_(e);
+}
+
+void winp::event::key_dispatcher::dispatch_(object &e){
+	auto handler = dynamic_cast<key_handler *>(e.get_context());
+	if (handler != nullptr){
+		switch (e.get_info()->code){
+		case WM_KEYDOWN:
+			if (handler->handle_key_down_event_(dynamic_cast<key &>(e)))
+				e.stop_propagation();
+			break;
+		case WM_KEYUP:
+			if (handler->handle_key_up_event_(dynamic_cast<key &>(e)))
+				e.stop_propagation();
+			break;
+		case WM_CHAR:
+			if (handler->handle_key_char_event_(dynamic_cast<key &>(e)))
+				e.stop_propagation();
+			break;
+		default:
+			break;
+		}
+	}
+	else//Events are not subscribed to
+		dispatcher::dispatch_(e);
+}

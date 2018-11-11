@@ -64,6 +64,11 @@ namespace winp::message{
 
 		static bool bubble_of_(event::object &e);
 
+		template <typename target_type>
+		static bool bubble_to_type_of_(event::object &e){
+			return e.bubble_to_type_<target_type>();
+		}
+
 		static void set_flag_of_(event::object &e, unsigned int flag);
 
 		static void remove_flag_of_(event::object &e, unsigned int flag);
@@ -116,10 +121,37 @@ namespace winp::message{
 
 		virtual std::shared_ptr<event::object> create_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default) override;
 
-		virtual void resolve_(ui::io_surface &target, UINT msg, WPARAM wparam, LPARAM lparam, event::manager_base *&ev, event::mouse::button_type &button);
+		virtual void resolve_(ui::io_surface &target, UINT msg);
 
 		std::shared_ptr<event::mouse> e_;
 		event::manager_base *ev_;
 		event::mouse::button_type button_;
+	};
+
+	class focus_dispatcher : public dispatcher{
+	public:
+		focus_dispatcher();
+
+	protected:
+		virtual void fire_event_(event::object &e) override;
+	};
+
+	class key_dispatcher : public dispatcher{
+	public:
+		key_dispatcher();
+
+	protected:
+		virtual void cleanup_() override;
+
+		virtual void post_dispatch_(event::object &e) override;
+
+		virtual void fire_event_(event::object &e) override;
+
+		virtual std::shared_ptr<event::object> create_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default) override;
+
+		virtual void resolve_(ui::io_surface &target, UINT msg);
+
+		std::shared_ptr<event::key> e_;
+		event::manager_base *ev_;
 	};
 }

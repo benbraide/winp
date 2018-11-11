@@ -1,5 +1,6 @@
 #pragma once
 
+#include <bitset>
 #include <functional>
 
 #include "../utility/windows.h"
@@ -8,6 +9,7 @@ namespace winp::message{
 	class dispatcher;
 	class draw_dispatcher;
 	class mouse_dispatcher;
+	class key_dispatcher;
 }
 
 namespace winp::thread{
@@ -257,5 +259,80 @@ namespace winp::event{
 
 		m_point_type offset_;
 		button_type button_;
+	};
+
+	class key : public object{
+	public:
+		class keyboard_state{
+		public:
+			bool check_state(BYTE key) const;
+
+			bool left_shift_pressed() const;
+
+			bool right_shift_pressed() const;
+
+			bool shift_pressed() const;
+
+			bool left_ctrl_pressed() const;
+
+			bool right_ctrl_pressed() const;
+
+			bool ctrl_pressed() const;
+
+			bool left_alt_pressed() const;
+
+			bool right_alt_pressed() const;
+
+			bool alt_pressed() const;
+
+			bool left_win_pressed() const;
+
+			bool right_win_pressed() const;
+
+			bool win_pressed() const;
+
+			bool caps_lock_on() const;
+
+			bool num_lock_on() const;
+
+			bool scroll_lock_on() const;
+
+			bool insert_on() const;
+
+		private:
+			void retrieve_states_() const;
+		};
+
+		key(ui::object &target, const callback_type &default_handler, const info_type &info);
+
+		key(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info);
+
+		virtual ~key();
+
+		virtual unsigned short get_code() const;
+
+		virtual char get_char() const;
+
+		virtual WORD get_repeat_count() const;
+
+		virtual bool is_char() const;
+
+		virtual bool is_down() const;
+
+		virtual bool is_first_down() const;
+
+		virtual bool is_being_released() const;
+
+		virtual bool is_extended() const;
+
+		virtual const keyboard_state &get_keyboard_state() const;
+
+	protected:
+		friend class winp::message::key_dispatcher;
+
+		keyboard_state keyboard_state_;
+
+		static thread_local bool keyboard_states_retrieved_;
+		static thread_local BYTE keyboard_states_[0x100];
 	};
 }

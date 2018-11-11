@@ -24,21 +24,26 @@ winp::thread::surface_manager::surface_manager(){
 	dispatchers_[WINP_WM_MOUSEDRAG] = std::make_shared<message::mouse_dispatcher>();
 	dispatchers_[WINP_WM_MOUSEDRAGBEGIN] = std::make_shared<message::mouse_dispatcher>();
 	dispatchers_[WINP_WM_MOUSEDRAGEND] = std::make_shared<message::mouse_dispatcher>();
+
+	dispatchers_[WINP_WM_FOCUS] = std::make_shared<message::focus_dispatcher>();
+	dispatchers_[WINP_WM_KEY] = std::make_shared<message::key_dispatcher>();
 }
 
 void winp::thread::surface_manager::prepare_for_run_(){
 	hook_handle_ = SetWindowsHookExW(WH_CBT, hook_entry_, nullptr, GetCurrentThreadId());
 }
 
-bool winp::thread::surface_manager::is_dialog_message_(const MSG &msg) const{
-	return false;
+bool winp::thread::surface_manager::is_dialog_message_(MSG &msg) const{
+	if (state_.focused != nullptr)
+		return state_.focused->is_dialog_message_(msg);
+	return ((state_.mouse_focused == nullptr) ? false : state_.mouse_focused->is_dialog_message_(msg));
 }
 
-void winp::thread::surface_manager::translate_message_(const MSG &msg) const{
+void winp::thread::surface_manager::translate_message_(MSG &msg) const{
 	TranslateMessage(&msg);
 }
 
-void winp::thread::surface_manager::dispatch_message_(const MSG &msg) const{
+void winp::thread::surface_manager::dispatch_message_(MSG &msg) const{
 	if (msg.hwnd == nullptr || !is_dialog_message_(msg)){
 		translate_message_(msg);
 		DispatchMessageW(&msg);
@@ -84,204 +89,178 @@ void winp::thread::surface_manager::destroy_window_(HWND handle){
 	}
 }
 
-LRESULT winp::thread::surface_manager::mouse_leave_(ui::io_surface &target, UINT msg, DWORD mouse_position, bool prevent_default){
-	if (!prevent_default){
-		auto target_handle = target.get_handle_();
-		switch (SendMessageW(target_handle, WM_NCHITTEST, 0, mouse_position)){
-		case HTCLIENT://Inside client --> Possibly inside child
-			if (msg == WM_NCMOUSELEAVE)//Moved from non-client to client
-				track_mouse_leave_(target_handle, 0);
-			return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), target_handle, msg, 0, 0));
-		case HTNOWHERE:
-		case HTERROR://Outside window
-			break;
-		default://Moved from client to non-client
-			track_mouse_leave_(target_handle, TME_NONCLIENT);
-			return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), target_handle, msg, 0, 0));
-		}
+LRESULT winp::thread::surface_manager::mouse_nc_leave_(ui::io_surface &target, DWORD mouse_position, bool prevent_default){
+	mouse_info_.tracking_mouse = false;
+
+	auto dispatcher = find_dispatcher_(WINP_WM_MOUSELEAVE);
+	for (ui::io_surface *surface = target.get_first_ancestor_of_<ui::io_surface>(), *surface_parent = nullptr; surface != nullptr; surface = surface_parent){
+		if (surface->hit_test_(m_point_type{ GET_X_LPARAM(mouse_position), GET_Y_LPARAM(mouse_position) }, true) == utility::hit_target::inside)
+			break;//Mouse is inside surface
+
+		dispatcher->dispatch_(*surface, WM_MOUSELEAVE, 0, 0, false);
+		if ((surface_parent = surface->get_first_ancestor_of_<ui::io_surface>()) != nullptr && surface_parent->moused_ == surface)
+			surface_parent->moused_ = nullptr;//Update parent's moused
+
+		mouse_info_.mouse_target = surface_parent;
 	}
+
+	return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), target.get_handle_(), WM_NCMOUSELEAVE, 0, 0));
+}
+
+LRESULT winp::thread::surface_manager::mouse_leave_(ui::io_surface &target, DWORD mouse_position, bool prevent_default){
+	mouse_info_.tracking_mouse = false;
 	
 	LRESULT result = 0;
 	auto dispatcher = find_dispatcher_(WINP_WM_MOUSELEAVE);
 
 	auto do_hit_test = false;
-	ui::io_surface *surface = target.get_top_moused_(), *surface_parent = nullptr;
-
-	for (; surface != nullptr; surface = surface_parent){
+	for (ui::io_surface *surface = mouse_info_.mouse_target, *surface_parent = nullptr; surface != nullptr; surface = surface_parent){
 		if (do_hit_test && surface->hit_test_(m_point_type{ GET_X_LPARAM(mouse_position), GET_Y_LPARAM(mouse_position) }, true) == utility::hit_target::inside)
 			break;//Mouse is inside surface
 
 		if (!do_hit_test && surface == &target)
 			do_hit_test = true;//Test ancestors for mouse position
 
-		result = dispatcher->dispatch_(*surface, WINP_WM_MOUSELEAVE, 0, 0, (!prevent_default && surface == &target));
-		if ((surface_parent = surface->get_io_surface_parent_()) != nullptr && surface_parent->moused_ == surface)
+		if (mouse_info_.drag_target == surface){
+			find_dispatcher_(WINP_WM_MOUSEDRAGEND)->dispatch_(*mouse_info_.drag_target, WINP_WM_MOUSEDRAGEND, 0, 0, false);
+			mouse_info_.drag_target = nullptr;
+		}
+
+		if ((!prevent_default && surface == &target))
+			result = dispatcher->dispatch_(*surface, WM_MOUSELEAVE, 0, 0, true);
+		else//Don't update result
+			dispatcher->dispatch_(*surface, WM_MOUSELEAVE, 0, 0, false);
+
+		if ((surface_parent = surface->get_first_ancestor_of_<ui::io_surface>()) != nullptr && surface_parent->moused_ == surface)
 			surface_parent->moused_ = nullptr;//Update parent's moused
-		else if (mouse_info_.root == surface)
-			mouse_info_.root = nullptr;
+
+		mouse_info_.mouse_target = surface_parent;
 	}
 
 	return result;
 }
 
 LRESULT winp::thread::surface_manager::mouse_enter_(ui::io_surface &target, DWORD mouse_position){
-	auto target_parent = target.get_io_surface_parent_();
-	find_dispatcher_(WINP_WM_MOUSEENTER)->dispatch_(target, WINP_WM_MOUSEENTER, 0, 0, !false);
-
-	if (dynamic_cast<ui::window_surface *>(&target) != nullptr){//Track mouse leave on surface with mouse
-		auto target_handle = target.get_handle_();
-		switch (SendMessageW(target_handle, WM_NCHITTEST, 0, mouse_position)){
-		case HTCLIENT://Inside client
-			track_mouse_leave_(target_handle, 0);
-			break;
-		default://Inside non-client
-			track_mouse_leave_(target_handle, TME_NONCLIENT);
-			break;
-		}
-	}
+	auto dispatcher = find_dispatcher_(WINP_WM_MOUSEENTER);
+	m_point_type computed_mouse_position{ GET_X_LPARAM(mouse_position), GET_Y_LPARAM(mouse_position) };
 
 	auto surface_parent = target.get_io_surface_parent_();
-	if (surface_parent == nullptr && dynamic_cast<ui::window_surface *>(&target) != nullptr)
-		mouse_info_.root = &target;
-	else if (surface_parent == nullptr)
+	if (surface_parent != nullptr)
 		surface_parent->moused_ = &target;
+
+	mouse_info_.mouse_target = &target;
+	dispatcher->dispatch_(target, WINP_WM_MOUSEENTER, 0, 0, false);
+
+	for (auto surface = &target; surface != nullptr; surface = surface->moused_){
+		if ((surface->moused_ = surface->find_moused_child_(computed_mouse_position)) != nullptr){
+			dispatcher->dispatch_(*surface->moused_, WINP_WM_MOUSEENTER, 0, 0, false);
+			mouse_info_.mouse_target = surface->moused_;
+		}
+	}
 
 	return 0;
 }
 
 LRESULT winp::thread::surface_manager::mouse_nc_move_(ui::io_surface &target, DWORD mouse_position, WPARAM wparam, LPARAM lparam, bool prevent_default){
-	auto result = (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), target.get_handle_(), WM_NCMOUSEMOVE, wparam, lparam));
+	if (!mouse_info_.tracking_mouse)
+		track_mouse_leave_(target.get_handle_(), TME_NONCLIENT);
 
-	auto io_ancestor = target.get_first_ancestor_of_<ui::io_surface>();
-	if (io_ancestor != nullptr)
-		mouse_move_(*io_ancestor, mouse_position, 0, 0, true);
+	if (mouse_info_.drag_target == &target){
+		find_dispatcher_(WINP_WM_MOUSEDRAGEND)->dispatch_(*mouse_info_.drag_target, WINP_WM_MOUSEDRAGEND, wparam, lparam, false);
+		mouse_info_.drag_target = nullptr;
+	}
 
-	return result;
+	auto surface_parent = target.get_first_ancestor_of_<ui::io_surface>();
+	if (surface_parent != nullptr)
+		mouse_move_(*surface_parent, mouse_position, 0, 0, false);
+
+	return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), target.get_handle_(), WM_NCMOUSEMOVE, wparam, lparam));
 }
 
 LRESULT winp::thread::surface_manager::mouse_move_(ui::io_surface &target, DWORD mouse_position, WPARAM wparam, LPARAM lparam, bool prevent_default){
-	auto target_parent = target.get_io_surface_parent_();
-	auto previous_moused = ((target_parent == nullptr) ? mouse_info_.root : target_parent->moused_);
+	if (!mouse_info_.tracking_mouse)
+		track_mouse_leave_(target.get_handle_(), 0);
 
 	m_point_type computed_mouse_position{ GET_X_LPARAM(mouse_position), GET_Y_LPARAM(mouse_position) };
-	if (previous_moused == &target && !mouse_info_.is_captured){//Check for offspring with mouse out
-		for (auto moused = target.moused_; moused != nullptr; moused = moused->moused_){
-			if (moused->hit_test_(computed_mouse_position, true) != utility::hit_target::inside){
-				mouse_leave_(*moused, WINP_WM_MOUSELEAVE, mouse_position, true);
-				break;
-			}
-		}
-	}
-	else if (previous_moused != &target && previous_moused != nullptr){//Mouse leave from previous
-		mouse_leave_(*previous_moused, WINP_WM_MOUSELEAVE, mouse_position, true);
+	if (mouse_info_.mouse_target != nullptr && mouse_info_.mouse_target->hit_test_(computed_mouse_position, true) != utility::hit_target::inside)
+		mouse_leave_(*mouse_info_.mouse_target, mouse_position, true);
+
+	if (mouse_info_.mouse_target == nullptr)
 		mouse_enter_(target, mouse_position);
-	}
+	else if ((mouse_info_.mouse_target->moused_ = mouse_info_.mouse_target->find_moused_child_(computed_mouse_position)) != nullptr)
+		mouse_enter_(*mouse_info_.mouse_target->moused_, mouse_position);
 
-	for (auto surface = &target; surface != nullptr; surface = surface->moused_){
-		if (surface->moused_ == nullptr && (surface->moused_ = surface->find_moused_child_(computed_mouse_position)) != nullptr)
-			mouse_enter_(*surface->moused_, mouse_position);
-	}
-
-	auto top_moused = target.get_top_moused_();
-	if (previous_moused == &target){//Check for drag
-		auto last_mouse_position = mouse_info_.last_position;
-		if (!mouse_info_.is_dragging && mouse_info_.is_captured){
-			m_size_type delta{//Absolute values
-				((computed_mouse_position.x < mouse_info_.pressed_position.x) ? (mouse_info_.pressed_position.x - computed_mouse_position.x) : (computed_mouse_position.x - mouse_info_.pressed_position.x)),
-				((computed_mouse_position.y < mouse_info_.pressed_position.y) ? (mouse_info_.pressed_position.y - computed_mouse_position.y) : (computed_mouse_position.y - mouse_info_.pressed_position.y))
-			};
-
-			if (top_moused->should_begin_drag_(delta)){//Begin drag
-				mouse_info_.last_position = mouse_info_.pressed_position;
-				mouse_info_.is_dragging = true;
-				find_dispatcher_(WINP_WM_MOUSEDRAGBEGIN)->dispatch_(*top_moused, WINP_WM_MOUSEDRAGBEGIN, wparam, lparam, !prevent_default);
-			}
-		}
-
-		if (mouse_info_.is_dragging){//Continue drag
-			find_dispatcher_(WINP_WM_MOUSEDRAG)->dispatch_(*top_moused, WINP_WM_MOUSEDRAG, wparam, lparam, !prevent_default);
+	auto last_mouse_position = mouse_info_.last_position;
+	if (mouse_info_.drag_target == nullptr){
+		m_size_type delta{//Absolute values
+			std::abs(computed_mouse_position.x - mouse_info_.pressed_position.x),
+			std::abs(computed_mouse_position.y - mouse_info_.pressed_position.y)
+		};
+		               
+		if ((mouse_info_.drag_target = mouse_info_.mouse_target->get_drag_target_(delta)) != nullptr){//Begin drag
+			mouse_info_.last_position = mouse_info_.pressed_position;
+			find_dispatcher_(WINP_WM_MOUSEDRAGBEGIN)->dispatch_(*mouse_info_.drag_target, WINP_WM_MOUSEDRAGBEGIN, wparam, lparam, !prevent_default);
 			mouse_info_.last_position = last_mouse_position;
 		}
 	}
 
-	auto result = find_dispatcher_(WINP_WM_MOUSEMOVE)->dispatch_(*top_moused, WINP_WM_MOUSEMOVE, wparam, lparam, !prevent_default);
+	if (mouse_info_.drag_target != nullptr)//Continue drag
+		find_dispatcher_(WINP_WM_MOUSEDRAG)->dispatch_(*mouse_info_.drag_target, WINP_WM_MOUSEDRAG, wparam, lparam, !prevent_default);
+
+	auto result = find_dispatcher_(WINP_WM_MOUSEMOVE)->dispatch_(*mouse_info_.mouse_target, WM_MOUSEMOVE, wparam, lparam, !prevent_default);
 	mouse_info_.last_position = computed_mouse_position;
 
 	return result;
 }
 
 LRESULT winp::thread::surface_manager::mouse_nc_down_(ui::io_surface &target, UINT msg, DWORD mouse_position, WPARAM wparam, LPARAM lparam, UINT button, bool prevent_default){
-	mouse_down_(target, msg, mouse_position, wparam, lparam, button, false);
+	auto surface_parent = target.get_first_ancestor_of_<ui::io_surface>();
+	if (surface_parent != nullptr)
+		mouse_down_(*surface_parent, msg, mouse_position, 0, 0, button, false);
+
 	return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), target.get_handle_(), msg, wparam, lparam));
 }
 
 LRESULT winp::thread::surface_manager::mouse_down_(ui::io_surface &target, UINT msg, DWORD mouse_position, WPARAM wparam, LPARAM lparam, UINT button, bool prevent_default){
-	bool is_client;
-	if (!prevent_default){
-		switch (msg){
-		case WM_NCLBUTTONDOWN:
-		case WM_NCMBUTTONDOWN:
-		case WM_NCRBUTTONDOWN:
-			is_client = false;
-			break;
-		default:
-			is_client = true;
-			break;
-		}
+	auto result = find_dispatcher_(WINP_WM_MOUSEDOWN)->dispatch_(*mouse_info_.mouse_target, msg, 0, 0, !prevent_default);
+
+	state_.mouse_focused = mouse_info_.mouse_target;
+	if (!prevent_default && mouse_info_.first_button_pressed == 0u){
+		mouse_info_.pressed_position = m_point_type{ GET_X_LPARAM(mouse_position), GET_Y_LPARAM(mouse_position) };
+		mouse_info_.first_button_pressed = mouse_info_.button_pressed = button;
 	}
 	else
-		is_client = true;
-
-	auto top_moused = (is_client ? target.get_top_moused_() : &target);
-	auto result = find_dispatcher_(WINP_WM_MOUSEDOWN)->dispatch_(*top_moused, msg, 0, 0, (is_client && !prevent_default));
-
-	if (!prevent_default && is_client && !mouse_info_.is_captured && dynamic_cast<ui::window_surface *>(&target) != nullptr){
-		SetCapture(target.get_handle_());
-
-		mouse_info_.is_captured = true;
-		mouse_info_.captured = &target;
-
-		mouse_info_.pressed_position = m_point_type{ GET_X_LPARAM(mouse_position), GET_Y_LPARAM(mouse_position) };
-		mouse_info_.last_position = mouse_info_.pressed_position;
-		mouse_info_.button_pressed = button;
-	}
+		mouse_info_.button_pressed |= button;
 
 	return result;
 }
 
 LRESULT winp::thread::surface_manager::mouse_nc_up_(ui::io_surface &target, UINT msg, DWORD mouse_position, WPARAM wparam, LPARAM lparam, UINT button, bool prevent_default){
-	mouse_up_(target, msg, mouse_position, wparam, lparam, button, false);
+	auto surface_parent = target.get_first_ancestor_of_<ui::io_surface>();
+	if (surface_parent != nullptr)
+		mouse_up_(*surface_parent, msg, mouse_position, 0, 0, button, false);
+
 	return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), target.get_handle_(), msg, wparam, lparam));
 }
 
 LRESULT winp::thread::surface_manager::mouse_up_(ui::io_surface &target, UINT msg, DWORD mouse_position, WPARAM wparam, LPARAM lparam, UINT button, bool prevent_default){
-	bool is_client;
-	if (!prevent_default){
-		switch (msg){
-		case WM_NCLBUTTONUP:
-		case WM_NCMBUTTONUP:
-		case WM_NCRBUTTONUP:
-			is_client = false;
-			break;
-		default:
-			is_client = true;
-			break;
-		}
+	auto result = find_dispatcher_(WINP_WM_MOUSEUP)->dispatch_(*mouse_info_.mouse_target, msg, 0, 0, !prevent_default);
+
+	mouse_info_.button_pressed &= ~button;
+	if (!prevent_default && button == mouse_info_.first_button_pressed){
+		mouse_info_.first_button_pressed = 0u;
+		find_dispatcher_(WINP_WM_MOUSEDRAGEND)->dispatch_(*mouse_info_.drag_target, WINP_WM_MOUSEDRAGEND, wparam, lparam, false);
+		mouse_info_.drag_target = nullptr;
 	}
-	else
-		is_client = true;
-
-	auto top_moused = (is_client ? target.get_top_moused_() : &target);
-	auto result = find_dispatcher_(WINP_WM_MOUSEUP)->dispatch_(*top_moused, msg, 0, 0, (is_client && !prevent_default));
-
-	if (!prevent_default && is_client && mouse_info_.is_captured && mouse_info_.captured == &target)
-		ReleaseCapture();
 
 	return result;
 }
 
 LRESULT winp::thread::surface_manager::mouse_nc_dbl_click_(ui::io_surface &target, UINT msg, DWORD mouse_position, WPARAM wparam, LPARAM lparam, UINT button, bool prevent_default){
-	mouse_dbl_click_(target, msg, mouse_position, wparam, lparam, button, true);
+	auto surface_parent = target.get_first_ancestor_of_<ui::io_surface>();
+	if (surface_parent != nullptr)
+		mouse_dbl_click_(*surface_parent, msg, mouse_position, 0, 0, button, false);
+
 	return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), target.get_handle_(), msg, wparam, lparam));
 }
 
@@ -293,16 +272,20 @@ LRESULT winp::thread::surface_manager::mouse_wheel_(ui::io_surface &target, UINT
 	return find_dispatcher_(WINP_WM_MOUSEWHEEL)->dispatch_(*target.get_top_moused_(), msg, wparam, lparam, !prevent_default);
 }
 
-LRESULT winp::thread::surface_manager::capture_released_(ui::io_surface &target, WPARAM wparam, LPARAM lparam){
-	if (mouse_info_.captured == nullptr || reinterpret_cast<HWND>(lparam) == mouse_info_.captured->get_handle_())
-		return CallWindowProcW(target.get_default_message_entry_(), target.get_handle_(), WM_CAPTURECHANGED, wparam, lparam);
+LRESULT winp::thread::surface_manager::set_focus_(ui::io_surface &target, DWORD mouse_position, WPARAM wparam, LPARAM lparam, bool prevent_default){
+	state_.focused = &target;
+	return find_dispatcher_(WINP_WM_FOCUS)->dispatch_(target, WM_SETFOCUS, wparam, lparam, !prevent_default);
+}
 
-	if (mouse_info_.is_dragging){//End drag
-		mouse_info_.is_dragging = false;
-		find_dispatcher_(WINP_WM_MOUSEDRAGEND)->dispatch_(*target.get_top_moused_(), WINP_WM_MOUSEDRAGEND, wparam, lparam, false);
-	}
+LRESULT winp::thread::surface_manager::kill_focus_(ui::io_surface &target, DWORD mouse_position, WPARAM wparam, LPARAM lparam, bool prevent_default){
+	if (state_.focused == &target)
+		state_.focused = state_.mouse_focused;
 
-	return CallWindowProcW(target.get_default_message_entry_(), target.get_handle_(), WM_CAPTURECHANGED, wparam, lparam);
+	return find_dispatcher_(WINP_WM_FOCUS)->dispatch_(target, WM_KILLFOCUS, wparam, lparam, !prevent_default);
+}
+
+LRESULT winp::thread::surface_manager::key_(ui::io_surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool prevent_default){
+	return find_dispatcher_(WINP_WM_KEY)->dispatch_(*target.get_top_moused_(), msg, wparam, lparam, !prevent_default);
 }
 
 winp::message::dispatcher *winp::thread::surface_manager::find_dispatcher_(UINT msg){
@@ -311,8 +294,11 @@ winp::message::dispatcher *winp::thread::surface_manager::find_dispatcher_(UINT 
 }
 
 void winp::thread::surface_manager::track_mouse_leave_(HWND target, UINT flags){
-	TRACKMOUSEEVENT info{ sizeof(TRACKMOUSEEVENT), (TME_LEAVE | flags), target, 0 };
-	TrackMouseEvent(&info);
+	if (target != nullptr){
+		TRACKMOUSEEVENT info{ sizeof(TRACKMOUSEEVENT), (TME_LEAVE | flags), target, 0 };
+		TrackMouseEvent(&info);
+		mouse_info_.tracking_mouse = true;
+	}
 }
 
 LRESULT CALLBACK winp::thread::surface_manager::entry_(HWND handle, UINT msg, WPARAM wparam, LPARAM lparam){
@@ -326,8 +312,9 @@ LRESULT CALLBACK winp::thread::surface_manager::entry_(HWND handle, UINT msg, WP
 	if (io_surface != nullptr){
 		switch (msg){
 		case WM_NCMOUSELEAVE:
+			return manager.mouse_nc_leave_(*io_surface, GetMessagePos(), false);
 		case WM_MOUSELEAVE:
-			return manager.mouse_leave_(*io_surface, GetMessagePos(), msg, false);
+			return manager.mouse_leave_(*io_surface, GetMessagePos(), false);
 		case WM_NCMOUSEMOVE:
 			return manager.mouse_nc_move_(*io_surface, GetMessagePos(), wparam, lparam, false);
 		case WM_MOUSEMOVE:
@@ -370,8 +357,14 @@ LRESULT CALLBACK winp::thread::surface_manager::entry_(HWND handle, UINT msg, WP
 			return manager.mouse_nc_dbl_click_(*io_surface, msg, GetMessagePos(), wparam, lparam, MK_RBUTTON, false);
 		case WM_MOUSEWHEEL:
 			return manager.mouse_wheel_(*io_surface, msg, GetMessagePos(), wparam, lparam, false);
-		case WM_CAPTURECHANGED:
-			return manager.capture_released_(*io_surface, wparam, lparam);
+		case WM_SETFOCUS:
+			return manager.set_focus_(*io_surface, GetMessagePos(), wparam, lparam, false);
+		case WM_KILLFOCUS:
+			return manager.kill_focus_(*io_surface, GetMessagePos(), wparam, lparam, false);
+		case WM_KEYDOWN:
+		case WM_KEYUP:
+		case WM_CHAR:
+			return manager.key_(*io_surface, msg, wparam, lparam, false);
 		default:
 			break;
 		}

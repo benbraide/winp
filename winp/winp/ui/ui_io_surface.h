@@ -25,6 +25,12 @@ namespace winp::ui{
 			event::manager<io_surface, event::mouse> drag_end;
 		};
 
+		struct key_event_info{
+			event::manager<io_surface, event::key> down;
+			event::manager<io_surface, event::key> up;
+			event::manager<io_surface, event::key> press;
+		};
+
 		io_surface();
 
 		explicit io_surface(thread::object &thread);
@@ -32,6 +38,10 @@ namespace winp::ui{
 		virtual ~io_surface();
 
 		mouse_event_info mouse_event;
+		key_event_info key_event;
+
+		event::manager<io_surface, event::object> set_focus_event;
+		event::manager<io_surface, event::object> kill_focus_event;
 
 	protected:
 		friend class message::mouse_dispatcher;
@@ -45,7 +55,9 @@ namespace winp::ui{
 
 		virtual io_surface *find_moused_child_(const m_point_type &position) const;
 
-		virtual bool should_begin_drag_(const m_size_type &delta) const;
+		virtual io_surface *get_drag_target_(const m_size_type &delta) const;
+
+		virtual bool is_dialog_message_(MSG &msg) const;
 
 		io_surface *moused_ = nullptr;
 	};

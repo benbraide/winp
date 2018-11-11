@@ -21,6 +21,9 @@
 #define WINP_WM_MOUSEDRAGBEGIN	(WM_APP + 0x9)
 #define WINP_WM_MOUSEDRAGEND	(WM_APP + 0xA)
 
+#define WINP_WM_FOCUS			(WM_APP + 0xB)
+#define WINP_WM_KEY				(WM_APP + 0xC)
+
 namespace winp::app{
 	class object;
 }
@@ -51,19 +54,21 @@ namespace winp::thread{
 		};
 
 		struct mouse_info{
-			ui::io_surface *root;
-			ui::io_surface *captured;
+			ui::io_surface *mouse_target;
+			ui::io_surface *drag_target;
 
 			m_point_type last_position;
 			m_point_type pressed_position;
+
+			UINT first_button_pressed;
 			UINT button_pressed;
 
-			bool is_captured;
-			bool is_dragging;
+			bool tracking_mouse;
 		};
 
 		struct surface_state{
 			ui::io_surface *focused;
+			ui::io_surface *mouse_focused;
 		};
 
 		surface_manager();
@@ -78,11 +83,11 @@ namespace winp::thread{
 
 		void prepare_for_run_();
 
-		bool is_dialog_message_(const MSG &msg) const;
+		bool is_dialog_message_(MSG &msg) const;
 
-		void translate_message_(const MSG &msg) const;
+		void translate_message_(MSG &msg) const;
 
-		void dispatch_message_(const MSG &msg) const;
+		void dispatch_message_(MSG &msg) const;
 
 		ui::surface *find_object_(HWND handle) const;
 
@@ -90,7 +95,9 @@ namespace winp::thread{
 
 		void destroy_window_(HWND handle);
 
-		LRESULT mouse_leave_(ui::io_surface &target, UINT msg, DWORD mouse_position, bool prevent_default);
+		LRESULT mouse_nc_leave_(ui::io_surface &target, DWORD mouse_position, bool prevent_default);
+
+		LRESULT mouse_leave_(ui::io_surface &target, DWORD mouse_position, bool prevent_default);
 
 		LRESULT mouse_enter_(ui::io_surface &target, DWORD mouse_position);
 
@@ -112,11 +119,15 @@ namespace winp::thread{
 
 		LRESULT mouse_wheel_(ui::io_surface &target, UINT msg, DWORD mouse_position, WPARAM wparam, LPARAM lparam, bool prevent_default);
 
-		LRESULT capture_released_(ui::io_surface &target, WPARAM wparam, LPARAM lparam);
+		LRESULT set_focus_(ui::io_surface &target, DWORD mouse_position, WPARAM wparam, LPARAM lparam, bool prevent_default);
+
+		LRESULT kill_focus_(ui::io_surface &target, DWORD mouse_position, WPARAM wparam, LPARAM lparam, bool prevent_default);
+
+		LRESULT key_(ui::io_surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool prevent_default);
 
 		message::dispatcher *find_dispatcher_(UINT msg);
 
-		static void track_mouse_leave_(HWND target, UINT flags);
+		void track_mouse_leave_(HWND target, UINT flags);
 
 		static LRESULT CALLBACK entry_(HWND handle, UINT msg, WPARAM wparam, LPARAM lparam);
 
@@ -127,7 +138,9 @@ namespace winp::thread{
 
 		mutable cache_info cache_{};
 		HHOOK hook_handle_ = nullptr;
+
 		mouse_info mouse_info_{};
+		surface_state state_{};
 
 		std::shared_ptr<message::dispatcher> default_dispatcher_;
 		std::unordered_map<UINT, std::shared_ptr<message::dispatcher>> dispatchers_;

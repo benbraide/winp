@@ -237,3 +237,128 @@ winp::event::mouse::m_point_type winp::event::mouse::get_position_() const{
 	auto position = ::GetMessagePos();
 	return m_point_type{ GET_X_LPARAM(position), GET_Y_LPARAM(position) };
 }
+
+bool winp::event::key::keyboard_state::check_state(BYTE key) const{
+	retrieve_states_();
+
+	if (key == VK_CAPITAL || key == VK_NUMLOCK || key == VK_SCROLL || key == VK_INSERT)
+		return ((key::keyboard_states_[key] & 1u) != 0u);
+
+	return (key::keyboard_states_[key] < 0);
+}
+
+bool winp::event::key::keyboard_state::left_shift_pressed() const{
+	return check_state(VK_LSHIFT);
+}
+
+bool winp::event::key::keyboard_state::right_shift_pressed() const{
+	return check_state(VK_RSHIFT);
+}
+
+bool winp::event::key::keyboard_state::shift_pressed() const{
+	return check_state(VK_SHIFT);
+}
+
+bool winp::event::key::keyboard_state::left_ctrl_pressed() const{
+	return check_state(VK_LCONTROL);
+}
+
+bool winp::event::key::keyboard_state::right_ctrl_pressed() const{
+	return check_state(VK_RCONTROL);
+}
+
+bool winp::event::key::keyboard_state::ctrl_pressed() const{
+	return check_state(VK_CONTROL);
+}
+
+bool winp::event::key::keyboard_state::left_alt_pressed() const{
+	return check_state(VK_LMENU);
+}
+
+bool winp::event::key::keyboard_state::right_alt_pressed() const{
+	return check_state(VK_RMENU);
+}
+
+bool winp::event::key::keyboard_state::alt_pressed() const{
+	return check_state(VK_MENU);
+}
+
+bool winp::event::key::keyboard_state::left_win_pressed() const{
+	return check_state(VK_LWIN);
+}
+
+bool winp::event::key::keyboard_state::right_win_pressed() const{
+	return check_state(VK_RWIN);
+}
+
+bool winp::event::key::keyboard_state::win_pressed() const{
+	return (left_win_pressed() || right_win_pressed());
+}
+
+bool winp::event::key::keyboard_state::caps_lock_on() const{
+	return check_state(VK_CAPITAL);
+}
+
+bool winp::event::key::keyboard_state::num_lock_on() const{
+	return check_state(VK_NUMLOCK);
+}
+
+bool winp::event::key::keyboard_state::scroll_lock_on() const{
+	return check_state(VK_SCROLL);
+}
+
+bool winp::event::key::keyboard_state::insert_on() const{
+	return check_state(VK_INSERT);
+}
+
+void winp::event::key::keyboard_state::retrieve_states_() const{
+	if (!key::keyboard_states_retrieved_)
+		key::keyboard_states_retrieved_ = (GetKeyboardState(key::keyboard_states_) != FALSE);
+}
+
+winp::event::key::key(ui::object &target, const callback_type &default_handler, const info_type &info)
+	: object(target, default_handler, info){}
+
+winp::event::key::key(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
+	: object(target, context, default_handler, info){}
+
+winp::event::key::~key() = default;
+
+unsigned short winp::event::key::get_code() const{
+	return static_cast<unsigned short>(info_.wparam);
+}
+
+char winp::event::key::get_char() const{
+	return (reinterpret_cast<const char *>(&info_.lparam))[2];
+}
+
+WORD winp::event::key::get_repeat_count() const{
+	return (is_down() ? static_cast<WORD>(info_.lparam) : 0);
+}
+
+bool winp::event::key::is_char() const{
+	return (info_.code == WM_CHAR);
+}
+
+bool winp::event::key::is_down() const{
+	return (info_.code == WM_KEYDOWN);
+}
+
+bool winp::event::key::is_first_down() const{
+	return (is_down() ? std::bitset<sizeof(LPARAM) * 8>(info_.lparam).test(30) : false);
+}
+
+bool winp::event::key::is_being_released() const{
+	return (is_char() ? std::bitset<sizeof(LPARAM) * 8>(info_.lparam).test(31) : false);
+}
+
+bool winp::event::key::is_extended() const{
+	return std::bitset<sizeof(LPARAM) * 8>(info_.lparam).test(24);
+}
+
+const winp::event::key::keyboard_state &winp::event::key::get_keyboard_state() const{
+	return keyboard_state_;
+}
+
+thread_local bool winp::event::key::keyboard_states_retrieved_ = false;
+thread_local BYTE winp::event::key::keyboard_states_[0x100];

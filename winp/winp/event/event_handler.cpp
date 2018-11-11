@@ -36,3 +36,19 @@ void winp::event::mouse_handler::handle_mouse_drag_event_(mouse &e){}
 void winp::event::mouse_handler::handle_mouse_drag_begin_event_(mouse &e){}
 
 void winp::event::mouse_handler::handle_mouse_drag_end_event_(mouse &e){}
+
+void winp::event::focus_handler::handle_set_focus_event_(object &e){}
+
+void winp::event::focus_handler::handle_kill_focus_event_(object &e){}
+
+bool winp::event::key_handler::handle_key_down_event_(key &e){
+	return true;
+}
+
+bool winp::event::key_handler::handle_key_up_event_(key &e){
+	return true;
+}
+
+bool winp::event::key_handler::handle_key_char_event_(key &e){
+	return true;
+}

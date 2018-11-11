@@ -11,6 +11,8 @@ namespace winp::event{
 	class create_destroy_dispatcher;
 	class draw_dispatcher;
 	class mouse_dispatcher;
+	class focus_dispatcher;
+	class key_dispatcher;
 
 	class unhandled_handler{
 	public:
@@ -73,5 +75,31 @@ namespace winp::event{
 		virtual void handle_mouse_drag_begin_event_(mouse &e);
 
 		virtual void handle_mouse_drag_end_event_(mouse &e);
+	};
+
+	class focus_handler{
+	public:
+		virtual ~focus_handler() = default;
+
+	protected:
+		friend class focus_dispatcher;
+
+		virtual void handle_set_focus_event_(object &e);
+
+		virtual void handle_kill_focus_event_(object &e);
+	};
+
+	class key_handler{
+	public:
+		virtual ~key_handler() = default;
+
+	protected:
+		friend class key_dispatcher;
+
+		virtual bool handle_key_down_event_(key &e);
+
+		virtual bool handle_key_up_event_(key &e);
+
+		virtual bool handle_key_char_event_(key &e);
 	};
 }

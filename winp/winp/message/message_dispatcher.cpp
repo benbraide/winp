@@ -207,83 +207,165 @@ std::shared_ptr<winp::event::object> winp::message::mouse_dispatcher::create_eve
 		auto mouse_position = GetMessagePos();
 		POINT computed_mouse_position{ GET_X_LPARAM(mouse_position), GET_Y_LPARAM(mouse_position) };
 
-		resolve_(*io_target, msg, wparam, lparam, ev_, button_);
+		resolve_(*io_target, msg);
 		e_ = create_new_event_<event::mouse>(target, msg, wparam, lparam, call_default, computed_mouse_position, button_);
 	}
 
 	return e_;
 }
 
-void winp::message::mouse_dispatcher::resolve_(ui::io_surface &target, UINT msg, WPARAM wparam, LPARAM lparam, event::manager_base *&ev, event::mouse::button_type &button){
+void winp::message::mouse_dispatcher::resolve_(ui::io_surface &target, UINT msg){
 	switch (msg){
 	case WINP_WM_MOUSELEAVE:
-		ev = &target.mouse_event.leave;
-		button = event::mouse::button_type::nil;
+		ev_ = &target.mouse_event.leave;
+		button_ = event::mouse::button_type::nil;
 		break;
 	case WINP_WM_MOUSEENTER:
-		ev = &target.mouse_event.enter;
-		button = event::mouse::button_type::nil;
+		ev_ = &target.mouse_event.enter;
+		button_ = event::mouse::button_type::nil;
 		break;
 	case WINP_WM_MOUSEMOVE:
-		ev = &target.mouse_event.move;
-		button = event::mouse::button_type::nil;
+		ev_ = &target.mouse_event.move;
+		button_ = event::mouse::button_type::nil;
 		break;
 	case WM_MOUSEWHEEL:
 	case WM_MOUSEHWHEEL:
-		ev = &target.mouse_event.wheel;
-		button = event::mouse::button_type::nil;
+		ev_ = &target.mouse_event.wheel;
+		button_ = event::mouse::button_type::nil;
 		break;
+	case WM_NCLBUTTONDOWN:
 	case WM_LBUTTONDOWN:
-		ev = &target.mouse_event.down;
-		button = event::mouse::button_type::left;
+		ev_ = &target.mouse_event.down;
+		button_ = event::mouse::button_type::left;
 		break;
+	case WM_NCMBUTTONDOWN:
 	case WM_MBUTTONDOWN:
-		ev = &target.mouse_event.down;
-		button = event::mouse::button_type::middle;
+		ev_ = &target.mouse_event.down;
+		button_ = event::mouse::button_type::middle;
 		break;
+	case WM_NCRBUTTONDOWN:
 	case WM_RBUTTONDOWN:
-		ev = &target.mouse_event.down;
-		button = event::mouse::button_type::right;
+		ev_ = &target.mouse_event.down;
+		button_ = event::mouse::button_type::right;
 		break;
+	case WM_NCLBUTTONUP:
 	case WM_LBUTTONUP:
-		ev = &target.mouse_event.up;
-		button = event::mouse::button_type::left;
+		ev_ = &target.mouse_event.up;
+		button_ = event::mouse::button_type::left;
 		break;
+	case WM_NCMBUTTONUP:
 	case WM_MBUTTONUP:
-		ev = &target.mouse_event.up;
-		button = event::mouse::button_type::middle;
+		ev_ = &target.mouse_event.up;
+		button_ = event::mouse::button_type::middle;
 		break;
+	case WM_NCRBUTTONUP:
 	case WM_RBUTTONUP:
-		ev = &target.mouse_event.up;
-		button = event::mouse::button_type::right;
+		ev_ = &target.mouse_event.up;
+		button_ = event::mouse::button_type::right;
 		break;
+	case WM_NCLBUTTONDBLCLK:
 	case WM_LBUTTONDBLCLK:
-		ev = &target.mouse_event.double_click;
-		button = event::mouse::button_type::left;
+		ev_ = &target.mouse_event.double_click;
+		button_ = event::mouse::button_type::left;
 		break;
+	case WM_NCMBUTTONDBLCLK:
 	case WM_MBUTTONDBLCLK:
-		ev = &target.mouse_event.double_click;
-		button = event::mouse::button_type::middle;
+		ev_ = &target.mouse_event.double_click;
+		button_ = event::mouse::button_type::middle;
 		break;
+	case WM_NCRBUTTONDBLCLK:
 	case WM_RBUTTONDBLCLK:
-		ev = &target.mouse_event.double_click;
-		button = event::mouse::button_type::right;
+		ev_ = &target.mouse_event.double_click;
+		button_ = event::mouse::button_type::right;
 		break;
 	case WINP_WM_MOUSEDRAG:
-		ev = &target.mouse_event.drag;
-		button = event::mouse::button_type::nil;
+		ev_ = &target.mouse_event.drag;
+		button_ = event::mouse::button_type::nil;
 		break;
 	case WINP_WM_MOUSEDRAGBEGIN:
-		ev = &target.mouse_event.drag_begin;
-		button = event::mouse::button_type::nil;
+		ev_ = &target.mouse_event.drag_begin;
+		button_ = event::mouse::button_type::nil;
 		break;
 	case WINP_WM_MOUSEDRAGEND:
-		ev = &target.mouse_event.drag_end;
-		button = event::mouse::button_type::nil;
+		ev_ = &target.mouse_event.drag_end;
+		button_ = event::mouse::button_type::nil;
 		break;
 	default:
-		ev = nullptr;
-		button = event::mouse::button_type::nil;
+		ev_ = nullptr;
+		button_ = event::mouse::button_type::nil;
+		break;
+	}
+}
+
+winp::message::focus_dispatcher::focus_dispatcher()
+	: dispatcher(false){
+	event_dispatcher_ = std::make_shared<event::focus_dispatcher>();
+}
+
+void winp::message::focus_dispatcher::fire_event_(event::object &e){
+	auto surface_target = dynamic_cast<ui::io_surface *>(e.get_context());
+	if (surface_target == nullptr)
+		return;//Window target is required
+
+	if (e.get_info()->code == WM_CREATE)
+		fire_event_of_(*surface_target, surface_target->set_focus_event, e);
+	else
+		fire_event_of_(*surface_target, surface_target->kill_focus_event, e);
+}
+
+winp::message::key_dispatcher::key_dispatcher()
+	: dispatcher(false){
+	event_dispatcher_ = std::make_shared<event::key_dispatcher>();
+}
+
+void winp::message::key_dispatcher::cleanup_(){
+	e_ = nullptr;
+	ev_ = nullptr;
+}
+
+void winp::message::key_dispatcher::post_dispatch_(event::object &e){
+	if (e_->bubble_to_type_<ui::io_surface>()){
+		auto &info = *e.get_info();
+		auto saved_result = get_result_of_(e);
+
+		dispatch_(*dynamic_cast<ui::surface *>(e_->get_context()), info.code, info.wparam, info.lparam, false, true);
+		set_result_of_(e, saved_result);//Restore result
+	}
+}
+
+void winp::message::key_dispatcher::fire_event_(event::object &e){
+	if (ev_ != nullptr)
+		fire_event_of_(*dynamic_cast<ui::io_surface *>(e.get_context()), *ev_, *e_);
+}
+
+std::shared_ptr<winp::event::object> winp::message::key_dispatcher::create_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default){
+	if (e_ == nullptr){//Initialize
+		auto io_target = dynamic_cast<ui::io_surface *>(&target);
+		if (io_target == nullptr && (io_target = get_first_ancestor_of_<ui::io_surface>(target)) == nullptr)
+			return nullptr;//IO target required
+
+		auto key_position = GetMessagePos();
+		POINT computed_key_position{ GET_X_LPARAM(key_position), GET_Y_LPARAM(key_position) };
+
+		resolve_(*io_target, msg);
+		e_ = create_new_event_<event::key>(target, msg, wparam, lparam, call_default);
+	}
+
+	return e_;
+}
+
+void winp::message::key_dispatcher::resolve_(ui::io_surface &target, UINT msg){
+	switch (msg){
+	case WM_KEYDOWN:
+		ev_ = &target.key_event.down;
+		break;
+	case WM_KEYUP:
+		ev_ = &target.key_event.up;
+		break;
+	case WM_CHAR:
+		ev_ = &target.key_event.press;
+		break;
+	default:
 		break;
 	}
 }

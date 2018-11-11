@@ -420,6 +420,11 @@ winp::utility::hit_target winp::ui::window_surface::hit_test_(const m_rect_type 
 	return ((first_pt_inside || second_pt_inside) ? utility::hit_target::intersect : utility::hit_target::nil);
 }
 
+bool winp::ui::window_surface::is_dialog_message_(MSG &msg) const{
+	auto handle = get_handle_();
+	return (handle != nullptr && IsDialogMessageW(handle, &msg) != FALSE);
+}
+
 void winp::ui::window_surface::destruct_(){
 	thread_->queue.add([=]{
 		destroy_();

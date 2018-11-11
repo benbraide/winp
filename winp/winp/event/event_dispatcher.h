@@ -28,4 +28,14 @@ namespace winp::event{
 	protected:
 		virtual void dispatch_(object &e) override;
 	};
+
+	class focus_dispatcher : public dispatcher{
+	protected:
+		virtual void dispatch_(object &e) override;
+	};
+
+	class key_dispatcher : public dispatcher{
+	protected:
+		virtual void dispatch_(object &e) override;
+	};
 }
