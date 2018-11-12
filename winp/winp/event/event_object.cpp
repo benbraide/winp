@@ -1,13 +1,13 @@
 #include "../app/app_object.h"
 
 winp::event::object::object(thread::object &thread, const callback_type &default_handler, const info_type &info)
-	: target_(nullptr), context_(nullptr), thread_(thread), state_(state_type::nil), default_handler_(default_handler), info_(info){}
+	: target_(nullptr), context_(nullptr), thread_(thread), state_(state_type::nil), default_handler_(default_handler), result_(0), info_(info){}
 
 winp::event::object::object(ui::object &target, const callback_type &default_handler, const info_type &info)
-	: target_(&target), context_(&target), thread_(*target.thread_), state_(state_type::nil), default_handler_(default_handler), info_(info){}
+	: target_(&target), context_(&target), thread_(*target.thread_), state_(state_type::nil), default_handler_(default_handler), result_(0), info_(info){}
 
 winp::event::object::object(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
-	: target_(&target), context_(&context), thread_(*target.thread_), state_(state_type::nil), default_handler_(default_handler), info_(info){}
+	: target_(&target), context_(&context), thread_(*target.thread_), state_(state_type::nil), default_handler_(default_handler), result_(0), info_(info){}
 
 winp::event::object::~object() = default;
 
@@ -23,13 +23,13 @@ const winp::event::object::info_type *winp::event::object::get_info() const{
 	return (thread_.is_thread_context() ? &info_ : nullptr);
 }
 
-void winp::event::object::set_result(LRESULT value){
+void winp::event::object::set_result(LRESULT value, bool always_set){
 	if (thread_.is_thread_context())
-		set_result_(value);
+		set_result_(value, always_set);
 }
 
-void winp::event::object::set_result(bool value){
-	set_result(value ? TRUE : FALSE);
+void winp::event::object::set_result(bool value, bool always_set){
+	set_result((value ? TRUE : FALSE), always_set);
 }
 
 LRESULT winp::event::object::get_result() const{
@@ -53,10 +53,15 @@ void winp::event::object::stop_propagation(){
 		state_ |= state_type::propagation_stopped;
 }
 
-void winp::event::object::set_result_(LRESULT value){}
+void winp::event::object::set_result_(LRESULT value, bool always_set){
+	if (always_set || (state_ & object::state_type::result_set) == 0u){
+		result_ = value;
+		state_ |= object::state_type::result_set;
+	}
+}
 
 LRESULT winp::event::object::get_result_() const{
-	return LRESULT();
+	return result_;
 }
 
 bool winp::event::object::bubble_(){

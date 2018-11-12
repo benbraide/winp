@@ -58,7 +58,7 @@ namespace winp::message{
 
 		static std::list<ui::object *> &get_children_of_(ui::tree &target);
 
-		static void set_result_of_(event::object &e, LRESULT value);
+		static void set_result_of_(event::object &e, LRESULT value, bool always_set);
 
 		static LRESULT get_result_of_(event::object &e);
 

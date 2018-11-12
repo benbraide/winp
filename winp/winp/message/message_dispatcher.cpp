@@ -22,7 +22,7 @@ LRESULT winp::message::dispatcher::dispatch_(ui::surface &target, UINT msg, WPAR
 	if (!is_post)
 		cleanup_();
 
-	return (e->result_set_() ? e->get_result_() : 0);
+	return e->get_result_();
 }
 
 void winp::message::dispatcher::pre_dispatch_(event::object &e, bool &call_default){}
@@ -49,11 +49,7 @@ void winp::message::dispatcher::do_default_(event::object &e, bool call_default)
 	auto &info = *e.get_info();
 	auto &target = *dynamic_cast<ui::surface *>(e.get_context());
 
-	if (!e.result_set_())
-		e.set_result_(CallWindowProcW(get_default_message_entry_of_(target), get_handle_of_(target), info.code, info.wparam, info.lparam));
-	else//Result already set
-		CallWindowProcW(get_default_message_entry_of_(target), get_handle_of_(target), info.code, info.wparam, info.lparam);
-
+	e.set_result_(CallWindowProcW(get_default_message_entry_of_(target), get_handle_of_(target), info.code, info.wparam, info.lparam), false);
 	is_doing_default_ = false;
 }
 
@@ -83,8 +79,8 @@ std::list<winp::ui::object *> &winp::message::dispatcher::get_children_of_(ui::t
 	return target.children_;
 }
 
-void winp::message::dispatcher::set_result_of_(event::object &e, LRESULT value){
-	e.set_result_(value);
+void winp::message::dispatcher::set_result_of_(event::object &e, LRESULT value, bool always_set){
+	e.set_result_(value, always_set);
 }
 
 LRESULT winp::message::dispatcher::get_result_of_(event::object &e){
@@ -151,7 +147,7 @@ void winp::message::draw_dispatcher::post_dispatch_(event::object &e){
 			dispatch_(*child_target, info.code, info.wparam, info.lparam, false, true);
 
 		offset_ = saved_offset;//Restore saved offset
-		set_result_of_(e, saved_result);//Restore result
+		set_result_of_(e, saved_result, true);//Restore result
 	}
 }
 
@@ -189,7 +185,7 @@ void winp::message::mouse_dispatcher::post_dispatch_(event::object &e){
 		auto saved_result = get_result_of_(e);
 
 		dispatch_(*dynamic_cast<ui::surface *>(e_->get_context()), info.code, info.wparam, info.lparam, false, true);
-		set_result_of_(e, saved_result);//Restore result
+		set_result_of_(e, saved_result, true);//Restore result
 	}
 }
 
@@ -329,7 +325,7 @@ void winp::message::key_dispatcher::post_dispatch_(event::object &e){
 		auto saved_result = get_result_of_(e);
 
 		dispatch_(*dynamic_cast<ui::surface *>(e_->get_context()), info.code, info.wparam, info.lparam, false, true);
-		set_result_of_(e, saved_result);//Restore result
+		set_result_of_(e, saved_result, true);//Restore result
 	}
 }
 

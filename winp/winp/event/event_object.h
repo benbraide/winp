@@ -68,13 +68,13 @@ namespace winp::event{
 		virtual const info_type *get_info() const;
 
 		template <typename value_type>
-		void set_result(value_type value){
-			set_result((LRESULT)value);
+		void set_result(value_type value, bool always_set = true){
+			set_result((LRESULT)value, always_set);
 		}
 
-		virtual void set_result(LRESULT value);
+		virtual void set_result(LRESULT value, bool always_set = true);
 
-		virtual void set_result(bool value);
+		virtual void set_result(bool value, bool always_set = true);
 
 		virtual LRESULT get_result() const;
 
@@ -90,7 +90,7 @@ namespace winp::event{
 		friend class winp::message::dispatcher;
 		template <class, class> friend class manager;
 
-		virtual void set_result_(LRESULT value);
+		virtual void set_result_(LRESULT value, bool always_set);
 
 		virtual LRESULT get_result_() const;
 
@@ -121,62 +121,8 @@ namespace winp::event{
 		unsigned int state_;
 
 		callback_type default_handler_;
+		LRESULT result_;
 		info_type info_;
-	};
-
-	template <class result_type>
-	class typed : public object{
-	public:
-		using m_result_type = result_type;
-
-		typed(thread::object &thread, const callback_type &default_handler, const info_type &info)
-			: object(thread, default_handler, info){}
-
-		typed(ui::object &target, const callback_type &default_handler, const info_type &info)
-			: object(target, default_handler, info){}
-
-		typed(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
-			: object(target, context, default_handler, info){}
-
-		virtual ~typed() = default;
-
-	protected:
-		friend class ui::object;
-		friend class thread::object;
-		template <class, class> friend class manager;
-
-		virtual void set_result_(LRESULT value) override{
-			result_ = (m_result_type)value;
-			base_type::state_ |= object::state_type::result_set;
-		}
-
-		virtual LRESULT get_result_() const override{
-			return (LRESULT)result_;
-		}
-
-		m_result_type result_ = m_result_type();
-	};
-
-	template <>
-	class typed<void> : public object{
-	public:
-		using m_result_type = void;
-
-		typed(thread::object &thread, const callback_type &default_handler, const info_type &info)
-			: object(thread, default_handler, info){}
-
-		typed(ui::object &target, const callback_type &default_handler, const info_type &info)
-			: object(target, default_handler, info){}
-
-		typed(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
-			: object(target, context, default_handler, info){}
-
-		virtual ~typed() = default;
-
-	protected:
-		friend class ui::object;
-		friend class thread::object;
-		template <class, class> friend class manager;
 	};
 
 	class draw : public object{
