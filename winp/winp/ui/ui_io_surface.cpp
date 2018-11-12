@@ -1,38 +1,18 @@
 #include "../app/app_object.h"
 
-winp::ui::io_surface::io_surface(){
-	init_();
-}
+winp::ui::io_surface::mouse_event_info::mouse_event_info(io_surface &owner)
+	: leave(owner), enter(owner), move(owner), wheel(owner), down(owner), up(owner), double_click(owner), drag(owner), drag_begin(owner), drag_end(owner){}
+
+winp::ui::io_surface::key_event_info::key_event_info(io_surface &owner)
+	: down(owner), up(owner), press(owner){}
+
+winp::ui::io_surface::io_surface()
+	: mouse_event(*this), key_event(*this), set_cursor_event(*this), set_focus_event(*this), kill_focus_event(*this){}
 
 winp::ui::io_surface::io_surface(thread::object &thread)
-	: visible_surface(thread){
-	init_();
-}
+	: visible_surface(thread), mouse_event(*this), key_event(*this), set_cursor_event(*this), set_focus_event(*this), kill_focus_event(*this){}
 
 winp::ui::io_surface::~io_surface() = default;
-
-void winp::ui::io_surface::init_(){
-	mouse_event.leave.thread_ = thread_;
-	mouse_event.enter.thread_ = thread_;
-
-	mouse_event.move.thread_ = thread_;
-	mouse_event.wheel.thread_ = thread_;
-
-	mouse_event.down.thread_ = thread_;
-	mouse_event.up.thread_ = thread_;
-	mouse_event.double_click.thread_ = thread_;
-
-	mouse_event.drag.thread_ = thread_;
-	mouse_event.drag_end.thread_ = thread_;
-
-	key_event.down.thread_ = thread_;
-	key_event.up.thread_ = thread_;
-	key_event.press.thread_ = thread_;
-
-	set_cursor_event.thread_ = thread_;
-	set_focus_event.thread_ = thread_;
-	kill_focus_event.thread_ = thread_;
-}
 
 winp::ui::io_surface *winp::ui::io_surface::get_io_surface_parent_() const{
 	return dynamic_cast<io_surface *>(get_parent_());

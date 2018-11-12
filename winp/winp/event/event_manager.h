@@ -13,12 +13,27 @@ namespace winp::event{
 	protected:
 		friend class ui::object;
 
+		explicit manager_base(thread::item &owner)
+			: owner_(owner){}
+
+		virtual ~manager_base() = default;
+
 		virtual std::size_t count_() const = 0;
 
 		virtual void fire_generic_(object &e) const = 0;
+
+		virtual thread::object &get_thread_(){
+			return *owner_.thread_;
+		}
+
+		virtual unsigned __int64 get_owner_id_() const{
+			return owner_.id_;
+		}
+
+		thread::item &owner_;
 	};
 
-	template <class owner_type, class object_type>
+	template <class owner_type, class object_type, class group_type>
 	class manager : public manager_base{
 	public:
 		using m_object_type = object_type;
@@ -29,46 +44,47 @@ namespace winp::event{
 		using m_map_type = std::unordered_map<unsigned __int64, m_callback_type>;
 
 		unsigned __int64 operator +=(const m_callback_type &handler){
-			unsigned __int64 key = rand_;
-			if (thread_ == nullptr){
-				handlers_[key] = handler;
-				return key;
-			}
-			
-			return thread_->queue->add([this, handler, key]{
-				handlers_[key] = handler;
-				return key;
-			}, thread::queue::send_priority).get();
+			return bind(handler);
 		}
 
 		unsigned __int64 operator +=(const m_no_arg_callback_type &handler){
-			return operator +=([handler](m_object_type &){
-				return handler();
-			});
+			return bind(handler);
 		}
 
 		bool operator -=(unsigned __int64 id){
-			if (thread_ == nullptr){
-				auto it = handlers_->find(id);
-				if (it == handlers_->end())
-					return false;
+			return unbind(id);
+		}
 
-				handlers_->erase(it);
-				return true;
+		unsigned __int64 bind(const m_callback_type &handler, const std::function<void(manager_base &, unsigned __int64)> &callback = nullptr){
+			if (callback != nullptr){
+				manager_base::get_thread_().queue.post([=]{ callback(*this, bind_(handler)); }, thread::queue::send_priority, manager_base::get_owner_id_());
+				return 0u;
 			}
 
-			return thread_->queue->add([&]{
-				auto it = handlers_->find(id);
-				if (it == handlers_->end())
-					return false;
+			return manager_base::get_thread_().queue.add([=]{ return bind_(handler); }, thread::queue::send_priority, manager_base::get_owner_id_()).get();
+		}
 
-				handlers_->erase(it);
-				return true;
-			}, thread::queue::send_priority).get();
+		unsigned __int64 bind(const m_no_arg_callback_type &handler, const std::function<void(manager_base &, unsigned __int64)> &callback = nullptr){
+			return bind([handler](m_object_type &){
+				return handler();
+			}, callback);
+		}
+
+		bool unbind(unsigned __int64 id, const std::function<void(manager_base &, bool)> &callback = nullptr){
+			if (callback != nullptr){
+				manager_base::get_thread_().queue.post([=]{ callback(*this, unbind_(id)); }, thread::queue::send_priority, manager_base::get_owner_id_());
+				return false;
+			}
+
+			return manager_base::get_thread_().queue.add([=]{ return unbind_(id); }, thread::queue::send_priority, manager_base::get_owner_id_()).get();
 		}
 
 	protected:
 		friend owner_type;
+		friend group_type;
+
+		explicit manager(owner_type &owner)
+			: manager_base(owner){}
 
 		virtual std::size_t count_() const override{
 			return handlers_.size();
@@ -86,8 +102,22 @@ namespace winp::event{
 			}
 		}
 
+		unsigned __int64 bind_(const m_callback_type &handler){
+			auto id = rand_(1ui64, std::numeric_limits<unsigned __int64>::max());
+			handlers_[id] = handler;
+			return id;
+		}
+
+		bool unbind_(unsigned __int64 id){
+			auto it = handlers_->find(id);
+			if (it == handlers_->end())
+				return false;
+
+			handlers_->erase(it);
+			return true;
+		}
+
 		m_map_type handlers_;
 		utility::random_integral_number rand_;
-		thread::object *thread_ = nullptr;
 	};
 }

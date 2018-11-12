@@ -8,6 +8,10 @@ namespace winp::app{
 	class object;
 }
 
+namespace winp::event{
+	class manager_base;
+}
+
 namespace winp::thread{
 	class object;
 
@@ -30,6 +34,7 @@ namespace winp::thread{
 	protected:
 		friend class object;
 		friend class app::object;
+		friend class event::manager_base;
 
 		object *thread_;
 		unsigned __int64 id_;

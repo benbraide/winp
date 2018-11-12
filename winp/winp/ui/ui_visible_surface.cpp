@@ -1,12 +1,12 @@
 #include "ui_visible_surface.h"
 
 winp::ui::visible_surface::visible_surface()
-	: background_color_(0){
+	: show_event(*this), hide_event(*this), draw_event(*this), background_color_(0){
 	init_();
 }
 
 winp::ui::visible_surface::visible_surface(thread::object &thread)
-	: surface(thread), background_color_(0){
+	: surface(thread), show_event(*this), hide_event(*this), draw_event(*this), background_color_(0){
 	init_();
 }
 
@@ -84,10 +84,6 @@ D2D1::ColorF winp::ui::visible_surface::convert_to_d2d1_colorf(const m_colorf &v
 }
 
 void winp::ui::visible_surface::init_(){
-	show_event.thread_ = thread_;
-	hide_event.thread_ = thread_;
-	draw_event.thread_ = thread_;
-
 	auto sys_color = GetSysColor(COLOR_WINDOW);
 	background_color_ = D2D1::ColorF(
 		(GetRValue(sys_color) / 255.0f),

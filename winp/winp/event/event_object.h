@@ -33,7 +33,7 @@ namespace winp::event{
 		prevent_default,
 	};
 
-	template <class owner_type, class object_type>
+	template <class owner_type, class object_type, class group_type = void>
 	class manager;
 
 	class object{
@@ -88,7 +88,7 @@ namespace winp::event{
 		friend class ui::object;
 		friend class thread::object;
 		friend class winp::message::dispatcher;
-		template <class, class> friend class manager;
+		template <class, class, class> friend class manager;
 
 		virtual void set_result_(LRESULT value, bool always_set);
 

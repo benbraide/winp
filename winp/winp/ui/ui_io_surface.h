@@ -10,25 +10,29 @@ namespace winp::ui{
 	class io_surface : public visible_surface{
 	public:
 		struct mouse_event_info{
-			event::manager<io_surface, event::mouse> leave;
-			event::manager<io_surface, event::mouse> enter;
+			explicit mouse_event_info(io_surface &owner);
 
-			event::manager<io_surface, event::mouse> move;
-			event::manager<io_surface, event::mouse> wheel;
+			event::manager<io_surface, event::mouse, mouse_event_info> leave;
+			event::manager<io_surface, event::mouse, mouse_event_info> enter;
 
-			event::manager<io_surface, event::mouse> down;
-			event::manager<io_surface, event::mouse> up;
-			event::manager<io_surface, event::mouse> double_click;
+			event::manager<io_surface, event::mouse, mouse_event_info> move;
+			event::manager<io_surface, event::mouse, mouse_event_info> wheel;
 
-			event::manager<io_surface, event::mouse> drag;
-			event::manager<io_surface, event::mouse> drag_begin;
-			event::manager<io_surface, event::mouse> drag_end;
+			event::manager<io_surface, event::mouse, mouse_event_info> down;
+			event::manager<io_surface, event::mouse, mouse_event_info> up;
+			event::manager<io_surface, event::mouse, mouse_event_info> double_click;
+
+			event::manager<io_surface, event::mouse, mouse_event_info> drag;
+			event::manager<io_surface, event::mouse, mouse_event_info> drag_begin;
+			event::manager<io_surface, event::mouse, mouse_event_info> drag_end;
 		};
 
 		struct key_event_info{
-			event::manager<io_surface, event::key> down;
-			event::manager<io_surface, event::key> up;
-			event::manager<io_surface, event::key> press;
+			explicit key_event_info(io_surface &owner);
+
+			event::manager<io_surface, event::key, key_event_info> down;
+			event::manager<io_surface, event::key, key_event_info> up;
+			event::manager<io_surface, event::key, key_event_info> press;
 		};
 
 		io_surface();
@@ -47,8 +51,6 @@ namespace winp::ui{
 	protected:
 		friend class message::mouse_dispatcher;
 		friend class thread::surface_manager;
-
-		void init_();
 
 		virtual io_surface *get_io_surface_parent_() const;
 
