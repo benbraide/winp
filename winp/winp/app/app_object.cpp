@@ -98,7 +98,7 @@ void winp::app::object::init_(){
 	class_info_.lpszMenuName = nullptr;
 	class_info_.style = (CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS);
 	class_info_.hbrBackground = nullptr;
-	class_info_.hCursor = nullptr;
+	class_info_.hCursor = LoadCursorW(nullptr, IDC_ARROW);
 	class_info_.hIconSm = nullptr;
 	class_info_.hIcon = nullptr;
 	class_info_.cbWndExtra = 0;

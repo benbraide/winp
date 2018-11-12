@@ -218,6 +218,22 @@ bool winp::event::draw::erase_background_(){
 	return (struct_.fErase != FALSE);
 }
 
+winp::event::cursor::cursor(ui::object &target, const callback_type &default_handler, const info_type &info)
+	: object(target, default_handler, info){}
+
+winp::event::cursor::cursor(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
+	: object(target, context, default_handler, info){}
+
+winp::event::cursor::~cursor() = default;
+
+WORD winp::event::cursor::get_hit_target() const{
+	return (thread_.is_thread_context() ? LOWORD(info_.lparam) : 0);
+}
+
+WORD winp::event::cursor::get_mouse_button() const{
+	return (thread_.is_thread_context() ? HIWORD(info_.lparam) : 0);
+}
+
 winp::event::mouse::mouse(ui::object &target, const callback_type &default_handler, const info_type &info, const m_point_type &offset, button_type button)
 	: object(target, default_handler, info), offset_(offset), button_(button){}
 
@@ -239,11 +255,20 @@ winp::event::mouse::button_type winp::event::mouse::get_button() const{
 }
 
 winp::event::mouse::m_point_type winp::event::mouse::get_position_() const{
+	if (!thread_.is_thread_context())
+		return m_point_type{};
+
 	auto position = ::GetMessagePos();
 	return m_point_type{ GET_X_LPARAM(position), GET_Y_LPARAM(position) };
 }
 
+winp::event::key::keyboard_state::keyboard_state(key &e)
+	: e_(e){}
+
 bool winp::event::key::keyboard_state::check_state(BYTE key) const{
+	if (!e_.thread_.is_thread_context())
+		return false;
+
 	retrieve_states_();
 
 	if (key == VK_CAPITAL || key == VK_NUMLOCK || key == VK_SCROLL || key == VK_INSERT)
@@ -322,19 +347,19 @@ void winp::event::key::keyboard_state::retrieve_states_() const{
 }
 
 winp::event::key::key(ui::object &target, const callback_type &default_handler, const info_type &info)
-	: object(target, default_handler, info){}
+	: object(target, default_handler, info), keyboard_state_(*this){}
 
 winp::event::key::key(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
-	: object(target, context, default_handler, info){}
+	: object(target, context, default_handler, info), keyboard_state_(*this){}
 
 winp::event::key::~key() = default;
 
 unsigned short winp::event::key::get_code() const{
-	return static_cast<unsigned short>(info_.wparam);
+	return (thread_.is_thread_context() ? static_cast<unsigned short>(info_.wparam) : 0u);
 }
 
-char winp::event::key::get_char() const{
-	return (reinterpret_cast<const char *>(&info_.lparam))[2];
+wchar_t winp::event::key::get_char() const{
+	return (thread_.is_thread_context() ? (reinterpret_cast<const wchar_t *>(&info_.lparam))[2] : L'\0');
 }
 
 WORD winp::event::key::get_repeat_count() const{
@@ -342,11 +367,11 @@ WORD winp::event::key::get_repeat_count() const{
 }
 
 bool winp::event::key::is_char() const{
-	return (info_.code == WM_CHAR);
+	return (thread_.is_thread_context() && info_.code == WM_CHAR);
 }
 
 bool winp::event::key::is_down() const{
-	return (info_.code == WM_KEYDOWN);
+	return (thread_.is_thread_context() && info_.code == WM_KEYDOWN);
 }
 
 bool winp::event::key::is_first_down() const{
@@ -358,7 +383,7 @@ bool winp::event::key::is_being_released() const{
 }
 
 bool winp::event::key::is_extended() const{
-	return std::bitset<sizeof(LPARAM) * 8>(info_.lparam).test(24);
+	return (thread_.is_thread_context() && std::bitset<sizeof(LPARAM) * 8>(info_.lparam).test(24));
 }
 
 const winp::event::key::keyboard_state &winp::event::key::get_keyboard_state() const{

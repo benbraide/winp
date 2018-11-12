@@ -40,6 +40,7 @@ namespace winp::ui{
 		mouse_event_info mouse_event;
 		key_event_info key_event;
 
+		event::manager<io_surface, event::cursor> set_cursor_event;
 		event::manager<io_surface, event::object> set_focus_event;
 		event::manager<io_surface, event::object> kill_focus_event;
 

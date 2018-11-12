@@ -29,6 +29,7 @@ void winp::ui::io_surface::init_(){
 	key_event.up.thread_ = thread_;
 	key_event.press.thread_ = thread_;
 
+	set_cursor_event.thread_ = thread_;
 	set_focus_event.thread_ = thread_;
 	kill_focus_event.thread_ = thread_;
 }

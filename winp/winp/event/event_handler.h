@@ -10,6 +10,7 @@ namespace winp::event{
 	class dispatcher;
 	class create_destroy_dispatcher;
 	class draw_dispatcher;
+	class cursor_dispatcher;
 	class mouse_dispatcher;
 	class focus_dispatcher;
 	class key_dispatcher;
@@ -47,6 +48,16 @@ namespace winp::event{
 		virtual void handle_background_erase_event_(draw &e);
 
 		virtual void handle_paint_event_(draw &e);
+	};
+
+	class cursor_handler{
+	public:
+		virtual ~cursor_handler() = default;
+
+	protected:
+		friend class cursor_dispatcher;
+
+		virtual void handle_set_cursor_event_(cursor &e);
 	};
 
 	class mouse_handler{

@@ -25,6 +25,7 @@ winp::thread::surface_manager::surface_manager(){
 	dispatchers_[WINP_WM_MOUSEDRAGBEGIN] = std::make_shared<message::mouse_dispatcher>();
 	dispatchers_[WINP_WM_MOUSEDRAGEND] = std::make_shared<message::mouse_dispatcher>();
 
+	dispatchers_[WM_SETCURSOR] = std::make_shared<message::cursor_dispatcher>();
 	dispatchers_[WINP_WM_FOCUS] = std::make_shared<message::focus_dispatcher>();
 	dispatchers_[WINP_WM_KEY] = std::make_shared<message::key_dispatcher>();
 }

@@ -9,12 +9,17 @@ namespace winp::thread{
 	class surface_manager;
 }
 
+namespace winp::event{
+	class dispatcher;
+}
+
 namespace winp::message{
 	class dispatcher{
 	public:
 		dispatcher();
 
 	protected:
+		friend class event::dispatcher;
 		friend class thread::surface_manager;
 		friend class ui::object;
 
@@ -106,6 +111,16 @@ namespace winp::message{
 
 		std::shared_ptr<event::draw> e_;
 		POINT offset_{};
+	};
+
+	class cursor_dispatcher : public dispatcher{
+	public:
+		cursor_dispatcher();
+
+	protected:
+		virtual void fire_event_(event::object &e) override;
+
+		virtual std::shared_ptr<event::object> create_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default) override;
 	};
 
 	class mouse_dispatcher : public dispatcher{

@@ -177,6 +177,19 @@ namespace winp::event{
 		std::function<void()> cleaner_;
 	};
 
+	class cursor : public object{
+	public:
+		cursor(ui::object &target, const callback_type &default_handler, const info_type &info);
+
+		cursor(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info);
+
+		virtual ~cursor();
+
+		virtual WORD get_hit_target() const;
+
+		virtual WORD get_mouse_button() const;
+	};
+
 	class mouse : public object{
 	public:
 		using m_point_type = POINT;
@@ -213,6 +226,8 @@ namespace winp::event{
 	public:
 		class keyboard_state{
 		public:
+			explicit keyboard_state(key &e);
+
 			bool check_state(BYTE key) const;
 
 			bool left_shift_pressed() const;
@@ -249,6 +264,8 @@ namespace winp::event{
 
 		private:
 			void retrieve_states_() const;
+
+			key &e_;
 		};
 
 		key(ui::object &target, const callback_type &default_handler, const info_type &info);
@@ -259,7 +276,7 @@ namespace winp::event{
 
 		virtual unsigned short get_code() const;
 
-		virtual char get_char() const;
+		virtual wchar_t get_char() const;
 
 		virtual WORD get_repeat_count() const;
 

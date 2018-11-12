@@ -6,6 +6,22 @@ void winp::event::dispatcher::dispatch_(object &e){
 		handler->handle_unhandled_event_(e);
 }
 
+void winp::event::dispatcher::set_result_of_(event::object &e, LRESULT value, bool always_set){
+	message::dispatcher::set_result_of_(e, value, always_set);
+}
+
+LRESULT winp::event::dispatcher::get_result_of_(event::object &e){
+	return message::dispatcher::get_result_of_(e);
+}
+
+bool winp::event::dispatcher::result_set_of_(event::object &e){
+	return message::dispatcher::result_set_of_(e);
+}
+
+bool winp::event::dispatcher::default_prevented_of_(event::object &e){
+	return message::dispatcher::default_prevented_of_(e);
+}
+
 void winp::event::create_destroy_dispatcher::dispatch_(object &e){
 	auto handler = dynamic_cast<create_destroy_handler *>(e.get_context());
 	if (handler != nullptr){
@@ -33,14 +49,25 @@ void winp::event::draw_dispatcher::dispatch_(object &e){
 			break;
 		}
 	}
-	else if (e.get_info()->code == WM_ERASEBKGND && dynamic_cast<unhandled_handler *>(e.get_context()) == nullptr){//Do default painting
-		auto visible_surface = dynamic_cast<ui::visible_surface *>(e.get_context());
-		if (visible_surface != nullptr && !visible_surface->is_transparent_()){
-			auto drawer = dynamic_cast<draw &>(e).get_drawer_();
-			if (drawer != nullptr)
-				drawer->Clear(visible_surface->get_background_color_());
-		}
+	else if (e.get_info()->code == WM_ERASEBKGND && dynamic_cast<unhandled_handler *>(e.get_context()) == nullptr)//Do default painting
+		erase_background_(dynamic_cast<draw &>(e));
+	else//Events are not subscribed to
+		dispatcher::dispatch_(e);
+}
+
+void winp::event::draw_dispatcher::erase_background_(draw &e){
+	auto visible_surface = dynamic_cast<ui::visible_surface *>(e.get_context());
+	if (visible_surface != nullptr && !visible_surface->is_transparent_()){
+		auto drawer = e.get_drawer_();
+		if (drawer != nullptr)
+			drawer->Clear(visible_surface->get_background_color_());
 	}
+}
+
+void winp::event::cursor_dispatcher::dispatch_(object &e){
+	auto handler = dynamic_cast<cursor_handler *>(e.get_context());
+	if (handler != nullptr)
+		handler->handle_set_cursor_event_(dynamic_cast<cursor &>(e));
 	else//Events are not subscribed to
 		dispatcher::dispatch_(e);
 }

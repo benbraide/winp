@@ -169,6 +169,21 @@ std::shared_ptr<winp::event::object> winp::message::draw_dispatcher::create_even
 	return e_;
 }
 
+winp::message::cursor_dispatcher::cursor_dispatcher()
+	: dispatcher(false){
+	event_dispatcher_ = std::make_shared<event::cursor_dispatcher>();
+}
+
+void winp::message::cursor_dispatcher::fire_event_(event::object &e){
+	auto surface_target = dynamic_cast<ui::io_surface *>(e.get_context());
+	if (surface_target != nullptr)//IO target is required
+		fire_event_of_(*surface_target, surface_target->set_cursor_event, e);
+}
+
+std::shared_ptr<winp::event::object> winp::message::cursor_dispatcher::create_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default){
+	return create_new_event_<event::cursor>(target, msg, wparam, lparam, call_default);
+}
+
 winp::message::mouse_dispatcher::mouse_dispatcher()
 	: dispatcher(false){
 	event_dispatcher_ = std::make_shared<event::mouse_dispatcher>();
@@ -301,7 +316,7 @@ winp::message::focus_dispatcher::focus_dispatcher()
 void winp::message::focus_dispatcher::fire_event_(event::object &e){
 	auto surface_target = dynamic_cast<ui::io_surface *>(e.get_context());
 	if (surface_target == nullptr)
-		return;//Window target is required
+		return;//IO target is required
 
 	if (e.get_info()->code == WM_CREATE)
 		fire_event_of_(*surface_target, surface_target->set_focus_event, e);
@@ -339,9 +354,6 @@ std::shared_ptr<winp::event::object> winp::message::key_dispatcher::create_event
 		auto io_target = dynamic_cast<ui::io_surface *>(&target);
 		if (io_target == nullptr && (io_target = get_first_ancestor_of_<ui::io_surface>(target)) == nullptr)
 			return nullptr;//IO target required
-
-		auto key_position = GetMessagePos();
-		POINT computed_key_position{ GET_X_LPARAM(key_position), GET_Y_LPARAM(key_position) };
 
 		resolve_(*io_target, msg);
 		e_ = create_new_event_<event::key>(target, msg, wparam, lparam, call_default);
