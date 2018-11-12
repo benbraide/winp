@@ -157,7 +157,10 @@ void winp::message::draw_dispatcher::fire_event_(event::object &e){
 		return;//Visible target required
 
 	e_->set_target_(visible_target, offset_);
-	fire_event_of_(*visible_target, visible_target->draw_event, *e_);
+	if (e_->get_info()->code == WM_ERASEBKGND)
+		fire_event_of_(*visible_target, visible_target->background_erase_event, *e_);
+	else
+		fire_event_of_(*visible_target, visible_target->draw_event, *e_);
 }
 
 std::shared_ptr<winp::event::object> winp::message::draw_dispatcher::create_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default){

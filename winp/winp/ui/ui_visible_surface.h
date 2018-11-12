@@ -48,6 +48,8 @@ namespace winp::ui{
 
 		event::manager<visible_surface, event::object> show_event;
 		event::manager<visible_surface, event::object> hide_event;
+
+		event::manager<visible_surface, event::draw> background_erase_event;
 		event::manager<visible_surface, event::draw> draw_event;
 
 	protected:
