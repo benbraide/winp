@@ -273,12 +273,18 @@ LRESULT winp::thread::surface_manager::mouse_wheel_(ui::io_surface &target, UINT
 	return find_dispatcher_(WINP_WM_MOUSEWHEEL)->dispatch_(*target.get_top_moused_(), msg, wparam, lparam, !prevent_default);
 }
 
-LRESULT winp::thread::surface_manager::set_focus_(ui::io_surface &target, DWORD mouse_position, WPARAM wparam, LPARAM lparam, bool prevent_default){
+LRESULT winp::thread::surface_manager::set_cursor_(ui::io_surface &target, WPARAM wparam, LPARAM lparam, bool prevent_default){
+	auto value = find_dispatcher_(WM_SETCURSOR)->dispatch_(target, WM_SETCURSOR, wparam, lparam, !prevent_default);
+	SetCursor((value == 0) ? LoadCursorW(nullptr, IDC_ARROW) : reinterpret_cast<HCURSOR>(value));
+	return TRUE;
+}
+
+LRESULT winp::thread::surface_manager::set_focus_(ui::io_surface &target, WPARAM wparam, LPARAM lparam, bool prevent_default){
 	state_.focused = &target;
 	return find_dispatcher_(WINP_WM_FOCUS)->dispatch_(target, WM_SETFOCUS, wparam, lparam, !prevent_default);
 }
 
-LRESULT winp::thread::surface_manager::kill_focus_(ui::io_surface &target, DWORD mouse_position, WPARAM wparam, LPARAM lparam, bool prevent_default){
+LRESULT winp::thread::surface_manager::kill_focus_(ui::io_surface &target, WPARAM wparam, LPARAM lparam, bool prevent_default){
 	if (state_.focused == &target)
 		state_.focused = state_.mouse_focused;
 
@@ -358,10 +364,12 @@ LRESULT CALLBACK winp::thread::surface_manager::entry_(HWND handle, UINT msg, WP
 			return manager.mouse_nc_dbl_click_(*io_surface, msg, GetMessagePos(), wparam, lparam, MK_RBUTTON, false);
 		case WM_MOUSEWHEEL:
 			return manager.mouse_wheel_(*io_surface, msg, GetMessagePos(), wparam, lparam, false);
+		case WM_SETCURSOR:
+			return manager.set_cursor_(*io_surface, wparam, lparam, false);
 		case WM_SETFOCUS:
-			return manager.set_focus_(*io_surface, GetMessagePos(), wparam, lparam, false);
+			return manager.set_focus_(*io_surface, wparam, lparam, false);
 		case WM_KILLFOCUS:
-			return manager.kill_focus_(*io_surface, GetMessagePos(), wparam, lparam, false);
+			return manager.kill_focus_(*io_surface, wparam, lparam, false);
 		case WM_KEYDOWN:
 		case WM_KEYUP:
 		case WM_CHAR:

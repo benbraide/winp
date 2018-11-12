@@ -119,9 +119,11 @@ namespace winp::thread{
 
 		LRESULT mouse_wheel_(ui::io_surface &target, UINT msg, DWORD mouse_position, WPARAM wparam, LPARAM lparam, bool prevent_default);
 
-		LRESULT set_focus_(ui::io_surface &target, DWORD mouse_position, WPARAM wparam, LPARAM lparam, bool prevent_default);
+		LRESULT set_cursor_(ui::io_surface &target, WPARAM wparam, LPARAM lparam, bool prevent_default);
 
-		LRESULT kill_focus_(ui::io_surface &target, DWORD mouse_position, WPARAM wparam, LPARAM lparam, bool prevent_default);
+		LRESULT set_focus_(ui::io_surface &target, WPARAM wparam, LPARAM lparam, bool prevent_default);
+
+		LRESULT kill_focus_(ui::io_surface &target, WPARAM wparam, LPARAM lparam, bool prevent_default);
 
 		LRESULT key_(ui::io_surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool prevent_default);
 

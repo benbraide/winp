@@ -46,11 +46,14 @@ void winp::message::dispatcher::do_default_(event::object &e, bool call_default)
 		return;
 	}
 
+	e.set_result_(call_default_(e), false);
+	is_doing_default_ = false;
+}
+
+LRESULT winp::message::dispatcher::call_default_(event::object &e){
 	auto &info = *e.get_info();
 	auto &target = *dynamic_cast<ui::surface *>(e.get_context());
-
-	e.set_result_(CallWindowProcW(get_default_message_entry_of_(target), get_handle_of_(target), info.code, info.wparam, info.lparam), false);
-	is_doing_default_ = false;
+	return CallWindowProcW(get_default_message_entry_of_(target), get_handle_of_(target), info.code, info.wparam, info.lparam);
 }
 
 void winp::message::dispatcher::fire_event_(event::object &e){}
@@ -67,7 +70,7 @@ void winp::message::dispatcher::fire_event_of_(ui::surface &target, event::manag
 	target.fire_event_(ev, e);
 }
 
-HWND winp::message::dispatcher::get_handle_of_(ui::surface &target){
+HWND winp::message::dispatcher::get_handle_of_(ui::object &target){
 	return target.get_handle_();
 }
 
@@ -177,6 +180,10 @@ winp::message::cursor_dispatcher::cursor_dispatcher()
 	event_dispatcher_ = std::make_shared<event::cursor_dispatcher>();
 }
 
+LRESULT winp::message::cursor_dispatcher::call_default_(event::object &e){
+	return reinterpret_cast<LRESULT>(get_default_cursor_(dynamic_cast<event::cursor &>(e)));
+}
+
 void winp::message::cursor_dispatcher::fire_event_(event::object &e){
 	auto surface_target = dynamic_cast<ui::io_surface *>(e.get_context());
 	if (surface_target != nullptr)//IO target is required
@@ -185,6 +192,42 @@ void winp::message::cursor_dispatcher::fire_event_(event::object &e){
 
 std::shared_ptr<winp::event::object> winp::message::cursor_dispatcher::create_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default){
 	return create_new_event_<event::cursor>(target, msg, wparam, lparam, call_default);
+}
+
+HCURSOR winp::message::cursor_dispatcher::get_default_cursor_(event::cursor &e) const{
+	switch (e.get_hit_target()){
+	case HTERROR://Play beep if applicable
+		switch (e.get_mouse_button()){
+		case WM_LBUTTONDOWN:
+		case WM_MBUTTONDOWN:
+		case WM_RBUTTONDOWN:
+		case WM_XBUTTONDOWN:
+			MessageBeep(0);
+			break;
+		default:
+			break;
+		}
+
+		return nullptr;
+	case HTCLIENT://Use class cursor
+		return reinterpret_cast<HCURSOR>(GetClassLongPtrW(get_handle_of_(*e.get_context()), GCLP_HCURSOR));
+	case HTLEFT:
+	case HTRIGHT:
+		return LoadCursorW(nullptr, IDC_SIZEWE);
+	case HTTOP:
+	case HTBOTTOM:
+		return LoadCursorW(nullptr, IDC_SIZENS);
+	case HTTOPLEFT:
+	case HTBOTTOMRIGHT:
+		return LoadCursorW(nullptr, IDC_SIZENWSE);
+	case HTTOPRIGHT:
+	case HTBOTTOMLEFT:
+		return LoadCursorW(nullptr, IDC_SIZENESW);
+	default:
+		break;
+	}
+
+	return LoadCursorW(nullptr, IDC_ARROW);
 }
 
 winp::message::mouse_dispatcher::mouse_dispatcher()

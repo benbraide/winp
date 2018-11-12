@@ -37,6 +37,8 @@ namespace winp::message{
 
 		virtual void do_default_(event::object &e, bool call_default);
 
+		virtual LRESULT call_default_(event::object &e);
+
 		virtual void fire_event_(event::object &e);
 
 		virtual std::shared_ptr<event::object> create_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default);
@@ -52,12 +54,12 @@ namespace winp::message{
 
 		static void fire_event_of_(ui::surface &target, event::manager_base &ev, event::object &e);
 
-		static HWND get_handle_of_(ui::surface &target);
+		static HWND get_handle_of_(ui::object &target);
 
 		static WNDPROC get_default_message_entry_of_(ui::surface &target);
 
 		template <typename target_type>
-		static target_type *get_first_ancestor_of_(ui::surface &target){
+		static target_type *get_first_ancestor_of_(ui::object &target){
 			return target.get_first_ancestor_of_<target_type>();
 		}
 
@@ -118,9 +120,13 @@ namespace winp::message{
 		cursor_dispatcher();
 
 	protected:
+		virtual LRESULT call_default_(event::object &e) override;
+
 		virtual void fire_event_(event::object &e) override;
 
 		virtual std::shared_ptr<event::object> create_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default) override;
+
+		virtual HCURSOR get_default_cursor_(event::cursor &e) const;
 	};
 
 	class mouse_dispatcher : public dispatcher{
