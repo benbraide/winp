@@ -21,6 +21,12 @@ namespace winp::ui{
 
 		virtual ~window_surface();
 
+		using io_surface::show;
+
+		virtual void show(int how, const std::function<void(object &, bool)> &callback = nullptr) override;
+
+		virtual void hide(const std::function<void(object &, bool)> &callback = nullptr) override;
+
 		virtual void maximize(const std::function<void(object &, bool)> &callback = nullptr);
 
 		virtual void restore_maximized(const std::function<void(object &, bool)> &callback = nullptr);
@@ -94,10 +100,6 @@ namespace winp::ui{
 
 		virtual bool is_visible_() const override;
 
-		virtual bool set_transparency_(bool is_transparent) override;
-
-		virtual bool is_transparent_() const override;
-
 		virtual utility::hit_target hit_test_(const m_point_type &pt, bool is_absolute) const override;
 
 		virtual utility::hit_target hit_test_(const m_rect_type &rect, bool is_absolute) const override;
@@ -111,6 +113,8 @@ namespace winp::ui{
 		virtual void post_create_();
 
 		virtual window_surface *get_window_surface_parent_() const;
+
+		virtual bool show_(int how);
 
 		virtual bool maximize_();
 

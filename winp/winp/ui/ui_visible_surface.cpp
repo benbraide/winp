@@ -13,7 +13,7 @@ winp::ui::visible_surface::visible_surface(thread::object &thread)
 winp::ui::visible_surface::~visible_surface() = default;
 
 void winp::ui::visible_surface::show(const std::function<void(object &, bool)> &callback){
-	show(0, callback);
+	show(SW_SHOW, callback);
 }
 
 void winp::ui::visible_surface::show(int how, const std::function<void(object &, bool)> &callback){

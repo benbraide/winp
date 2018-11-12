@@ -15,6 +15,18 @@ winp::ui::window_surface::~window_surface(){
 	destruct_();
 }
 
+void winp::ui::window_surface::show(int how, const std::function<void(object &, bool)> &callback){
+	thread_->queue.post([=]{
+		auto result = show_(how);
+		if (callback != nullptr)
+			callback(*this, result);
+	}, thread::queue::send_priority, id_);
+}
+
+void winp::ui::window_surface::hide(const std::function<void(object &, bool)> &callback){
+	show(SW_HIDE, callback);
+}
+
 void winp::ui::window_surface::maximize(const std::function<void(object &, bool)> &callback){
 	thread_->queue.post([=]{
 		auto result = maximize_();
@@ -175,7 +187,7 @@ void winp::ui::window_surface::parent_changed_(tree *previous_parent, std::size_
 	auto parent = get_parent_();
 	if (parent == nullptr){
 		SetParent(get_handle_(), nullptr);
-		set_styles_(((get_styles_(false) | WS_POPUP) & ~WS_CHILD), false);
+		set_styles_((get_styles_(false) & ~WS_CHILD), false);
 	}
 	else{
 		set_styles_(((get_styles_(false) | WS_CHILD) & ~WS_POPUP), false);
@@ -361,14 +373,6 @@ bool winp::ui::window_surface::is_visible_() const{
 	return (IsWindowVisible(handle) != FALSE);
 }
 
-bool winp::ui::window_surface::set_transparency_(bool is_transparent){
-	return (is_transparent ? add_styles_(WS_EX_TRANSPARENT, true) : remove_styles_(WS_EX_TRANSPARENT, true));
-}
-
-bool winp::ui::window_surface::is_transparent_() const{
-	return has_styles_(WS_EX_TRANSPARENT, true, true);
-}
-
 winp::utility::hit_target winp::ui::window_surface::hit_test_(const m_point_type &pt, bool is_absolute) const{
 	auto handle = get_handle_();
 	if (handle == nullptr)
@@ -439,6 +443,28 @@ void winp::ui::window_surface::post_create_(){}
 
 winp::ui::window_surface *winp::ui::window_surface::get_window_surface_parent_() const{
 	return dynamic_cast<window_surface *>(get_parent_());
+}
+
+bool winp::ui::window_surface::show_(int how){
+	auto handle = get_handle_();
+	if (handle != nullptr)
+		return (ShowWindow(handle, how) != FALSE);
+
+	switch (how){
+	case SW_HIDE:
+		remove_styles_(WS_VISIBLE, false);
+		break;
+	case SW_MAXIMIZE:
+		add_styles_(WS_MAXIMIZE, false);
+		break;
+	case SW_MINIMIZE:
+		add_styles_(WS_MINIMIZE, false);
+		break;
+	default:
+		break;
+	}
+
+	return add_styles_(WS_VISIBLE, false);
 }
 
 bool winp::ui::window_surface::maximize_(){
@@ -585,7 +611,7 @@ DWORD winp::ui::window_surface::get_persistent_extended_styles_() const{
 }
 
 DWORD winp::ui::window_surface::get_filtered_styles_() const{
-	return 0u;
+	return ((get_parent_() == nullptr) ? WS_CHILD : WS_POPUP);
 }
 
 DWORD winp::ui::window_surface::get_filtered_extended_styles_() const{

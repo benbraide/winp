@@ -161,6 +161,7 @@ namespace winp::thread{
 
 		template <typename promise_type, typename function_type>
 		void set_promise_value_(promise_type &promise, const function_type &task, std::true_type){
+			task();
 			promise.set_value();
 		}
 

@@ -9,12 +9,23 @@ namespace winp::window{
 
 		explicit frame(thread::object &thread);
 
-		explicit frame(ui::window_surface &parent);
-
 		virtual ~frame();
 
 		virtual void set_caption(const std::wstring &value, const std::function<void(object &, bool)> &callback = nullptr);
 
 		virtual std::wstring get_caption(const std::function<void(const std::wstring &)> &callback = nullptr) const;
+
+	protected:
+		virtual DWORD get_persistent_styles_() const override;
+
+		virtual DWORD get_filtered_styles_() const override;
+
+		virtual const wchar_t *get_window_text_() const override;
+
+		virtual bool set_caption_(const std::wstring &value);
+
+		virtual const std::wstring &get_caption_() const;
+
+		std::wstring caption_;
 	};
 }
