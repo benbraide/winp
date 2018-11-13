@@ -27,7 +27,7 @@ namespace winp::message{
 
 		virtual void cleanup_();
 
-		virtual LRESULT dispatch_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default, bool is_post = false);
+		virtual LRESULT dispatch_(ui::object &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default, bool is_post = false);
 
 		virtual void pre_dispatch_(event::object &e, bool &call_default);
 
@@ -41,22 +41,22 @@ namespace winp::message{
 
 		virtual void fire_event_(event::object &e);
 
-		virtual std::shared_ptr<event::object> create_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default);
+		virtual std::shared_ptr<event::object> create_event_(ui::object &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default);
 
 		template <typename event_type, typename... other_types>
-		std::shared_ptr<event_type> create_new_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default, other_types &&... others){
+		std::shared_ptr<event_type> create_new_event_(ui::object &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default, other_types &&... others){
 			return std::make_shared<event_type>(target, [this, call_default](event::object &e){
 				do_default_(e, call_default);
 			}, event::object::info_type{ msg, wparam, lparam }, std::forward<other_types>(others)...);
 		}
 
-		static std::size_t event_handlers_count_of_(ui::surface &target, event::manager_base &ev);
+		static std::size_t event_handlers_count_of_(ui::object &target, event::manager_base &ev);
 
-		static void fire_event_of_(ui::surface &target, event::manager_base &ev, event::object &e);
+		static void fire_event_of_(ui::object &target, event::manager_base &ev, event::object &e);
 
 		static HWND get_handle_of_(ui::object &target);
 
-		static WNDPROC get_default_message_entry_of_(ui::surface &target);
+		static WNDPROC get_default_message_entry_of_(ui::object &target);
 
 		template <typename target_type>
 		static target_type *get_first_ancestor_of_(ui::object &target){
@@ -109,7 +109,7 @@ namespace winp::message{
 
 		virtual void fire_event_(event::object &e) override;
 
-		virtual std::shared_ptr<event::object> create_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default) override;
+		virtual std::shared_ptr<event::object> create_event_(ui::object &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default) override;
 
 		std::shared_ptr<event::draw> e_;
 		POINT offset_{};
@@ -124,7 +124,7 @@ namespace winp::message{
 
 		virtual void fire_event_(event::object &e) override;
 
-		virtual std::shared_ptr<event::object> create_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default) override;
+		virtual std::shared_ptr<event::object> create_event_(ui::object &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default) override;
 
 		virtual HCURSOR get_default_cursor_(event::cursor &e) const;
 	};
@@ -140,7 +140,7 @@ namespace winp::message{
 
 		virtual void fire_event_(event::object &e) override;
 
-		virtual std::shared_ptr<event::object> create_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default) override;
+		virtual std::shared_ptr<event::object> create_event_(ui::object &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default) override;
 
 		virtual void resolve_(ui::io_surface &target, UINT msg);
 
@@ -168,7 +168,7 @@ namespace winp::message{
 
 		virtual void fire_event_(event::object &e) override;
 
-		virtual std::shared_ptr<event::object> create_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default) override;
+		virtual std::shared_ptr<event::object> create_event_(ui::object &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default) override;
 
 		virtual void resolve_(ui::io_surface &target, UINT msg);
 

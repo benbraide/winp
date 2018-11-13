@@ -184,11 +184,6 @@ winp::ui::surface *winp::ui::surface::get_root_surface_() const{
 	return ((parent == nullptr) ? const_cast<surface *>(this) : parent->get_root_surface_());
 }
 
-WNDPROC winp::ui::surface::get_default_message_entry_() const{
-	auto parent = get_surface_parent_();
-	return ((parent == nullptr) ? nullptr : parent->get_default_message_entry_());
-}
-
 void winp::ui::surface::set_message_entry_(LONG_PTR value){}
 
 void winp::ui::surface::add_to_toplevel_(bool update){

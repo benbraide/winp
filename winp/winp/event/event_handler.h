@@ -26,6 +26,16 @@ namespace winp::event{
 		virtual void handle_unhandled_event_(object &e);
 	};
 
+	class tree_handler{
+	public:
+		virtual ~tree_handler() = default;
+
+	protected:
+		friend class cursor_dispatcher;
+
+		virtual void handle_parent_change_event_(cursor &e);
+	};
+
 	class create_destroy_handler{
 	public:
 		virtual ~create_destroy_handler() = default;

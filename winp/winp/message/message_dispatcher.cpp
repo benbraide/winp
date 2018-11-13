@@ -8,7 +8,7 @@ winp::message::dispatcher::dispatcher(bool){}
 
 void winp::message::dispatcher::cleanup_(){}
 
-LRESULT winp::message::dispatcher::dispatch_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default, bool is_post){
+LRESULT winp::message::dispatcher::dispatch_(ui::object &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default, bool is_post){
 	auto e = create_event_(target, msg, wparam, lparam, call_default);
 	if (e == nullptr)//Error
 		return 0;
@@ -58,15 +58,15 @@ LRESULT winp::message::dispatcher::call_default_(event::object &e){
 
 void winp::message::dispatcher::fire_event_(event::object &e){}
 
-std::shared_ptr<winp::event::object> winp::message::dispatcher::create_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default){
+std::shared_ptr<winp::event::object> winp::message::dispatcher::create_event_(ui::object &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default){
 	return create_new_event_<event::object>(target, msg, wparam, lparam, call_default);
 }
 
-std::size_t winp::message::dispatcher::event_handlers_count_of_(ui::surface &target, event::manager_base &ev){
+std::size_t winp::message::dispatcher::event_handlers_count_of_(ui::object &target, event::manager_base &ev){
 	return target.event_handlers_count_(ev);
 }
 
-void winp::message::dispatcher::fire_event_of_(ui::surface &target, event::manager_base &ev, event::object &e){
+void winp::message::dispatcher::fire_event_of_(ui::object &target, event::manager_base &ev, event::object &e){
 	target.fire_event_(ev, e);
 }
 
@@ -74,7 +74,7 @@ HWND winp::message::dispatcher::get_handle_of_(ui::object &target){
 	return target.get_handle_();
 }
 
-WNDPROC winp::message::dispatcher::get_default_message_entry_of_(ui::surface &target){
+WNDPROC winp::message::dispatcher::get_default_message_entry_of_(ui::object &target){
 	return target.get_default_message_entry_();
 }
 
@@ -166,7 +166,7 @@ void winp::message::draw_dispatcher::fire_event_(event::object &e){
 		fire_event_of_(*visible_target, visible_target->draw_event, *e_);
 }
 
-std::shared_ptr<winp::event::object> winp::message::draw_dispatcher::create_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default){
+std::shared_ptr<winp::event::object> winp::message::draw_dispatcher::create_event_(ui::object &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default){
 	if (e_ == nullptr){//Initialize
 		e_ = create_new_event_<event::draw>(target, msg, wparam, lparam, call_default);
 		offset_ = POINT{};
@@ -190,7 +190,7 @@ void winp::message::cursor_dispatcher::fire_event_(event::object &e){
 		fire_event_of_(*surface_target, surface_target->set_cursor_event, e);
 }
 
-std::shared_ptr<winp::event::object> winp::message::cursor_dispatcher::create_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default){
+std::shared_ptr<winp::event::object> winp::message::cursor_dispatcher::create_event_(ui::object &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default){
 	return create_new_event_<event::cursor>(target, msg, wparam, lparam, call_default);
 }
 
@@ -255,7 +255,7 @@ void winp::message::mouse_dispatcher::fire_event_(event::object &e){
 		fire_event_of_(*dynamic_cast<ui::io_surface *>(e.get_context()), *ev_, *e_);
 }
 
-std::shared_ptr<winp::event::object> winp::message::mouse_dispatcher::create_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default){
+std::shared_ptr<winp::event::object> winp::message::mouse_dispatcher::create_event_(ui::object &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default){
 	if (e_ == nullptr){//Initialize
 		auto io_target = dynamic_cast<ui::io_surface *>(&target);
 		if (io_target == nullptr && (io_target = get_first_ancestor_of_<ui::io_surface>(target)) == nullptr)
@@ -395,7 +395,7 @@ void winp::message::key_dispatcher::fire_event_(event::object &e){
 		fire_event_of_(*dynamic_cast<ui::io_surface *>(e.get_context()), *ev_, *e_);
 }
 
-std::shared_ptr<winp::event::object> winp::message::key_dispatcher::create_event_(ui::surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default){
+std::shared_ptr<winp::event::object> winp::message::key_dispatcher::create_event_(ui::object &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default){
 	if (e_ == nullptr){//Initialize
 		auto io_target = dynamic_cast<ui::io_surface *>(&target);
 		if (io_target == nullptr && (io_target = get_first_ancestor_of_<ui::io_surface>(target)) == nullptr)

@@ -69,17 +69,19 @@ namespace winp::ui{
 			return do_send_message_(msg, (WPARAM)wparam, (LPARAM)lparam, callback);
 		}
 
-		void post_message(UINT msg, const std::function<void(bool)> &callback = nullptr);
+		bool post_message(UINT msg, const std::function<void(bool)> &callback = nullptr);
 
 		template <typename wparam_type = WPARAM>
-		void post_message(UINT msg, wparam_type wparam, const std::function<void(bool)> &callback = nullptr){
-			do_post_message_(msg, (WPARAM)wparam, 0, callback);
+		bool post_message(UINT msg, wparam_type wparam, const std::function<void(bool)> &callback = nullptr){
+			return do_post_message_(msg, (WPARAM)wparam, 0, callback);
 		}
 
 		template <typename wparam_type = WPARAM, typename lparam_type = LPARAM>
-		void post_message(UINT msg, wparam_type wparam, lparam_type lparam, const std::function<void(bool)> &callback = nullptr){
-			do_post_message_(msg, (WPARAM)wparam, (LPARAM)lparam, callback);
+		bool post_message(UINT msg, wparam_type wparam, lparam_type lparam, const std::function<void(bool)> &callback = nullptr){
+			return do_post_message_(msg, (WPARAM)wparam, (LPARAM)lparam, callback);
 		}
+
+		event::manager<object, event::object> parent_change_event;
 
 	protected:
 		friend class tree;
@@ -105,6 +107,8 @@ namespace winp::ui{
 		virtual void set_handle_(HWND value);
 
 		virtual HWND get_handle_() const;
+
+		virtual WNDPROC get_default_message_entry_() const;
 
 		virtual void set_parent_(tree *value);
 
@@ -138,7 +142,7 @@ namespace winp::ui{
 
 		virtual LRESULT send_message_(UINT msg, WPARAM wparam, LPARAM lparam);
 
-		virtual void do_post_message_(UINT msg, WPARAM wparam, LPARAM lparam, const std::function<void(bool)> &callback);
+		virtual bool do_post_message_(UINT msg, WPARAM wparam, LPARAM lparam, const std::function<void(bool)> &callback);
 
 		virtual bool post_message_(UINT msg, WPARAM wparam, LPARAM lparam);
 

@@ -75,8 +75,6 @@ namespace winp::ui{
 
 		virtual surface *get_root_surface_() const;
 
-		virtual WNDPROC get_default_message_entry_() const;
-
 		virtual void set_message_entry_(LONG_PTR value);
 
 		virtual void add_to_toplevel_(bool update = false);

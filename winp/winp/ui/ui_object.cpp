@@ -1,12 +1,12 @@
 #include "../app/app_object.h"
 
 winp::ui::object::object()
-	: handle_(nullptr), parent_(nullptr), index_(static_cast<std::size_t>(-1)){
+	: parent_change_event(*this), handle_(nullptr), parent_(nullptr), index_(static_cast<std::size_t>(-1)){
 	init_();
 }
 
 winp::ui::object::object(thread::object &thread)
-	: item(thread), handle_(nullptr), parent_(nullptr), index_(static_cast<std::size_t>(-1)){
+	: item(thread), parent_change_event(*this), handle_(nullptr), parent_(nullptr), index_(static_cast<std::size_t>(-1)){
 	init_();
 }
 
@@ -121,8 +121,8 @@ LRESULT winp::ui::object::send_message(UINT msg, const std::function<void(LRESUL
 	return do_send_message_(msg, 0, 0, callback);
 }
 
-void winp::ui::object::post_message(UINT msg, const std::function<void(bool)> &callback){
-	do_post_message_(msg, 0, 0, callback);
+bool winp::ui::object::post_message(UINT msg, const std::function<void(bool)> &callback){
+	return do_post_message_(msg, 0, 0, callback);
 }
 
 void winp::ui::object::init_(){
@@ -161,6 +161,11 @@ void winp::ui::object::set_handle_(HWND value){
 
 HWND winp::ui::object::get_handle_() const{
 	return handle_;
+}
+
+WNDPROC winp::ui::object::get_default_message_entry_() const{
+	auto parent = get_parent_();
+	return ((parent == nullptr) ? nullptr : parent->get_default_message_entry_());
 }
 
 void winp::ui::object::set_parent_(tree *value){
@@ -308,34 +313,16 @@ LRESULT winp::ui::object::send_message_(UINT msg, WPARAM wparam, LPARAM lparam){
 	if (handle != nullptr)
 		return SendMessageW(handle, msg, wparam, lparam);
 
-	auto surface_self = dynamic_cast<surface *>(this);
-	if (surface_self != nullptr)//Perform dispatch
-		return thread_.surface_manager_.find_dispatcher_(msg)->dispatch_(*surface_self, msg, wparam, lparam, false);
-
-	auto handler = dynamic_cast<event::unhandled_handler *>(this);
-	if (handler == nullptr)
-		return 0;
-
-	event::object::info_type info;
-	{//Populate info
-		info.code = msg;
-		info.wparam = wparam;
-		info.lparam = lparam;
-	}
-
-	event::object e(*this, nullptr, info);
-	handler->handle_unhandled_event_(e);
-
-	return e.get_result();
+	return thread_.surface_manager_.find_dispatcher_(msg)->dispatch_(*this, msg, wparam, lparam, false);
 }
 
-void winp::ui::object::do_post_message_(UINT msg, WPARAM wparam, LPARAM lparam, const std::function<void(bool)> &callback){
-	thread_.queue.post([=]{
-		if (callback == nullptr)
-			post_message_(msg, wparam, lparam);
-		else//Send response
-			callback(post_message_(msg, wparam, lparam));
-	}, thread::queue::send_priority, id_);
+bool winp::ui::object::do_post_message_(UINT msg, WPARAM wparam, LPARAM lparam, const std::function<void(bool)> &callback){
+	if (callback != nullptr){
+		thread_.queue.post([=]{ callback(post_message_(msg, wparam, lparam)); }, thread::queue::send_priority, id_);
+		return false;
+	}
+
+	return thread_.queue.add([=]{ return post_message_(msg, wparam, lparam); }, thread::queue::send_priority, id_).get();
 }
 
 bool winp::ui::object::post_message_(UINT msg, WPARAM wparam, LPARAM lparam){
@@ -343,26 +330,7 @@ bool winp::ui::object::post_message_(UINT msg, WPARAM wparam, LPARAM lparam){
 	if (handle != nullptr)
 		return (PostMessageW(handle, msg, wparam, lparam) != FALSE);
 
-	auto surface_self = dynamic_cast<surface *>(this);
-	if (surface_self != nullptr){//Perform dispatch
-		thread_.surface_manager_.find_dispatcher_(msg)->dispatch_(*surface_self, msg, wparam, lparam, false);
-		return true;
-	}
-
-	auto handler = dynamic_cast<event::unhandled_handler *>(this);
-	if (handler == nullptr)
-		return false;
-
-	event::object::info_type info;
-	{//Populate info
-		info.code = msg;
-		info.wparam = wparam;
-		info.lparam = lparam;
-	}
-
-	event::object e(*this, nullptr, info);
-	handler->handle_unhandled_event_(e);
-
+	thread_.surface_manager_.find_dispatcher_(msg)->dispatch_(*this, msg, wparam, lparam, false);
 	return true;
 }
 
