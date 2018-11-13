@@ -11,7 +11,7 @@ winp::ui::window_surface::~window_surface(){
 }
 
 void winp::ui::window_surface::show(int how, const std::function<void(object &, bool)> &callback){
-	thread_->queue.post([=]{
+	thread_.queue.post([=]{
 		auto result = show_(how);
 		if (callback != nullptr)
 			callback(*this, result);
@@ -23,7 +23,7 @@ void winp::ui::window_surface::hide(const std::function<void(object &, bool)> &c
 }
 
 void winp::ui::window_surface::maximize(const std::function<void(object &, bool)> &callback){
-	thread_->queue.post([=]{
+	thread_.queue.post([=]{
 		auto result = maximize_();
 		if (callback != nullptr)
 			callback(*this, result);
@@ -31,7 +31,7 @@ void winp::ui::window_surface::maximize(const std::function<void(object &, bool)
 }
 
 void winp::ui::window_surface::restore_maximized(const std::function<void(object &, bool)> &callback){
-	thread_->queue.post([=]{
+	thread_.queue.post([=]{
 		auto result = restore_maximized_();
 		if (callback != nullptr)
 			callback(*this, result);
@@ -39,7 +39,7 @@ void winp::ui::window_surface::restore_maximized(const std::function<void(object
 }
 
 void winp::ui::window_surface::toggle_maximized(const std::function<void(object &, bool)> &callback){
-	thread_->queue.post([=]{
+	thread_.queue.post([=]{
 		auto result = toggle_maximized_();
 		if (callback != nullptr)
 			callback(*this, result);
@@ -48,15 +48,15 @@ void winp::ui::window_surface::toggle_maximized(const std::function<void(object 
 
 bool winp::ui::window_surface::is_maximized(const std::function<void(bool)> &callback) const{
 	if (callback != nullptr){
-		thread_->queue.post([=]{ callback(is_maximized_()); }, thread::queue::send_priority, id_);
+		thread_.queue.post([=]{ callback(is_maximized_()); }, thread::queue::send_priority, id_);
 		return false;
 	}
 
-	return thread_->queue.add([this]{ return is_maximized_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.add([this]{ return is_maximized_(); }, thread::queue::send_priority, id_).get();
 }
 
 void winp::ui::window_surface::minimize(const std::function<void(object &, bool)> &callback){
-	thread_->queue.post([=]{
+	thread_.queue.post([=]{
 		auto result = minimize_();
 		if (callback != nullptr)
 			callback(*this, result);
@@ -64,7 +64,7 @@ void winp::ui::window_surface::minimize(const std::function<void(object &, bool)
 }
 
 void winp::ui::window_surface::restore_minimized(const std::function<void(object &, bool)> &callback){
-	thread_->queue.post([=]{
+	thread_.queue.post([=]{
 		auto result = restore_minimized_();
 		if (callback != nullptr)
 			callback(*this, result);
@@ -72,7 +72,7 @@ void winp::ui::window_surface::restore_minimized(const std::function<void(object
 }
 
 void winp::ui::window_surface::toggle_minimized(const std::function<void(object &, bool)> &callback){
-	thread_->queue.post([=]{
+	thread_.queue.post([=]{
 		auto result = toggle_minimized_();
 		if (callback != nullptr)
 			callback(*this, result);
@@ -81,15 +81,15 @@ void winp::ui::window_surface::toggle_minimized(const std::function<void(object 
 
 bool winp::ui::window_surface::is_minimized(const std::function<void(bool)> &callback) const{
 	if (callback != nullptr){
-		thread_->queue.post([=]{ callback(is_minimized_()); }, thread::queue::send_priority, id_);
+		thread_.queue.post([=]{ callback(is_minimized_()); }, thread::queue::send_priority, id_);
 		return false;
 	}
 
-	return thread_->queue.add([this]{ return is_minimized_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.add([this]{ return is_minimized_(); }, thread::queue::send_priority, id_).get();
 }
 
 void winp::ui::window_surface::set_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback){
-	thread_->queue.post([=]{
+	thread_.queue.post([=]{
 		auto result = set_styles_(value, is_extended);
 		if (callback != nullptr)
 			callback(*this, result);
@@ -97,7 +97,7 @@ void winp::ui::window_surface::set_styles(DWORD value, bool is_extended, const s
 }
 
 void winp::ui::window_surface::add_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback){
-	thread_->queue.post([=]{
+	thread_.queue.post([=]{
 		auto result = add_styles_(value, is_extended);
 		if (callback != nullptr)
 			callback(*this, result);
@@ -105,7 +105,7 @@ void winp::ui::window_surface::add_styles(DWORD value, bool is_extended, const s
 }
 
 void winp::ui::window_surface::remove_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback){
-	thread_->queue.post([=]{
+	thread_.queue.post([=]{
 		auto result = remove_styles_(value, is_extended);
 		if (callback != nullptr)
 			callback(*this, result);
@@ -114,20 +114,20 @@ void winp::ui::window_surface::remove_styles(DWORD value, bool is_extended, cons
 
 DWORD winp::ui::window_surface::get_styles(bool is_extended, const std::function<void(DWORD)> &callback) const{
 	if (callback != nullptr){
-		thread_->queue.post([=]{ callback(get_styles_(is_extended)); }, thread::queue::send_priority, id_);
+		thread_.queue.post([=]{ callback(get_styles_(is_extended)); }, thread::queue::send_priority, id_);
 		return false;
 	}
 
-	return thread_->queue.add([=]{ return get_styles_(is_extended); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.add([=]{ return get_styles_(is_extended); }, thread::queue::send_priority, id_).get();
 }
 
 bool winp::ui::window_surface::has_styles(DWORD value, bool is_extended, bool has_all, const std::function<void(bool)> &callback) const{
 	if (callback != nullptr){
-		thread_->queue.post([=]{ callback(has_styles_(value, is_extended, has_all)); }, thread::queue::send_priority, id_);
+		thread_.queue.post([=]{ callback(has_styles_(value, is_extended, has_all)); }, thread::queue::send_priority, id_);
 		return false;
 	}
 
-	return thread_->queue.add([=]{ return has_styles_(value, is_extended, has_all); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.add([=]{ return has_styles_(value, is_extended, has_all); }, thread::queue::send_priority, id_).get();
 }
 
 bool winp::ui::window_surface::create_(){
@@ -144,8 +144,8 @@ bool winp::ui::window_surface::create_(){
 	auto styles = (styles_ | get_persistent_styles_());
 	auto extended_styles = (extended_styles_ | get_persistent_extended_styles_());
 
-	thread_->surface_manager_.cache_.handle = nullptr;
-	thread_->surface_manager_.cache_.object = this;
+	thread_.surface_manager_.cache_.handle = nullptr;
+	thread_.surface_manager_.cache_.object = this;
 
 	auto offset_from_window_ancestor = get_offset_from_ancestor_of_<window_surface>(m_point_type{});
 	auto result = CreateWindowExW(
@@ -425,7 +425,7 @@ bool winp::ui::window_surface::is_dialog_message_(MSG &msg) const{
 }
 
 void winp::ui::window_surface::destruct_(){
-	thread_->queue.add([=]{
+	thread_.queue.add([=]{
 		destroy_();
 	}, thread::queue::send_priority, id_).get();
 }

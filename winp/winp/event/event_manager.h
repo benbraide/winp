@@ -23,7 +23,7 @@ namespace winp::event{
 		virtual void fire_generic_(object &e) const = 0;
 
 		virtual thread::object &get_thread_(){
-			return *owner_.thread_;
+			return owner_.thread_;
 		}
 
 		virtual unsigned __int64 get_owner_id_() const{

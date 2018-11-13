@@ -14,7 +14,7 @@ winp::window::frame::~frame(){
 }
 
 void winp::window::frame::set_caption(const std::wstring &value, const std::function<void(object &, bool)> &callback){
-	thread_->queue.post([=]{
+	thread_.queue.post([=]{
 		auto result = set_caption_(value);
 		if (callback != nullptr)
 			callback(*this, result);
@@ -23,11 +23,11 @@ void winp::window::frame::set_caption(const std::wstring &value, const std::func
 
 std::wstring winp::window::frame::get_caption(const std::function<void(const std::wstring &)> &callback) const{
 	if (callback != nullptr){
-		thread_->queue.post([=]{ callback(get_caption_()); }, thread::queue::send_priority, id_);
+		thread_.queue.post([=]{ callback(get_caption_()); }, thread::queue::send_priority, id_);
 		return false;
 	}
 
-	return thread_->queue.add([=]{ return get_caption_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.add([=]{ return get_caption_(); }, thread::queue::send_priority, id_).get();
 }
 
 DWORD winp::window::frame::get_persistent_styles_() const{

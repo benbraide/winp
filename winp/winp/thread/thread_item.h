@@ -36,7 +36,7 @@ namespace winp::thread{
 		friend class app::object;
 		friend class event::manager_base;
 
-		object *thread_;
+		object &thread_;
 		unsigned __int64 id_;
 	};
 }

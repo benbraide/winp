@@ -4,10 +4,10 @@ winp::event::object::object(thread::object &thread, const callback_type &default
 	: target_(nullptr), context_(nullptr), thread_(thread), state_(state_type::nil), default_handler_(default_handler), result_(0), info_(info){}
 
 winp::event::object::object(ui::object &target, const callback_type &default_handler, const info_type &info)
-	: target_(&target), context_(&target), thread_(*target.thread_), state_(state_type::nil), default_handler_(default_handler), result_(0), info_(info){}
+	: target_(&target), context_(&target), thread_(target.thread_), state_(state_type::nil), default_handler_(default_handler), result_(0), info_(info){}
 
 winp::event::object::object(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
-	: target_(&target), context_(&context), thread_(*target.thread_), state_(state_type::nil), default_handler_(default_handler), result_(0), info_(info){}
+	: target_(&target), context_(&context), thread_(target.thread_), state_(state_type::nil), default_handler_(default_handler), result_(0), info_(info){}
 
 winp::event::object::~object() = default;
 
@@ -180,7 +180,7 @@ void winp::event::draw::begin_(){
 
 ID2D1RenderTarget *winp::event::draw::get_drawer_(){
 	auto device = get_device_();
-	if (device != nullptr && drawer_ == nullptr && (drawer_ = target_->thread_->get_device_drawer()) != nullptr){
+	if (device != nullptr && drawer_ == nullptr && (drawer_ = thread_.get_device_drawer()) != nullptr){
 		auto target_rect = dynamic_cast<ui::surface *>(target_)->get_client_dimension_();
 
 		OffsetRect(&target_rect, current_offset_.x, current_offset_.y);
@@ -197,7 +197,7 @@ ID2D1RenderTarget *winp::event::draw::get_drawer_(){
 
 ID2D1SolidColorBrush *winp::event::draw::get_color_brush_(){
 	auto render = get_drawer_();
-	if (render != nullptr && color_brush_ == nullptr && (color_brush_ = target_->thread_->get_color_brush()) != nullptr)
+	if (render != nullptr && color_brush_ == nullptr && (color_brush_ = thread_.get_color_brush()) != nullptr)
 		color_brush_->SetColor(D2D1::ColorF(D2D1::ColorF::Black, 1.0f));
 
 	return color_brush_;

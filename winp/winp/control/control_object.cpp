@@ -8,7 +8,7 @@ winp::control::object::~object(){
 }
 
 void winp::control::object::set_font(HFONT value, const std::function<void(object &, bool)> &callback){
-	thread_->queue.post([=]{
+	thread_.queue.post([=]{
 		auto result = set_font_(value);
 		if (callback != nullptr)
 			callback(*this, result);
@@ -17,15 +17,15 @@ void winp::control::object::set_font(HFONT value, const std::function<void(objec
 
 HFONT winp::control::object::get_font(const std::function<void(HFONT)> &callback) const{
 	if (callback != nullptr){
-		thread_->queue.post([=]{ callback(get_font_()); }, thread::queue::send_priority, id_);
+		thread_.queue.post([=]{ callback(get_font_()); }, thread::queue::send_priority, id_);
 		return nullptr;
 	}
 
-	return thread_->queue.add([this]{ return get_font_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.add([this]{ return get_font_(); }, thread::queue::send_priority, id_).get();
 }
 
 void winp::control::object::set_text(const std::wstring &value, const std::function<void(object &, bool)> &callback){
-	thread_->queue.post([=]{
+	thread_.queue.post([=]{
 		auto result = set_text_(value);
 		if (callback != nullptr)
 			callback(*this, result);
@@ -34,11 +34,11 @@ void winp::control::object::set_text(const std::wstring &value, const std::funct
 
 std::wstring winp::control::object::get_text(const std::function<void(const std::wstring &)> &callback) const{
 	if (callback != nullptr){
-		thread_->queue.post([=]{ callback(get_text_()); }, thread::queue::send_priority, id_);
+		thread_.queue.post([=]{ callback(get_text_()); }, thread::queue::send_priority, id_);
 		return L"";
 	}
 
-	return thread_->queue.add([this]{ return get_text_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.add([this]{ return get_text_(); }, thread::queue::send_priority, id_).get();
 }
 
 WNDPROC winp::control::object::get_default_message_entry_() const{
