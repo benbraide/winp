@@ -57,8 +57,8 @@ namespace winp::ui{
 
 		virtual utility::hit_target hit_test(const m_point_type &pt, const m_point_type &pos, const m_size_type &size, const std::function<void(utility::hit_target)> &callback = nullptr) const;
 
-		event::manager<surface, event::object> size_event;
-		event::manager<surface, event::object> move_event;
+		event::manager<surface, event::object> size_event{ *this };;
+		event::manager<surface, event::object> move_event{ *this };;
 
 	protected:
 		friend class surface_hit_test;

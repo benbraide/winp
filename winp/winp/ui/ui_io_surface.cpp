@@ -6,11 +6,10 @@ winp::ui::io_surface::mouse_event_info::mouse_event_info(io_surface &owner)
 winp::ui::io_surface::key_event_info::key_event_info(io_surface &owner)
 	: down(owner), up(owner), press(owner){}
 
-winp::ui::io_surface::io_surface()
-	: mouse_event(*this), key_event(*this), set_cursor_event(*this), set_focus_event(*this), kill_focus_event(*this){}
+winp::ui::io_surface::io_surface() = default;
 
 winp::ui::io_surface::io_surface(thread::object &thread)
-	: visible_surface(thread), mouse_event(*this), key_event(*this), set_cursor_event(*this), set_focus_event(*this), kill_focus_event(*this){}
+	: visible_surface(thread){}
 
 winp::ui::io_surface::~io_surface() = default;
 

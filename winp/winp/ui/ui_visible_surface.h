@@ -46,11 +46,11 @@ namespace winp::ui{
 
 		static D2D1::ColorF convert_to_d2d1_colorf(const m_colorf &value);
 
-		event::manager<visible_surface, event::object> show_event;
-		event::manager<visible_surface, event::object> hide_event;
+		event::manager<visible_surface, event::object> show_event{ *this };;
+		event::manager<visible_surface, event::object> hide_event{ *this };;
 
-		event::manager<visible_surface, event::draw> background_erase_event;
-		event::manager<visible_surface, event::draw> draw_event;
+		event::manager<visible_surface, event::draw> background_erase_event{ *this };;
+		event::manager<visible_surface, event::draw> draw_event{ *this };;
 
 	protected:
 		friend class non_window::child;
@@ -78,6 +78,6 @@ namespace winp::ui{
 
 		virtual const D2D1::ColorF &get_background_color_() const;
 
-		D2D1::ColorF background_color_;
+		D2D1::ColorF background_color_{ 0 };
 	};
 }

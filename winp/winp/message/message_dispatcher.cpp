@@ -114,6 +114,42 @@ bool winp::message::dispatcher::result_set_of_(event::object &e){
 	return e.result_set_();
 }
 
+winp::message::tree_dispatcher::tree_dispatcher()
+	: dispatcher(false){
+	event_dispatcher_ = std::make_shared<event::tree_dispatcher>();
+}
+
+void winp::message::tree_dispatcher::fire_event_(event::object &e){
+	auto msg = e.get_info()->code;
+	if (msg != WINP_WM_PARENT_CHANGED && msg != WINP_WM_INDEX_CHANGED){
+		auto tree_target = dynamic_cast<ui::tree *>(e.get_context());
+		if (tree_target == nullptr)
+			return;
+
+		switch (msg){
+		case WINP_WM_CHILD_INDEX_CHANGED:
+			fire_event_of_(*tree_target, tree_target->child_index_change_event, e);
+			break;
+		case WINP_WM_CHILD_INSERTED:
+			fire_event_of_(*tree_target, tree_target->child_insert_event, e);
+			break;
+		case WINP_WM_CHILD_REMOVED:
+			fire_event_of_(*tree_target, tree_target->child_remove_event, e);
+			break;
+		default:
+			break;
+		}
+	}
+	else if (msg != WINP_WM_PARENT_CHANGED)
+		fire_event_of_(*e.get_context(), e.get_context()->parent_change_event, e);
+	else if (msg != WINP_WM_INDEX_CHANGED)
+		fire_event_of_(*e.get_context(), e.get_context()->index_change_event, e);
+}
+
+std::shared_ptr<winp::event::object> winp::message::tree_dispatcher::create_event_(ui::object &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default){
+	return create_new_event_<event::tree>(target, msg, wparam, lparam, call_default);
+}
+
 winp::message::create_destroy_dispatcher::create_destroy_dispatcher()
 	: dispatcher(false){
 	event_dispatcher_ = std::make_shared<event::create_destroy_dispatcher>();

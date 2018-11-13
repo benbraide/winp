@@ -1,12 +1,12 @@
 #include "../app/app_object.h"
 
 winp::ui::object::object()
-	: parent_change_event(*this), handle_(nullptr), parent_(nullptr), index_(static_cast<std::size_t>(-1)){
+	: handle_(nullptr), parent_(nullptr), index_(static_cast<std::size_t>(-1)){
 	init_();
 }
 
 winp::ui::object::object(thread::object &thread)
-	: item(thread), parent_change_event(*this), handle_(nullptr), parent_(nullptr), index_(static_cast<std::size_t>(-1)){
+	: item(thread), handle_(nullptr), parent_(nullptr), index_(static_cast<std::size_t>(-1)){
 	init_();
 }
 
@@ -204,22 +204,12 @@ std::size_t winp::ui::object::change_parent_(tree *value, std::size_t index){
 	if (previous_parent != nullptr && !previous_parent->remove_child_(*this))
 		return static_cast<std::size_t>(-1);//Failed to remove from parent
 
-	try{//Revert parent on exception
-		set_parent_(value);
-		value = get_parent_();
+	if ((index = value->insert_child_(*this, index)) == static_cast<std::size_t>(-1))
+		return static_cast<std::size_t>(-1);//Failed to insert into parent
 
-		if (value != nullptr && (index = value->insert_child_(*this, index)) == static_cast<std::size_t>(-1))
-			set_parent_(nullptr);//Failed to insert into parent
-	}
-	catch (...){//Failed to insert into parent
-		set_parent_(nullptr);
-		throw;//Forward exception
-	}
-
-	if (value != previous_parent){
-		parent_changed_(previous_parent, previous_index);
-		index_changed_(static_cast<std::size_t>(-1));
-	}
+	set_parent_(value);
+	parent_changed_(previous_parent, previous_index);
+	index_changed_(previous_parent, previous_index);
 
 	return index;
 }
@@ -233,17 +223,19 @@ bool winp::ui::object::remove_parent_(){
 		return false;
 
 	auto previous_index = get_index_();
-	if (previous_parent != nullptr && !previous_parent->remove_child_(*this))
+	if (!previous_parent->remove_child_(*this))
 		return false;
 
 	set_parent_(nullptr);
 	parent_changed_(previous_parent, previous_index);
-	index_changed_(static_cast<std::size_t>(-1));
+	index_changed_(previous_parent, previous_index);
 
 	return true;
 }
 
-void winp::ui::object::parent_changed_(tree *previous_parent, std::size_t previous_index){}
+void winp::ui::object::parent_changed_(tree *previous_parent, std::size_t previous_index){
+	dispatch_message_(WINP_WM_PARENT_CHANGED, reinterpret_cast<WPARAM>(previous_parent), static_cast<LPARAM>(previous_index));
+}
 
 bool winp::ui::object::validate_index_change_(std::size_t value) const{
 	auto parent = get_parent_();
@@ -261,7 +253,7 @@ std::size_t winp::ui::object::change_index_(std::size_t value){
 	if (parent_ != nullptr){
 		value = parent_->change_child_index_(*this, value);
 		if (value != static_cast<std::size_t>(-1) && value != previous_index)
-			index_changed_(previous_index);
+			index_changed_(get_parent_(), previous_index);
 	}
 	else
 		index_ = value;
@@ -269,7 +261,9 @@ std::size_t winp::ui::object::change_index_(std::size_t value){
 	return value;
 }
 
-void winp::ui::object::index_changed_(std::size_t previous){}
+void winp::ui::object::index_changed_(tree *previous_parent, std::size_t previous_index){
+	dispatch_message_(WINP_WM_INDEX_CHANGED, reinterpret_cast<WPARAM>(previous_parent), static_cast<LPARAM>(previous_index));
+}
 
 std::size_t winp::ui::object::get_index_() const{
 	return ((parent_ == nullptr) ? index_ : parent_->find_child_(*this));
@@ -313,7 +307,7 @@ LRESULT winp::ui::object::send_message_(UINT msg, WPARAM wparam, LPARAM lparam){
 	if (handle != nullptr)
 		return SendMessageW(handle, msg, wparam, lparam);
 
-	return thread_.surface_manager_.find_dispatcher_(msg)->dispatch_(*this, msg, wparam, lparam, false);
+	return dispatch_message_(msg, wparam, lparam);
 }
 
 bool winp::ui::object::do_post_message_(UINT msg, WPARAM wparam, LPARAM lparam, const std::function<void(bool)> &callback){
@@ -330,7 +324,7 @@ bool winp::ui::object::post_message_(UINT msg, WPARAM wparam, LPARAM lparam){
 	if (handle != nullptr)
 		return (PostMessageW(handle, msg, wparam, lparam) != FALSE);
 
-	thread_.surface_manager_.find_dispatcher_(msg)->dispatch_(*this, msg, wparam, lparam, false);
+	dispatch_message_(msg, wparam, lparam, false);
 	return true;
 }
 
@@ -344,6 +338,10 @@ void winp::ui::object::fire_event_(event::manager_base &ev, event::object &e) co
 
 winp::message::dispatcher *winp::ui::object::find_dispatcher_(UINT msg){
 	return thread_.surface_manager_.find_dispatcher_(msg);
+}
+
+LRESULT winp::ui::object::dispatch_message_(UINT msg, WPARAM wparam, LPARAM lparam, bool call_default){
+	return find_dispatcher_(msg)->dispatch_(*this, msg, wparam, lparam, call_default);
 }
 
 winp::ui::tree *winp::ui::object::get_parent_of_(const object &target){

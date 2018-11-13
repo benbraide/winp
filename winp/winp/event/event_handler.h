@@ -8,6 +8,7 @@ namespace winp::ui{
 
 namespace winp::event{
 	class dispatcher;
+	class tree_dispatcher;
 	class create_destroy_dispatcher;
 	class draw_dispatcher;
 	class cursor_dispatcher;
@@ -31,9 +32,17 @@ namespace winp::event{
 		virtual ~tree_handler() = default;
 
 	protected:
-		friend class cursor_dispatcher;
+		friend class tree_dispatcher;
 
-		virtual void handle_parent_change_event_(cursor &e);
+		virtual void handle_parent_change_event_(tree &e);
+
+		virtual void handle_index_change_event_(tree &e);
+
+		virtual void handle_child_index_change_event_(tree &e);
+
+		virtual void handle_child_insert_event_(tree &e);
+
+		virtual void handle_child_remove_event_(tree &e);
 	};
 
 	class create_destroy_handler{

@@ -25,6 +25,11 @@ namespace winp::event{
 		static bool default_prevented_of_(event::object &e);
 	};
 
+	class tree_dispatcher : public dispatcher{
+	protected:
+		virtual void dispatch_(object &e) override;
+	};
+
 	class create_destroy_dispatcher : public dispatcher{
 	protected:
 		virtual void dispatch_(object &e) override;

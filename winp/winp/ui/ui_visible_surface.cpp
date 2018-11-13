@@ -1,12 +1,11 @@
 #include "ui_visible_surface.h"
 
-winp::ui::visible_surface::visible_surface()
-	: show_event(*this), hide_event(*this), background_erase_event(*this), draw_event(*this), background_color_(0){
+winp::ui::visible_surface::visible_surface(){
 	init_();
 }
 
 winp::ui::visible_surface::visible_surface(thread::object &thread)
-	: surface(thread), show_event(*this), hide_event(*this), background_erase_event(*this), draw_event(*this), background_color_(0){
+	: surface(thread){
 	init_();
 }
 

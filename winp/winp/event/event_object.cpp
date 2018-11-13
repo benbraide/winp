@@ -87,6 +87,47 @@ bool winp::event::object::result_set_() const{
 	return ((state_ & state_type::result_set) != 0u);
 }
 
+winp::event::tree::tree(ui::object &target, const callback_type &default_handler, const info_type &info)
+	: object(target, default_handler, info_type{}), previous_parent_(nullptr), current_parent_(target.get_parent_()), previous_index_(static_cast<std::size_t>(-1)), current_index_(target.get_index_()){
+	init_();
+}
+
+winp::event::tree::tree(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
+	: object(target, context, default_handler, info_type{}), previous_parent_(nullptr), current_parent_(target.get_parent_()), previous_index_(static_cast<std::size_t>(-1)), current_index_(target.get_index_()){
+	init_();
+}
+
+winp::event::tree::~tree() = default;
+
+winp::ui::tree *winp::event::tree::get_previous_parent() const{
+	return (thread_.is_thread_context() ? previous_parent_ : nullptr);
+}
+
+winp::ui::tree *winp::event::tree::get_current_parent() const{
+	return (thread_.is_thread_context() ? current_parent_ : nullptr);
+}
+
+std::size_t winp::event::tree::get_previous_index() const{
+	return (thread_.is_thread_context() ? previous_index_ : static_cast<std::size_t>(-1));
+}
+
+std::size_t winp::event::tree::get_current_index() const{
+	return (thread_.is_thread_context() ? current_index_ : static_cast<std::size_t>(-1));
+}
+
+void winp::event::tree::init_(){
+	if (info_.code != WINP_WM_PARENT_CHANGED && info_.code != WINP_WM_INDEX_CHANGED){
+		auto info = reinterpret_cast<ui::tree::child_change_info *>(info_.wparam);
+		target_ = info->child;
+		previous_parent_ = info->previous_parent_;
+		previous_index_ = info->previous_index_;
+	}
+	else{
+		previous_parent_ = reinterpret_cast<ui::tree *>(info_.wparam);
+		previous_index_ = static_cast<std::size_t>(info_.lparam);
+	}
+}
+
 winp::event::draw::draw(ui::object &target, const callback_type &default_handler, const info_type &info)
 	: object(target, default_handler, info){}
 

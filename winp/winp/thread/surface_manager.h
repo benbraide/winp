@@ -7,22 +7,29 @@
 
 #include "thread_item.h"
 
-#define WINP_WM_MOUSELEAVE		(WM_APP + 0x1)
-#define WINP_WM_MOUSEENTER		(WM_APP + 0x2)
+#define WINP_WM_MOUSELEAVE				(WM_APP + 0x01)
+#define WINP_WM_MOUSEENTER				(WM_APP + 0x02)
 
-#define WINP_WM_MOUSEMOVE		(WM_APP + 0x3)
-#define WINP_WM_MOUSEWHEEL		(WM_APP + 0x4)
+#define WINP_WM_MOUSEMOVE				(WM_APP + 0x03)
+#define WINP_WM_MOUSEWHEEL				(WM_APP + 0x04)
 
-#define WINP_WM_MOUSEDOWN		(WM_APP + 0x5)
-#define WINP_WM_MOUSEUP			(WM_APP + 0x6)
-#define WINP_WM_MOUSEDBLCLK		(WM_APP + 0x7)
+#define WINP_WM_MOUSEDOWN				(WM_APP + 0x05)
+#define WINP_WM_MOUSEUP					(WM_APP + 0x06)
+#define WINP_WM_MOUSEDBLCLK				(WM_APP + 0x07)
 
-#define WINP_WM_MOUSEDRAG		(WM_APP + 0x8)
-#define WINP_WM_MOUSEDRAGBEGIN	(WM_APP + 0x9)
-#define WINP_WM_MOUSEDRAGEND	(WM_APP + 0xA)
+#define WINP_WM_MOUSEDRAG				(WM_APP + 0x08)
+#define WINP_WM_MOUSEDRAGBEGIN			(WM_APP + 0x09)
+#define WINP_WM_MOUSEDRAGEND			(WM_APP + 0x0A)
 
-#define WINP_WM_FOCUS			(WM_APP + 0xB)
-#define WINP_WM_KEY				(WM_APP + 0xC)
+#define WINP_WM_FOCUS					(WM_APP + 0x0B)
+#define WINP_WM_KEY						(WM_APP + 0x0C)
+
+#define WINP_WM_PARENT_CHANGED			(WM_APP + 0x0D)
+#define WINP_WM_INDEX_CHANGED			(WM_APP + 0x0E)
+#define WINP_WM_CHILD_INDEX_CHANGED		(WM_APP + 0x0F)
+
+#define WINP_WM_CHILD_INSERTED			(WM_APP + 0x10)
+#define WINP_WM_CHILD_REMOVED			(WM_APP + 0x11)
 
 namespace winp::app{
 	class object;

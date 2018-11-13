@@ -1,10 +1,9 @@
 #include "../app/app_object.h"
 
-winp::ui::window_surface::window_surface()
-	: create_event(*this), destroy_event(*this){}
+winp::ui::window_surface::window_surface() = default;
 
 winp::ui::window_surface::window_surface(thread::object &thread)
-	: io_surface(thread), create_event(*this), destroy_event(*this){}
+	: io_surface(thread){}
 
 winp::ui::window_surface::~window_surface(){
 	destruct_();

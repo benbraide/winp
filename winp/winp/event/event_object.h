@@ -19,6 +19,7 @@ namespace winp::thread{
 
 namespace winp::ui{
 	class object;
+	class tree;
 	class visible_surface;
 }
 
@@ -123,6 +124,32 @@ namespace winp::event{
 		callback_type default_handler_;
 		LRESULT result_;
 		info_type info_;
+	};
+
+	class tree : public object{
+	public:
+		tree(ui::object &target, const callback_type &default_handler, const info_type &info);
+
+		tree(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info);
+
+		virtual ~tree();
+
+		virtual ui::tree *get_previous_parent() const;
+
+		virtual ui::tree *get_current_parent() const;
+
+		virtual std::size_t get_previous_index() const;
+
+		virtual std::size_t get_current_index() const;
+
+	protected:
+		void init_();
+
+		ui::tree *previous_parent_;
+		ui::tree *current_parent_;
+
+		std::size_t previous_index_;
+		std::size_t current_index_;
 	};
 
 	class draw : public object{

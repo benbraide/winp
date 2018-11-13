@@ -9,7 +9,8 @@ namespace winp::ui{
 	public:
 		struct child_change_info{
 			object *child;
-			std::size_t index;
+			tree *previous_parent_;
+			std::size_t previous_index_;
 		};
 
 		tree();
@@ -32,6 +33,10 @@ namespace winp::ui{
 
 		virtual void traverse_children(const std::function<void(object *)> &callback, bool post = true) const;
 
+		event::manager<tree, event::tree> child_index_change_event{ *this };
+		event::manager<tree, event::tree> child_insert_event{ *this };
+		event::manager<tree, event::tree> child_remove_event{ *this };
+
 	protected:
 		friend class object;
 
@@ -44,7 +49,7 @@ namespace winp::ui{
 
 		virtual std::size_t insert_child_(object &child, std::size_t index = static_cast<std::size_t>(-1));
 
-		virtual void child_inserted_(object &child, std::size_t index);
+		virtual void child_inserted_(object &child, tree *previous_parent, std::size_t previous_index);
 
 		virtual bool validate_child_remove_(const object &child) const;
 
@@ -56,13 +61,13 @@ namespace winp::ui{
 
 		virtual bool remove_child_at_(std::size_t index);
 
-		virtual void child_removed_(object &child, std::size_t index);
+		virtual void child_removed_(object &child, std::size_t previous_index);
 
 		virtual bool validate_child_index_change_(const object &child, std::size_t index) const;
 
 		virtual std::size_t change_child_index_(object &child, std::size_t index);
 
-		virtual void child_index_changed_(object &child, std::size_t previous_index, std::size_t index);
+		virtual void child_index_changed_(object &child, tree *previous_parent, std::size_t previous_index);
 
 		virtual std::size_t find_child_(const object &child) const;
 

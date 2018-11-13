@@ -4,6 +4,13 @@
 winp::thread::surface_manager::surface_manager(){
 	default_dispatcher_ = std::make_shared<message::dispatcher>();
 
+	dispatchers_[WINP_WM_PARENT_CHANGED] = std::make_shared<message::tree_dispatcher>();
+	dispatchers_[WINP_WM_INDEX_CHANGED] = std::make_shared<message::tree_dispatcher>();
+	dispatchers_[WINP_WM_CHILD_INDEX_CHANGED] = std::make_shared<message::tree_dispatcher>();
+
+	dispatchers_[WINP_WM_CHILD_INSERTED] = std::make_shared<message::tree_dispatcher>();
+	dispatchers_[WINP_WM_CHILD_REMOVED] = std::make_shared<message::tree_dispatcher>();
+
 	dispatchers_[WM_CREATE] = std::make_shared<message::create_destroy_dispatcher>();
 	dispatchers_[WM_DESTROY] = std::make_shared<message::create_destroy_dispatcher>();
 

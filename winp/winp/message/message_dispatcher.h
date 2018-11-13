@@ -90,6 +90,16 @@ namespace winp::message{
 		std::shared_ptr<event::dispatcher> event_dispatcher_;
 	};
 
+	class tree_dispatcher : public dispatcher{
+	public:
+		tree_dispatcher();
+
+	protected:
+		virtual void fire_event_(event::object &e) override;
+
+		virtual std::shared_ptr<event::object> create_event_(ui::object &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default) override;
+	};
+
 	class create_destroy_dispatcher : public dispatcher{
 	public:
 		create_destroy_dispatcher();

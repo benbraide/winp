@@ -53,8 +53,8 @@ namespace winp::ui{
 
 		virtual bool has_styles(DWORD value, bool is_extended, bool has_all, const std::function<void(bool)> &callback = nullptr) const;
 
-		event::manager<window_surface, event::object> create_event;
-		event::manager<window_surface, event::object> destroy_event;
+		event::manager<window_surface, event::object> create_event{ *this };;
+		event::manager<window_surface, event::object> destroy_event{ *this };;
 
 	protected:
 		friend class message::dispatcher;

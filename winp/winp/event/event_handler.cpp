@@ -5,6 +5,16 @@ void winp::event::unhandled_handler::handle_unhandled_event_(object &e){
 		draw_dispatcher::erase_background_(dynamic_cast<draw &>(e));
 }
 
+void winp::event::tree_handler::handle_parent_change_event_(tree &e){}
+
+void winp::event::tree_handler::handle_index_change_event_(tree &e){}
+
+void winp::event::tree_handler::handle_child_index_change_event_(tree &e){}
+
+void winp::event::tree_handler::handle_child_insert_event_(tree &e){}
+
+void winp::event::tree_handler::handle_child_remove_event_(tree &e){}
+
 void winp::event::create_destroy_handler::handle_create_event_(object &e){}
 
 void winp::event::create_destroy_handler::handle_destroy_event_(object &e){}

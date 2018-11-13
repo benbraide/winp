@@ -1,10 +1,9 @@
 #include "ui_surface.h"
 
-winp::ui::surface::surface()
-	: size_event(*this), move_event(*this){}
+winp::ui::surface::surface() = default;
 
 winp::ui::surface::surface(thread::object &thread)
-	: tree(thread), size_event(*this), move_event(*this){}
+	: tree(thread){}
 
 winp::ui::surface::~surface() = default;
 

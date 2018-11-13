@@ -6,6 +6,7 @@
 
 namespace winp::event{
 	class object;
+	class tree;
 	class draw;
 	class dispatcher;
 }
@@ -81,7 +82,8 @@ namespace winp::ui{
 			return do_post_message_(msg, (WPARAM)wparam, (LPARAM)lparam, callback);
 		}
 
-		event::manager<object, event::object> parent_change_event;
+		event::manager<object, event::tree> parent_change_event{ *this };
+		event::manager<object, event::tree> index_change_event{ *this };
 
 	protected:
 		friend class tree;
@@ -91,6 +93,7 @@ namespace winp::ui{
 		friend class post_message;
 
 		friend class event::object;
+		friend class event::tree;
 		friend class event::draw;
 		friend class event::dispatcher;
 
@@ -126,7 +129,7 @@ namespace winp::ui{
 
 		virtual std::size_t change_index_(std::size_t value);
 
-		virtual void index_changed_(std::size_t previous);
+		virtual void index_changed_(tree *previous_parent, std::size_t previous_index);
 
 		virtual std::size_t get_index_() const;
 
@@ -150,7 +153,9 @@ namespace winp::ui{
 
 		virtual void fire_event_(event::manager_base &ev, event::object &e) const;
 
-		message::dispatcher *find_dispatcher_(UINT msg);
+		virtual message::dispatcher *find_dispatcher_(UINT msg);
+
+		virtual LRESULT dispatch_message_(UINT msg, WPARAM wparam, LPARAM lparam, bool call_default = false);
 
 		template <typename target_type>
 		target_type *get_first_ancestor_of_() const{
