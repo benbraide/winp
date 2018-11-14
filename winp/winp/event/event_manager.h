@@ -83,8 +83,8 @@ namespace winp::event{
 		friend owner_type;
 		friend group_type;
 
-		explicit manager(owner_type &owner)
-			: manager_base(owner){}
+		explicit manager(owner_type &owner, const std::function<void(manager_base &, std::size_t)> &callback = nullptr)
+			: manager_base(owner), callback_(callback){}
 
 		virtual std::size_t count_() const override{
 			return handlers_.size();
@@ -105,19 +105,30 @@ namespace winp::event{
 		unsigned __int64 bind_(const m_callback_type &handler){
 			auto id = rand_(1ui64, std::numeric_limits<unsigned __int64>::max());
 			handlers_[id] = handler;
+
+			if (callback_ != nullptr)
+				callback_(*this, handlers_.size());
+
 			return id;
 		}
 
 		bool unbind_(unsigned __int64 id){
+			if (handlers_.empty())
+				return false;
+
 			auto it = handlers_->find(id);
 			if (it == handlers_->end())
 				return false;
 
 			handlers_->erase(it);
+			if (callback_ != nullptr)
+				callback_(*this, handlers_.size());
+
 			return true;
 		}
 
 		m_map_type handlers_;
+		std::function<void(manager_base &, std::size_t)> callback_;
 		utility::random_integral_number rand_;
 	};
 }
