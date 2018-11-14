@@ -81,8 +81,10 @@ std::size_t winp::ui::tree::add_child_(object &child, std::size_t index){
 
 std::size_t winp::ui::tree::insert_child_(object &child, std::size_t index){
 	auto previous_parent = child.get_parent_();
-	auto previous_index = child.get_index_();
+	if (previous_parent != nullptr)
+		return static_cast<std::size_t>(-1);
 
+	auto previous_index = child.get_index_();
 	if (index >= children_.size()){
 		children_.push_back(&child);
 		index = (children_.size() - 1u);
@@ -90,6 +92,7 @@ std::size_t winp::ui::tree::insert_child_(object &child, std::size_t index){
 	else
 		children_.insert(std::next(children_.begin(), index), &child);
 
+	child.set_parent_(this);
 	child_inserted_(child, previous_parent, previous_index);
 	child_index_changed_(child, previous_parent, previous_index);
 
@@ -110,11 +113,11 @@ bool winp::ui::tree::validate_child_remove_(const object &child) const{
 }
 
 bool winp::ui::tree::erase_child_(object &child){
-	return ((child.parent_ == this) ? child.remove_parent_() : false);
+	return ((child.get_parent_() == this) ? child.remove_parent_() : false);
 }
 
 bool winp::ui::tree::remove_child_(object &child){
-	return ((child.parent_ == this) ? remove_child_at_(std::distance(children_.begin(), std::find(children_.begin(), children_.end(), &child))) : false);
+	return ((child.get_parent_() == this) ? remove_child_at_(std::distance(children_.begin(), std::find(children_.begin(), children_.end(), &child))) : false);
 }
 
 bool winp::ui::tree::erase_child_at_(std::size_t index){
@@ -129,6 +132,7 @@ bool winp::ui::tree::remove_child_at_(std::size_t index){
 	auto child = *it;
 
 	children_.erase(it);
+	child->set_parent_(nullptr);
 	child_removed_(*child, index);
 
 	return true;
@@ -148,7 +152,7 @@ bool winp::ui::tree::validate_child_index_change_(const object &child, std::size
 }
 
 std::size_t winp::ui::tree::change_child_index_(object &child, std::size_t index){
-	if (child.parent_ != this || children_.empty())
+	if (child.get_parent_() != this || children_.empty())
 		return static_cast<std::size_t>(-1);
 
 	auto it = std::find(children_.begin(), children_.end(), &child);
@@ -181,7 +185,7 @@ void winp::ui::tree::child_index_changed_(object &child, tree *previous_parent, 
 }
 
 std::size_t winp::ui::tree::find_child_(const object &child) const{
-	return ((child.parent_ == this) ? std::distance(children_.begin(), std::find(children_.begin(), children_.end(), &child)) : static_cast<std::size_t>(-1));
+	return ((child.get_parent_() == this) ? std::distance(children_.begin(), std::find(children_.begin(), children_.end(), &child)) : static_cast<std::size_t>(-1));
 }
 
 winp::ui::object *winp::ui::tree::get_child_at_(std::size_t index) const{

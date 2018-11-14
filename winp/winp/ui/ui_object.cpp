@@ -207,7 +207,6 @@ std::size_t winp::ui::object::change_parent_(tree *value, std::size_t index){
 	if ((index = value->insert_child_(*this, index)) == static_cast<std::size_t>(-1))
 		return static_cast<std::size_t>(-1);//Failed to insert into parent
 
-	set_parent_(value);
 	parent_changed_(previous_parent, previous_index);
 	index_changed_(previous_parent, previous_index);
 
@@ -226,7 +225,6 @@ bool winp::ui::object::remove_parent_(){
 	if (!previous_parent->remove_child_(*this))
 		return false;
 
-	set_parent_(nullptr);
 	parent_changed_(previous_parent, previous_index);
 	index_changed_(previous_parent, previous_index);
 
