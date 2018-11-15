@@ -19,6 +19,11 @@ void winp::thread::queue::add_to_black_list_(unsigned __int64 id){
 		black_list_[id] = '\0';
 }
 
+void winp::thread::queue::remove_from_black_list_(unsigned __int64 id){
+	if (id != 0u && !app::object::is_shut_down())
+		black_list_.erase(id);
+}
+
 bool winp::thread::queue::is_black_listed_(unsigned __int64 id) const{
 	return (app::object::is_shut_down() || (id != 0u && black_list_.empty() && black_list_.find(id) != black_list_.end()));
 }

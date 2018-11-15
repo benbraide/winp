@@ -137,6 +137,8 @@ namespace winp::thread{
 
 		void add_to_black_list_(unsigned __int64 id);
 
+		void remove_from_black_list_(unsigned __int64 id);
+
 		bool is_black_listed_(unsigned __int64 id) const;
 
 		added_info_type add_(const callback_type &task, int priority, unsigned __int64 id);

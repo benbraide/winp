@@ -101,6 +101,8 @@ namespace winp::ui{
 		friend class message::mouse_dispatcher;
 		friend class thread::surface_manager;
 
+		friend menu::item;
+
 		void init_();
 
 		virtual bool create_();

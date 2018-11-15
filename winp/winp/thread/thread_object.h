@@ -20,6 +20,10 @@ namespace winp::message{
 	class object;
 }
 
+namespace winp::menu{
+	class item;
+}
+
 namespace winp::thread{
 	class object{
 	public:
@@ -72,6 +76,8 @@ namespace winp::thread{
 		friend class ui::object;
 		friend class ui::surface;
 		friend class ui::window_surface;
+
+		friend menu::item;
 		friend class surface_manager;
 
 		explicit object(bool);
@@ -79,6 +85,8 @@ namespace winp::thread{
 		void init_(bool is_main = false);
 
 		void add_to_black_list_(unsigned __int64 id);
+
+		void remove_from_black_list_(unsigned __int64 id);
 
 		virtual bool run_task_();
 
@@ -108,5 +116,6 @@ namespace winp::thread{
 		ID2D1SolidColorBrush *color_brush_ = nullptr;
 
 		utility::random_integral_number random_generator_;
+		utility::random_integral_number menu_random_generator_;
 	};
 }

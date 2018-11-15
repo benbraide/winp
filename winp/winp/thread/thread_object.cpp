@@ -199,6 +199,13 @@ void winp::thread::object::add_to_black_list_(unsigned __int64 id){
 		ref_->add_to_black_list_(id);
 }
 
+void winp::thread::object::remove_from_black_list_(unsigned __int64 id){
+	if (ref_ == nullptr)
+		queue.remove_from_black_list_(id);
+	else
+		ref_->remove_from_black_list_(id);
+}
+
 bool winp::thread::object::run_task_(){
 	auto task = get_next_task_();
 	if (task == nullptr)
