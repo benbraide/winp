@@ -187,9 +187,9 @@ void winp::ui::surface::set_message_entry_(LONG_PTR value){}
 
 void winp::ui::surface::add_to_toplevel_(bool update){
 	if (get_parent_() == nullptr)
-		thread_.surface_manager_.toplevel_map_[get_handle_()] = this;
+		thread_.surface_manager_.toplevel_map_[static_cast<HWND>(get_handle_())] = this;
 	else if (update)//Remove from top level list
-		thread_.surface_manager_.toplevel_map_.erase(get_handle_());
+		thread_.surface_manager_.toplevel_map_.erase(static_cast<HWND>(get_handle_()));
 }
 
 bool winp::ui::surface::set_size_(const m_size_type &value){

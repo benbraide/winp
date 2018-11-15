@@ -53,7 +53,7 @@ void winp::message::dispatcher::do_default_(event::object &e, bool call_default)
 LRESULT winp::message::dispatcher::call_default_(event::object &e){
 	auto &info = *e.get_info();
 	auto &target = *dynamic_cast<ui::surface *>(e.get_context());
-	return CallWindowProcW(get_default_message_entry_of_(target), get_handle_of_(target), info.code, info.wparam, info.lparam);
+	return CallWindowProcW(get_default_message_entry_of_(target), static_cast<HWND>(get_handle_of_(target)), info.code, info.wparam, info.lparam);
 }
 
 void winp::message::dispatcher::fire_event_(event::object &e){}
@@ -70,7 +70,7 @@ void winp::message::dispatcher::fire_event_of_(ui::object &target, event::manage
 	target.fire_event_(ev, e);
 }
 
-HWND winp::message::dispatcher::get_handle_of_(ui::object &target){
+HANDLE winp::message::dispatcher::get_handle_of_(ui::object &target){
 	return target.get_handle_();
 }
 
@@ -246,7 +246,7 @@ HCURSOR winp::message::cursor_dispatcher::get_default_cursor_(event::cursor &e) 
 
 		return nullptr;
 	case HTCLIENT://Use class cursor
-		return reinterpret_cast<HCURSOR>(GetClassLongPtrW(get_handle_of_(*e.get_context()), GCLP_HCURSOR));
+		return reinterpret_cast<HCURSOR>(GetClassLongPtrW(static_cast<HWND>(get_handle_of_(*e.get_context())), GCLP_HCURSOR));
 	case HTLEFT:
 	case HTRIGHT:
 		return LoadCursorW(nullptr, IDC_SIZEWE);

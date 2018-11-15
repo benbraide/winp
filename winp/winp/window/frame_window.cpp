@@ -45,7 +45,7 @@ const wchar_t *winp::window::frame::get_window_text_() const{
 bool winp::window::frame::set_caption_(const std::wstring &value){
 	auto handle = get_handle_();
 	if (handle != nullptr)
-		return (SendMessageW(handle, WM_SETTEXT, 0, reinterpret_cast<WPARAM>(value.data())) != FALSE);
+		return (SendMessageW(static_cast<HWND>(handle), WM_SETTEXT, 0, reinterpret_cast<WPARAM>(value.data())) != FALSE);
 
 	caption_ = value;
 	return true;

@@ -54,7 +54,7 @@ namespace winp::message{
 
 		static void fire_event_of_(ui::object &target, event::manager_base &ev, event::object &e);
 
-		static HWND get_handle_of_(ui::object &target);
+		static HANDLE get_handle_of_(ui::object &target);
 
 		static WNDPROC get_default_message_entry_of_(ui::object &target);
 

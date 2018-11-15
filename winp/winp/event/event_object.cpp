@@ -194,9 +194,9 @@ void winp::event::draw::begin_(){
 
 	switch (info_.code){
 	case WM_PAINT:
-		BeginPaint(target_->get_first_ancestor_of_<ui::window_surface>()->get_handle_(), &struct_);
+		BeginPaint(static_cast<HWND>(target_->get_first_ancestor_of_<ui::window_surface>()->get_handle_()), &struct_);
 		cleaner_ = [this]{
-			EndPaint(target_->get_first_ancestor_of_<ui::window_surface>()->get_handle_(), &struct_);
+			EndPaint(static_cast<HWND>(target_->get_first_ancestor_of_<ui::window_surface>()->get_handle_()), &struct_);
 		};
 		break;
 	case WM_PRINTCLIENT:

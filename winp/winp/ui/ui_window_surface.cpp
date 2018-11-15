@@ -170,7 +170,7 @@ bool winp::ui::window_surface::create_(){
 
 bool winp::ui::window_surface::destroy_(){
 	auto handle = get_handle_();
-	return ((handle == nullptr) ? true : (DestroyWindow(handle) != FALSE));
+	return ((handle == nullptr) ? true : (DestroyWindow(static_cast<HWND>(handle)) != FALSE));
 }
 
 void winp::ui::window_surface::parent_changed_(tree *previous_parent, std::size_t previous_index){
@@ -180,12 +180,12 @@ void winp::ui::window_surface::parent_changed_(tree *previous_parent, std::size_
 
 	auto parent = get_parent_();
 	if (parent == nullptr){
-		SetParent(get_handle_(), nullptr);
+		SetParent(static_cast<HWND>(get_handle_()), nullptr);
 		set_styles_((get_styles_(false) & ~WS_CHILD), false);
 	}
 	else{
 		set_styles_(((get_styles_(false) | WS_CHILD) & ~WS_POPUP), false);
-		SetParent(get_handle_(), parent->get_handle_());
+		SetParent(static_cast<HWND>(get_handle_()), static_cast<HWND>(parent->get_handle_()));
 	}
 }
 
@@ -198,7 +198,7 @@ bool winp::ui::window_surface::set_size_(const m_size_type &value){
 	if (handle == nullptr)
 		return io_surface::set_size_(value);
 	
-	return (SetWindowPos(handle, nullptr, 0, 0, value.cx, value.cy, (SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE)) != FALSE);
+	return (SetWindowPos(static_cast<HWND>(handle), nullptr, 0, 0, value.cx, value.cy, (SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE)) != FALSE);
 }
 
 winp::ui::surface::m_size_type winp::ui::window_surface::get_size_() const{
@@ -207,20 +207,21 @@ winp::ui::surface::m_size_type winp::ui::window_surface::get_size_() const{
 		return io_surface::get_size_();
 
 	RECT dimension{};
-	GetWindowRect(handle, &dimension);
+	GetWindowRect(static_cast<HWND>(handle), &dimension);
 
 	return m_size_type{ (dimension.right - dimension.left), (dimension.bottom - dimension.top) };
 }
 
 winp::ui::surface::m_size_type winp::ui::window_surface::get_client_position_offset_() const{
-	if (handle_ == nullptr)
+	auto handle = get_handle_();
+	if (handle == nullptr)
 		return io_surface::get_client_position_offset_();
 
 	POINT client_offset{ 0, 0 };
-	ClientToScreen(handle_, &client_offset);
+	ClientToScreen(static_cast<HWND>(handle), &client_offset);
 
 	RECT window_rect{};
-	GetWindowRect(handle_, &window_rect);
+	GetWindowRect(static_cast<HWND>(handle), &window_rect);
 
 	return m_size_type{ (client_offset.x - window_rect.left), (client_offset.y - window_rect.top) };
 }
@@ -230,7 +231,7 @@ bool winp::ui::window_surface::set_position_(const m_point_type &value){
 	if (handle == nullptr)
 		return io_surface::set_position_(value);
 	
-	return (SetWindowPos(handle, nullptr, value.x, value.y, 0, 0, (SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE)) != FALSE);
+	return (SetWindowPos(static_cast<HWND>(handle), nullptr, value.x, value.y, 0, 0, (SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE)) != FALSE);
 }
 
 winp::ui::surface::m_point_type winp::ui::window_surface::get_position_() const{
@@ -239,7 +240,7 @@ winp::ui::surface::m_point_type winp::ui::window_surface::get_position_() const{
 		return io_surface::get_position_();
 
 	RECT dimension{};
-	GetWindowRect(handle, &dimension);
+	GetWindowRect(static_cast<HWND>(handle), &dimension);
 	m_point_type value{ dimension.left, dimension.top };
 
 	auto parent = get_surface_parent_();
@@ -252,7 +253,7 @@ winp::ui::surface::m_point_type winp::ui::window_surface::get_absolute_position_
 		return io_surface::get_absolute_position_();
 
 	RECT dimension{};
-	GetWindowRect(handle, &dimension);
+	GetWindowRect(static_cast<HWND>(handle), &dimension);
 
 	return m_point_type{ dimension.left, dimension.top };
 }
@@ -263,7 +264,7 @@ winp::ui::surface::m_rect_type winp::ui::window_surface::get_dimension_() const{
 		return io_surface::get_dimension_();
 
 	RECT dimension{};
-	GetWindowRect(handle, &dimension);
+	GetWindowRect(static_cast<HWND>(handle), &dimension);
 
 	auto parent = get_surface_parent_();
 	return ((parent == nullptr) ? dimension : parent->convert_dimension_from_absolute_value_(dimension));
@@ -275,7 +276,7 @@ winp::ui::surface::m_rect_type winp::ui::window_surface::get_absolute_dimension_
 		return io_surface::get_absolute_dimension_();
 
 	RECT dimension{};
-	GetWindowRect(handle, &dimension);
+	GetWindowRect(static_cast<HWND>(handle), &dimension);
 
 	return dimension;
 }
@@ -286,7 +287,7 @@ winp::ui::surface::m_rect_type winp::ui::window_surface::get_client_dimension_()
 		return io_surface::get_client_dimension_();
 
 	RECT dimension{};
-	GetClientRect(handle, &dimension);
+	GetClientRect(static_cast<HWND>(handle), &dimension);
 
 	return dimension;
 }
@@ -297,7 +298,7 @@ winp::ui::surface::m_point_type winp::ui::window_surface::convert_position_from_
 		return io_surface::convert_position_from_absolute_value_(value);
 
 	POINT p{ value.x, value.y };
-	ScreenToClient(handle, &p);
+	ScreenToClient(static_cast<HWND>(handle), &p);
 
 	return p;
 }
@@ -308,7 +309,7 @@ winp::ui::surface::m_point_type winp::ui::window_surface::convert_position_to_ab
 		return io_surface::convert_position_to_absolute_value_(value);
 
 	POINT p{ value.x, value.y };
-	ClientToScreen(handle, &p);
+	ClientToScreen(static_cast<HWND>(handle), &p);
 
 	return p;
 }
@@ -319,7 +320,7 @@ winp::ui::surface::m_rect_type winp::ui::window_surface::convert_dimension_from_
 		return io_surface::convert_dimension_from_absolute_value_(value);
 
 	RECT r{ value.left, value.top, value.right, value.bottom };
-	MapWindowPoints(HWND_DESKTOP, handle, reinterpret_cast<POINT *>(&r), (sizeof(RECT) / sizeof(POINT)));
+	MapWindowPoints(HWND_DESKTOP, static_cast<HWND>(handle), reinterpret_cast<POINT *>(&r), (sizeof(RECT) / sizeof(POINT)));
 
 	return r;
 }
@@ -330,7 +331,7 @@ winp::ui::surface::m_rect_type winp::ui::window_surface::convert_dimension_to_ab
 		return io_surface::convert_dimension_to_absolute_value_(value);
 
 	RECT r{ value.left, value.top, value.right, value.bottom };
-	MapWindowPoints(handle, HWND_DESKTOP, reinterpret_cast<POINT *>(&r), (sizeof(RECT) / sizeof(POINT)));
+	MapWindowPoints(static_cast<HWND>(handle), HWND_DESKTOP, reinterpret_cast<POINT *>(&r), (sizeof(RECT) / sizeof(POINT)));
 
 	return r;
 }
@@ -341,9 +342,9 @@ void winp::ui::window_surface::redraw_(const m_rect_type &region){
 		return;
 
 	if (region.left < region.right || region.top < region.bottom)
-		InvalidateRect(handle, &region, TRUE);
+		InvalidateRect(static_cast<HWND>(handle), &region, TRUE);
 	else
-		InvalidateRect(handle, nullptr, TRUE);
+		InvalidateRect(static_cast<HWND>(handle), nullptr, TRUE);
 }
 
 bool winp::ui::window_surface::set_visibility_(bool is_visible){
@@ -354,8 +355,8 @@ bool winp::ui::window_surface::set_visibility_(bool is_visible){
 		return remove_styles_(WS_VISIBLE, false);
 	}
 	
-	if ((IsWindowVisible(handle) == FALSE) == is_visible)
-		return (ShowWindow(handle, (is_visible ? SW_SHOW : SW_HIDE)) != FALSE);
+	if ((IsWindowVisible(static_cast<HWND>(handle)) == FALSE) == is_visible)
+		return (ShowWindow(static_cast<HWND>(handle), (is_visible ? SW_SHOW : SW_HIDE)) != FALSE);
 
 	return true;
 }
@@ -364,7 +365,7 @@ bool winp::ui::window_surface::is_visible_() const{
 	auto handle = get_handle_();
 	if (handle == nullptr)
 		return has_styles_(WS_VISIBLE, false, true);
-	return (IsWindowVisible(handle) != FALSE);
+	return (IsWindowVisible(static_cast<HWND>(handle)) != FALSE);
 }
 
 winp::utility::hit_target winp::ui::window_surface::hit_test_(const m_point_type &pt, bool is_absolute) const{
@@ -373,7 +374,7 @@ winp::utility::hit_target winp::ui::window_surface::hit_test_(const m_point_type
 		return io_surface::hit_test_(pt, is_absolute);
 
 	auto absolute_pt = (is_absolute ? pt : convert_position_to_absolute_value_(pt));
-	switch (SendMessageW(handle, WM_NCHITTEST, 0, MAKELONG(absolute_pt.x, absolute_pt.y))){
+	switch (SendMessageW(static_cast<HWND>(handle), WM_NCHITTEST, 0, MAKELONG(absolute_pt.x, absolute_pt.y))){
 	case HTNOWHERE:
 	case HTERROR://Outside window
 		return utility::hit_target::nil;
@@ -392,7 +393,7 @@ winp::utility::hit_target winp::ui::window_surface::hit_test_(const m_rect_type 
 	bool first_pt_inside, second_pt_inside;
 	auto absolute_rect = (is_absolute ? rect : convert_dimension_to_absolute_value_(rect));
 
-	switch (SendMessageW(handle, WM_NCHITTEST, 0, MAKELONG(absolute_rect.left, absolute_rect.top))){
+	switch (SendMessageW(static_cast<HWND>(handle), WM_NCHITTEST, 0, MAKELONG(absolute_rect.left, absolute_rect.top))){
 	case HTNOWHERE:
 	case HTERROR://Outside window
 		first_pt_inside = false;
@@ -402,7 +403,7 @@ winp::utility::hit_target winp::ui::window_surface::hit_test_(const m_rect_type 
 		break;
 	}
 
-	switch (SendMessageW(handle, WM_NCHITTEST, 0, MAKELONG(absolute_rect.right, absolute_rect.bottom))){
+	switch (SendMessageW(static_cast<HWND>(handle), WM_NCHITTEST, 0, MAKELONG(absolute_rect.right, absolute_rect.bottom))){
 	case HTNOWHERE:
 	case HTERROR://Outside window
 		second_pt_inside = false;
@@ -420,7 +421,7 @@ winp::utility::hit_target winp::ui::window_surface::hit_test_(const m_rect_type 
 
 bool winp::ui::window_surface::is_dialog_message_(MSG &msg) const{
 	auto handle = get_handle_();
-	return (handle != nullptr && IsDialogMessageW(handle, &msg) != FALSE);
+	return (handle != nullptr && IsDialogMessageW(static_cast<HWND>(handle), &msg) != FALSE);
 }
 
 void winp::ui::window_surface::destruct_(){
@@ -442,7 +443,7 @@ winp::ui::window_surface *winp::ui::window_surface::get_window_surface_parent_()
 bool winp::ui::window_surface::show_(int how){
 	auto handle = get_handle_();
 	if (handle != nullptr)
-		return (ShowWindow(handle, how) != FALSE);
+		return (ShowWindow(static_cast<HWND>(handle), how) != FALSE);
 
 	switch (how){
 	case SW_HIDE:
@@ -466,8 +467,8 @@ bool winp::ui::window_surface::maximize_(){
 	if (handle == nullptr)
 		return add_styles_(WS_MAXIMIZE, false);
 
-	if (IsZoomed(handle) == FALSE)
-		return (ShowWindow(handle, SW_MAXIMIZE) != FALSE);
+	if (IsZoomed(static_cast<HWND>(handle)) == FALSE)
+		return (ShowWindow(static_cast<HWND>(handle), SW_MAXIMIZE) != FALSE);
 
 	return true;
 }
@@ -477,8 +478,8 @@ bool winp::ui::window_surface::restore_maximized_(){
 	if (handle == nullptr)
 		return remove_styles_(WS_MAXIMIZE, false);
 
-	if (IsZoomed(handle) != FALSE)
-		return (ShowWindow(handle, SW_RESTORE) != FALSE);
+	if (IsZoomed(static_cast<HWND>(handle)) != FALSE)
+		return (ShowWindow(static_cast<HWND>(handle), SW_RESTORE) != FALSE);
 
 	return true;
 }
@@ -492,7 +493,7 @@ bool winp::ui::window_surface::is_maximized_() const{
 	if (handle == nullptr)
 		return has_styles_(WS_MAXIMIZE, false, true);
 
-	return (IsZoomed(handle) != FALSE);
+	return (IsZoomed(static_cast<HWND>(handle)) != FALSE);
 }
 
 bool winp::ui::window_surface::minimize_(){
@@ -500,8 +501,8 @@ bool winp::ui::window_surface::minimize_(){
 	if (handle == nullptr)
 		return add_styles_(WS_MINIMIZE, false);
 
-	if (IsIconic(handle) == FALSE)
-		return (ShowWindow(handle, SW_MINIMIZE) != FALSE);
+	if (IsIconic(static_cast<HWND>(handle)) == FALSE)
+		return (ShowWindow(static_cast<HWND>(handle), SW_MINIMIZE) != FALSE);
 
 	return true;
 }
@@ -511,8 +512,8 @@ bool winp::ui::window_surface::restore_minimized_(){
 	if (handle == nullptr)
 		return remove_styles_(WS_MINIMIZE, false);
 
-	if (IsIconic(handle) != FALSE)
-		return (ShowWindow(handle, SW_RESTORE) != FALSE);
+	if (IsIconic(static_cast<HWND>(handle)) != FALSE)
+		return (ShowWindow(static_cast<HWND>(handle), SW_RESTORE) != FALSE);
 
 	return true;
 }
@@ -526,12 +527,12 @@ bool winp::ui::window_surface::is_minimized_() const{
 	if (handle == nullptr)
 		return has_styles_(WS_MINIMIZE, false, true);
 
-	return (IsIconic(handle) != FALSE);
+	return (IsIconic(static_cast<HWND>(handle)) != FALSE);
 }
 
 bool winp::ui::window_surface::set_styles_(DWORD value, bool is_extended){
 	DWORD diff;
-	HWND handle;
+	HANDLE handle;
 
 	if (is_extended){
 		diff = extended_styles_;
@@ -547,8 +548,8 @@ bool winp::ui::window_surface::set_styles_(DWORD value, bool is_extended){
 	}
 
 	if (diff != 0u && (handle = get_handle_()) != nullptr){//Update window
-		SetWindowLongPtrW(handle, (is_extended ? GWL_EXSTYLE : GWL_STYLE), value);
-		SetWindowPos(handle, nullptr, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+		SetWindowLongPtrW(static_cast<HWND>(handle), (is_extended ? GWL_EXSTYLE : GWL_STYLE), value);
+		SetWindowPos(static_cast<HWND>(handle), nullptr, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 	}
 
 	return true;
@@ -626,5 +627,5 @@ const wchar_t *winp::ui::window_surface::get_window_text_() const{
 
 HWND winp::ui::window_surface::get_first_window_ancestor_handle_() const{
 	auto window_ancestor = get_first_ancestor_of_<window_surface>();
-	return ((window_ancestor == nullptr) ? nullptr : window_ancestor->get_handle_());
+	return ((window_ancestor == nullptr) ? nullptr : static_cast<HWND>(window_ancestor->get_handle_()));
 }

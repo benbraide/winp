@@ -36,7 +36,7 @@ namespace winp::ui{
 
 		virtual void destroy(const std::function<void(object &, bool)> &callback = nullptr);
 
-		virtual HWND get_handle(const std::function<void(HWND)> &callback = nullptr) const;
+		virtual HANDLE get_handle(const std::function<void(HANDLE)> &callback = nullptr) const;
 
 		virtual void set_parent(tree *value, const std::function<void(object &, bool, std::size_t)> &callback = nullptr);
 
@@ -111,7 +111,7 @@ namespace winp::ui{
 
 		virtual void set_handle_(HWND value);
 
-		virtual HWND get_handle_() const;
+		virtual HANDLE get_handle_() const;
 
 		virtual WNDPROC get_default_message_entry_() const;
 
@@ -172,7 +172,7 @@ namespace winp::ui{
 
 		static tree *get_parent_of_(const object &target);
 
-		HWND handle_;
+		HANDLE handle_;
 		tree *parent_;
 		std::size_t index_;
 

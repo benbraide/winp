@@ -72,7 +72,11 @@ std::size_t winp::menu::item::get_absolute_index_() const{
 }
 
 bool winp::menu::item::remove_from_parent_(ui::tree &parent){
-	auto result = RemoveMenu(reinterpret_cast<HMENU>(parent.get_handle_()), local_id_, MF_BYCOMMAND);
+	auto handle = static_cast<HMENU>(parent.get_handle_());
+	if (handle == nullptr)//Parent not created
+		return true;
+
+	auto result = RemoveMenu(handle, local_id_, MF_BYCOMMAND);
 	/*auto bar_parent = dynamic_cast<bar *>(previous_parent);
 	if (bar_parent != nullptr && bar_parent->owner != nullptr)
 		DrawMenuBar(bar_parent->owner->handle);*/
@@ -81,7 +85,7 @@ bool winp::menu::item::remove_from_parent_(ui::tree &parent){
 }
 
 bool winp::menu::item::insert_into_parent_(ui::tree &parent){
-	auto handle = reinterpret_cast<HMENU>(parent.get_handle_());
+	auto handle = static_cast<HMENU>(parent.get_handle_());
 	if (handle == nullptr)//Parent not created
 		return true;
 
@@ -139,7 +143,7 @@ bool winp::menu::item::update_(const MENUITEMINFOW &info){
 	if (parent == nullptr)
 		return true;
 
-	auto handle = reinterpret_cast<HMENU>(parent->get_handle_());
+	auto handle = static_cast<HMENU>(parent->get_handle_());
 	if (handle == nullptr)//Parent not created
 		return true;
 

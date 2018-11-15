@@ -47,7 +47,7 @@ WNDPROC winp::control::object::get_default_message_entry_() const{
 
 void winp::control::object::post_create_(){
 	if (font_ != nullptr)//Update font
-		SendMessageW(get_handle_(), WM_SETFONT, reinterpret_cast<WPARAM>(font_), 0);
+		SendMessageW(static_cast<HWND>(get_handle_()), WM_SETFONT, reinterpret_cast<WPARAM>(font_), 0);
 }
 
 DWORD winp::control::object::get_filtered_styles_() const{
@@ -87,7 +87,7 @@ winp::ui::surface::m_size_type winp::control::object::compute_size_() const{
 	if (handle == nullptr)//Object not created
 		return m_size_type{};
 
-	auto device = GetDC(handle);
+	auto device = GetDC(static_cast<HWND>(handle));
 	if (device == nullptr)//Failed to retrieve device
 		return m_size_type{};
 

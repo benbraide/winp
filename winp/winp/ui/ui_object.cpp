@@ -28,13 +28,13 @@ void winp::ui::object::destroy(const std::function<void(object &, bool)> &callba
 	}, thread::queue::send_priority, id_);
 }
 
-HWND winp::ui::object::get_handle(const std::function<void(HWND)> &callback) const{
+HANDLE winp::ui::object::get_handle(const std::function<void(HANDLE)> &callback) const{
 	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(get_handle()); }, thread::queue::send_priority, id_);
+		thread_.queue.post([=]{ callback(get_handle_()); }, thread::queue::send_priority, id_);
 		return nullptr;
 	}
 
-	return thread_.queue.add([this]{ return get_handle(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.add([this]{ return get_handle_(); }, thread::queue::send_priority, id_).get();
 }
 
 void winp::ui::object::set_parent(tree *value, const std::function<void(object &, bool, std::size_t)> &callback){
@@ -159,7 +159,7 @@ void winp::ui::object::set_handle_(HWND value){
 	handle_ = value;
 }
 
-HWND winp::ui::object::get_handle_() const{
+HANDLE winp::ui::object::get_handle_() const{
 	return handle_;
 }
 
@@ -303,7 +303,7 @@ LRESULT winp::ui::object::do_send_message_(UINT msg, WPARAM wparam, LPARAM lpara
 LRESULT winp::ui::object::send_message_(UINT msg, WPARAM wparam, LPARAM lparam){
 	auto handle = get_handle_();
 	if (handle != nullptr)
-		return SendMessageW(handle, msg, wparam, lparam);
+		return SendMessageW(static_cast<HWND>(handle), msg, wparam, lparam);
 
 	return dispatch_message_(msg, wparam, lparam);
 }
@@ -320,7 +320,7 @@ bool winp::ui::object::do_post_message_(UINT msg, WPARAM wparam, LPARAM lparam, 
 bool winp::ui::object::post_message_(UINT msg, WPARAM wparam, LPARAM lparam){
 	auto handle = get_handle_();
 	if (handle != nullptr)
-		return (PostMessageW(handle, msg, wparam, lparam) != FALSE);
+		return (PostMessageW(static_cast<HWND>(handle), msg, wparam, lparam) != FALSE);
 
 	dispatch_message_(msg, wparam, lparam, false);
 	return true;

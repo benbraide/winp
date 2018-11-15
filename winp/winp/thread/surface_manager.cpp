@@ -112,7 +112,7 @@ LRESULT winp::thread::surface_manager::mouse_nc_leave_(ui::io_surface &target, D
 		mouse_info_.mouse_target = surface_parent;
 	}
 
-	return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), target.get_handle_(), WM_NCMOUSELEAVE, 0, 0));
+	return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), static_cast<HWND>(target.get_handle_()), WM_NCMOUSELEAVE, 0, 0));
 }
 
 LRESULT winp::thread::surface_manager::mouse_leave_(ui::io_surface &target, DWORD mouse_position, bool prevent_default){
@@ -171,7 +171,7 @@ LRESULT winp::thread::surface_manager::mouse_enter_(ui::io_surface &target, DWOR
 
 LRESULT winp::thread::surface_manager::mouse_nc_move_(ui::io_surface &target, DWORD mouse_position, WPARAM wparam, LPARAM lparam, bool prevent_default){
 	if (!mouse_info_.tracking_mouse)
-		track_mouse_leave_(target.get_handle_(), TME_NONCLIENT);
+		track_mouse_leave_(static_cast<HWND>(target.get_handle_()), TME_NONCLIENT);
 
 	if (mouse_info_.drag_target == &target){
 		find_dispatcher_(WINP_WM_MOUSEDRAGEND)->dispatch_(*mouse_info_.drag_target, WINP_WM_MOUSEDRAGEND, wparam, lparam, false);
@@ -182,12 +182,12 @@ LRESULT winp::thread::surface_manager::mouse_nc_move_(ui::io_surface &target, DW
 	if (surface_parent != nullptr)
 		mouse_move_(*surface_parent, mouse_position, 0, 0, false);
 
-	return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), target.get_handle_(), WM_NCMOUSEMOVE, wparam, lparam));
+	return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), static_cast<HWND>(target.get_handle_()), WM_NCMOUSEMOVE, wparam, lparam));
 }
 
 LRESULT winp::thread::surface_manager::mouse_move_(ui::io_surface &target, DWORD mouse_position, WPARAM wparam, LPARAM lparam, bool prevent_default){
 	if (!mouse_info_.tracking_mouse)
-		track_mouse_leave_(target.get_handle_(), 0);
+		track_mouse_leave_(static_cast<HWND>(target.get_handle_()), 0);
 
 	m_point_type computed_mouse_position{ GET_X_LPARAM(mouse_position), GET_Y_LPARAM(mouse_position) };
 	if (mouse_info_.mouse_target != nullptr && mouse_info_.mouse_target->hit_test_(computed_mouse_position, true) != utility::hit_target::inside)
@@ -226,7 +226,7 @@ LRESULT winp::thread::surface_manager::mouse_nc_down_(ui::io_surface &target, UI
 	if (surface_parent != nullptr)
 		mouse_down_(*surface_parent, msg, mouse_position, 0, 0, button, false);
 
-	return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), target.get_handle_(), msg, wparam, lparam));
+	return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), static_cast<HWND>(target.get_handle_()), msg, wparam, lparam));
 }
 
 LRESULT winp::thread::surface_manager::mouse_down_(ui::io_surface &target, UINT msg, DWORD mouse_position, WPARAM wparam, LPARAM lparam, UINT button, bool prevent_default){
@@ -248,7 +248,7 @@ LRESULT winp::thread::surface_manager::mouse_nc_up_(ui::io_surface &target, UINT
 	if (surface_parent != nullptr)
 		mouse_up_(*surface_parent, msg, mouse_position, 0, 0, button, false);
 
-	return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), target.get_handle_(), msg, wparam, lparam));
+	return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), static_cast<HWND>(target.get_handle_()), msg, wparam, lparam));
 }
 
 LRESULT winp::thread::surface_manager::mouse_up_(ui::io_surface &target, UINT msg, DWORD mouse_position, WPARAM wparam, LPARAM lparam, UINT button, bool prevent_default){
@@ -269,7 +269,7 @@ LRESULT winp::thread::surface_manager::mouse_nc_dbl_click_(ui::io_surface &targe
 	if (surface_parent != nullptr)
 		mouse_dbl_click_(*surface_parent, msg, mouse_position, 0, 0, button, false);
 
-	return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), target.get_handle_(), msg, wparam, lparam));
+	return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), static_cast<HWND>(target.get_handle_()), msg, wparam, lparam));
 }
 
 LRESULT winp::thread::surface_manager::mouse_dbl_click_(ui::io_surface &target, UINT msg, DWORD mouse_position, WPARAM wparam, LPARAM lparam, UINT button, bool prevent_default){
