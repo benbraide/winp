@@ -116,15 +116,15 @@ std::size_t winp::event::tree::get_current_index() const{
 }
 
 void winp::event::tree::init_(){
-	if (info_.code != WINP_WM_PARENT_CHANGED && info_.code != WINP_WM_INDEX_CHANGED){
-		auto info = reinterpret_cast<ui::tree::child_change_info *>(info_.wparam);
+	if (info_.message != WINP_WM_PARENT_CHANGED && info_.message != WINP_WM_INDEX_CHANGED){
+		auto info = reinterpret_cast<ui::tree::child_change_info *>(info_.wParam);
 		target_ = info->child;
 		previous_parent_ = info->previous_parent_;
 		previous_index_ = info->previous_index_;
 	}
 	else{
-		previous_parent_ = reinterpret_cast<ui::tree *>(info_.wparam);
-		previous_index_ = static_cast<std::size_t>(info_.lparam);
+		previous_parent_ = reinterpret_cast<ui::tree *>(info_.wParam);
+		previous_index_ = static_cast<std::size_t>(info_.lParam);
 	}
 }
 
@@ -192,7 +192,7 @@ void winp::event::draw::begin_(){
 	if (struct_.hdc != nullptr || dynamic_cast<ui::surface *>(target_) == nullptr)
 		return;//Already initialized
 
-	switch (info_.code){
+	switch (info_.message){
 	case WM_PAINT:
 		BeginPaint(static_cast<HWND>(target_->get_first_ancestor_of_<ui::window_surface>()->get_handle_()), &struct_);
 		cleaner_ = [this]{
@@ -200,12 +200,12 @@ void winp::event::draw::begin_(){
 		};
 		break;
 	case WM_PRINTCLIENT:
-		struct_.hdc = reinterpret_cast<HDC>(info_.wparam);
+		struct_.hdc = reinterpret_cast<HDC>(info_.wParam);
 		GetClipBox(struct_.hdc, &struct_.rcPaint);
-		struct_.fErase = ((info_.lparam & PRF_ERASEBKGND) == PRF_ERASEBKGND);
+		struct_.fErase = ((info_.lParam & PRF_ERASEBKGND) == PRF_ERASEBKGND);
 		break;
 	case WM_ERASEBKGND:
-		struct_.hdc = reinterpret_cast<HDC>(info_.wparam);
+		struct_.hdc = reinterpret_cast<HDC>(info_.wParam);
 		GetClipBox(struct_.hdc, &struct_.rcPaint);
 		struct_.fErase = TRUE;
 		break;
@@ -268,11 +268,11 @@ winp::event::cursor::cursor(ui::object &target, ui::object &context, const callb
 winp::event::cursor::~cursor() = default;
 
 WORD winp::event::cursor::get_hit_target() const{
-	return (thread_.is_thread_context() ? LOWORD(info_.lparam) : 0);
+	return (thread_.is_thread_context() ? LOWORD(info_.lParam) : 0);
 }
 
 WORD winp::event::cursor::get_mouse_button() const{
-	return (thread_.is_thread_context() ? HIWORD(info_.lparam) : 0);
+	return (thread_.is_thread_context() ? HIWORD(info_.lParam) : 0);
 }
 
 winp::event::mouse::mouse(ui::object &target, const callback_type &default_handler, const info_type &info, const m_point_type &offset, button_type button)
@@ -396,35 +396,35 @@ winp::event::key::key(ui::object &target, ui::object &context, const callback_ty
 winp::event::key::~key() = default;
 
 unsigned short winp::event::key::get_code() const{
-	return (thread_.is_thread_context() ? static_cast<unsigned short>(info_.wparam) : 0u);
+	return (thread_.is_thread_context() ? static_cast<unsigned short>(info_.wParam) : 0u);
 }
 
 wchar_t winp::event::key::get_char() const{
-	return (thread_.is_thread_context() ? (reinterpret_cast<const wchar_t *>(&info_.lparam))[2] : L'\0');
+	return (thread_.is_thread_context() ? (reinterpret_cast<const wchar_t *>(&info_.lParam))[2] : L'\0');
 }
 
 WORD winp::event::key::get_repeat_count() const{
-	return (is_down() ? static_cast<WORD>(info_.lparam) : 0);
+	return (is_down() ? static_cast<WORD>(info_.lParam) : 0);
 }
 
 bool winp::event::key::is_char() const{
-	return (thread_.is_thread_context() && info_.code == WM_CHAR);
+	return (thread_.is_thread_context() && info_.message == WM_CHAR);
 }
 
 bool winp::event::key::is_down() const{
-	return (thread_.is_thread_context() && info_.code == WM_KEYDOWN);
+	return (thread_.is_thread_context() && info_.message == WM_KEYDOWN);
 }
 
 bool winp::event::key::is_first_down() const{
-	return (is_down() ? std::bitset<sizeof(LPARAM) * 8>(info_.lparam).test(30) : false);
+	return (is_down() ? std::bitset<sizeof(LPARAM) * 8>(info_.lParam).test(30) : false);
 }
 
 bool winp::event::key::is_being_released() const{
-	return (is_char() ? std::bitset<sizeof(LPARAM) * 8>(info_.lparam).test(31) : false);
+	return (is_char() ? std::bitset<sizeof(LPARAM) * 8>(info_.lParam).test(31) : false);
 }
 
 bool winp::event::key::is_extended() const{
-	return (thread_.is_thread_context() && std::bitset<sizeof(LPARAM) * 8>(info_.lparam).test(24));
+	return (thread_.is_thread_context() && std::bitset<sizeof(LPARAM) * 8>(info_.lParam).test(24));
 }
 
 const winp::event::key::keyboard_state &winp::event::key::get_keyboard_state() const{

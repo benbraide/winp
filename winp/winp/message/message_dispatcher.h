@@ -27,7 +27,7 @@ namespace winp::message{
 
 		virtual void cleanup_();
 
-		virtual LRESULT dispatch_(ui::object &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default, bool is_post = false);
+		virtual LRESULT dispatch_(ui::object &target, const MSG &info, bool call_default, bool is_post = false);
 
 		virtual void pre_dispatch_(event::object &e, bool &call_default);
 
@@ -41,13 +41,13 @@ namespace winp::message{
 
 		virtual void fire_event_(event::object &e);
 
-		virtual std::shared_ptr<event::object> create_event_(ui::object &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default);
+		virtual std::shared_ptr<event::object> create_event_(ui::object &target, const MSG &info, bool call_default);
 
 		template <typename event_type, typename... other_types>
-		std::shared_ptr<event_type> create_new_event_(ui::object &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default, other_types &&... others){
+		std::shared_ptr<event_type> create_new_event_(ui::object &target, const MSG &info, bool call_default, other_types &&... others){
 			return std::make_shared<event_type>(target, [this, call_default](event::object &e){
 				do_default_(e, call_default);
-			}, event::object::info_type{ msg, wparam, lparam }, std::forward<other_types>(others)...);
+			}, info, std::forward<other_types>(others)...);
 		}
 
 		static std::size_t event_handlers_count_of_(ui::object &target, event::manager_base &ev);
@@ -97,7 +97,7 @@ namespace winp::message{
 	protected:
 		virtual void fire_event_(event::object &e) override;
 
-		virtual std::shared_ptr<event::object> create_event_(ui::object &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default) override;
+		virtual std::shared_ptr<event::object> create_event_(ui::object &target, const MSG &info, bool call_default) override;
 	};
 
 	class create_destroy_dispatcher : public dispatcher{
@@ -119,7 +119,7 @@ namespace winp::message{
 
 		virtual void fire_event_(event::object &e) override;
 
-		virtual std::shared_ptr<event::object> create_event_(ui::object &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default) override;
+		virtual std::shared_ptr<event::object> create_event_(ui::object &target, const MSG &info, bool call_default) override;
 
 		std::shared_ptr<event::draw> e_;
 		POINT offset_{};
@@ -134,7 +134,7 @@ namespace winp::message{
 
 		virtual void fire_event_(event::object &e) override;
 
-		virtual std::shared_ptr<event::object> create_event_(ui::object &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default) override;
+		virtual std::shared_ptr<event::object> create_event_(ui::object &target, const MSG &info, bool call_default) override;
 
 		virtual HCURSOR get_default_cursor_(event::cursor &e) const;
 	};
@@ -150,7 +150,7 @@ namespace winp::message{
 
 		virtual void fire_event_(event::object &e) override;
 
-		virtual std::shared_ptr<event::object> create_event_(ui::object &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default) override;
+		virtual std::shared_ptr<event::object> create_event_(ui::object &target, const MSG &info, bool call_default) override;
 
 		virtual void resolve_(ui::io_surface &target, UINT msg);
 
@@ -178,7 +178,7 @@ namespace winp::message{
 
 		virtual void fire_event_(event::object &e) override;
 
-		virtual std::shared_ptr<event::object> create_event_(ui::object &target, UINT msg, WPARAM wparam, LPARAM lparam, bool call_default) override;
+		virtual std::shared_ptr<event::object> create_event_(ui::object &target, const MSG &info, bool call_default) override;
 
 		virtual void resolve_(ui::io_surface &target, UINT msg);
 

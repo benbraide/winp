@@ -25,7 +25,7 @@ bool winp::event::dispatcher::default_prevented_of_(event::object &e){
 void winp::event::tree_dispatcher::dispatch_(object &e){
 	auto handler = dynamic_cast<tree_handler *>(e.get_context());
 	if (handler != nullptr){
-		switch (e.get_info()->code){
+		switch (e.get_info()->message){
 		case WINP_WM_PARENT_CHANGED:
 			handler->handle_parent_change_event_(dynamic_cast<tree &>(e));
 			break;
@@ -52,7 +52,7 @@ void winp::event::tree_dispatcher::dispatch_(object &e){
 void winp::event::create_destroy_dispatcher::dispatch_(object &e){
 	auto handler = dynamic_cast<create_destroy_handler *>(e.get_context());
 	if (handler != nullptr){
-		if (e.get_info()->code == WM_CREATE)
+		if (e.get_info()->message == WM_CREATE)
 			handler->handle_create_event_(e);
 		else//Destroy event
 			handler->handle_destroy_event_(e);
@@ -64,7 +64,7 @@ void winp::event::create_destroy_dispatcher::dispatch_(object &e){
 void winp::event::draw_dispatcher::dispatch_(object &e){
 	auto handler = dynamic_cast<draw_handler *>(e.get_context());
 	if (handler != nullptr){
-		switch (e.get_info()->code){
+		switch (e.get_info()->message){
 		case WM_ERASEBKGND:
 			handler->handle_background_erase_event_(dynamic_cast<draw &>(e));
 			break;
@@ -76,7 +76,7 @@ void winp::event::draw_dispatcher::dispatch_(object &e){
 			break;
 		}
 	}
-	else if (e.get_info()->code == WM_ERASEBKGND && dynamic_cast<unhandled_handler *>(e.get_context()) == nullptr)//Do default painting
+	else if (e.get_info()->message == WM_ERASEBKGND && dynamic_cast<unhandled_handler *>(e.get_context()) == nullptr)//Do default painting
 		erase_background_(dynamic_cast<draw &>(e));
 	else//Events are not subscribed to
 		dispatcher::dispatch_(e);
@@ -102,13 +102,17 @@ void winp::event::cursor_dispatcher::dispatch_(object &e){
 void winp::event::mouse_dispatcher::dispatch_(object &e){
 	auto handler = dynamic_cast<mouse_handler *>(e.get_context());
 	if (handler != nullptr){
-		switch (e.get_info()->code){
+		switch (e.get_info()->message){
+		case WM_NCMOUSELEAVE:
+		case WM_MOUSELEAVE:
 		case WINP_WM_MOUSELEAVE:
 			handler->handle_mouse_leave_event_(dynamic_cast<mouse &>(e));
 			break;
 		case WINP_WM_MOUSEENTER:
 			handler->handle_mouse_enter_event_(dynamic_cast<mouse &>(e));
 			break;
+		case WM_NCMOUSEMOVE:
+		case WM_MOUSEMOVE:
 		case WINP_WM_MOUSEMOVE:
 			handler->handle_mouse_move_event_(dynamic_cast<mouse &>(e));
 			break;
@@ -116,16 +120,25 @@ void winp::event::mouse_dispatcher::dispatch_(object &e){
 		case WM_MOUSEHWHEEL:
 			handler->handle_mouse_wheel_event_(dynamic_cast<mouse &>(e));
 			break;
+		case WM_NCLBUTTONDOWN:
+		case WM_NCMBUTTONDOWN:
+		case WM_NCRBUTTONDOWN:
 		case WM_LBUTTONDOWN:
 		case WM_MBUTTONDOWN:
 		case WM_RBUTTONDOWN:
 			handler->handle_mouse_down_event_(dynamic_cast<mouse &>(e));
 			break;
+		case WM_NCLBUTTONUP:
+		case WM_NCMBUTTONUP:
+		case WM_NCRBUTTONUP:
 		case WM_LBUTTONUP:
 		case WM_MBUTTONUP:
 		case WM_RBUTTONUP:
 			handler->handle_mouse_up_event_(dynamic_cast<mouse &>(e));
 			break;
+		case WM_NCLBUTTONDBLCLK:
+		case WM_NCMBUTTONDBLCLK:
+		case WM_NCRBUTTONDBLCLK:
 		case WM_LBUTTONDBLCLK:
 		case WM_MBUTTONDBLCLK:
 		case WM_RBUTTONDBLCLK:
@@ -151,7 +164,7 @@ void winp::event::mouse_dispatcher::dispatch_(object &e){
 void winp::event::focus_dispatcher::dispatch_(object &e){
 	auto handler = dynamic_cast<focus_handler *>(e.get_context());
 	if (handler != nullptr){
-		if (e.get_info()->code == WM_SETFOCUS)
+		if (e.get_info()->message == WM_SETFOCUS)
 			handler->handle_set_focus_event_(e);
 		else//Destroy event
 			handler->handle_kill_focus_event_(e);
@@ -163,7 +176,7 @@ void winp::event::focus_dispatcher::dispatch_(object &e){
 void winp::event::key_dispatcher::dispatch_(object &e){
 	auto handler = dynamic_cast<key_handler *>(e.get_context());
 	if (handler != nullptr){
-		switch (e.get_info()->code){
+		switch (e.get_info()->message){
 		case WM_KEYDOWN:
 			if (handler->handle_key_down_event_(dynamic_cast<key &>(e)))
 				e.stop_propagation();

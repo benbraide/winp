@@ -339,7 +339,7 @@ winp::message::dispatcher *winp::ui::object::find_dispatcher_(UINT msg){
 }
 
 LRESULT winp::ui::object::dispatch_message_(UINT msg, WPARAM wparam, LPARAM lparam, bool call_default){
-	return find_dispatcher_(msg)->dispatch_(*this, msg, wparam, lparam, call_default);
+	return find_dispatcher_(msg)->dispatch_(*this, MSG{ static_cast<HWND>(get_handle_()), msg, wparam, lparam }, call_default);
 }
 
 winp::ui::tree *winp::ui::object::get_parent_of_(const object &target){

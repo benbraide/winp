@@ -102,37 +102,37 @@ namespace winp::thread{
 
 		void destroy_window_(HWND handle);
 
-		LRESULT mouse_nc_leave_(ui::io_surface &target, DWORD mouse_position, bool prevent_default);
+		LRESULT mouse_nc_leave_(ui::io_surface &target, const MSG &info, DWORD mouse_position, bool prevent_default);
 
-		LRESULT mouse_leave_(ui::io_surface &target, DWORD mouse_position, bool prevent_default);
+		LRESULT mouse_leave_(ui::io_surface &target, const MSG &info, DWORD mouse_position, bool prevent_default);
 
-		LRESULT mouse_enter_(ui::io_surface &target, DWORD mouse_position);
+		LRESULT mouse_enter_(ui::io_surface &target, const MSG &info, DWORD mouse_position);
 
-		LRESULT mouse_nc_move_(ui::io_surface &target, DWORD mouse_position, WPARAM wparam, LPARAM lparam, bool prevent_default);
+		LRESULT mouse_nc_move_(ui::io_surface &target, const MSG &info, DWORD mouse_position, bool prevent_default);
 
-		LRESULT mouse_move_(ui::io_surface &target, DWORD mouse_position, WPARAM wparam, LPARAM lparam, bool prevent_default);
+		LRESULT mouse_move_(ui::io_surface &target, const MSG &info, DWORD mouse_position, bool prevent_default);
 
-		LRESULT mouse_nc_down_(ui::io_surface &target, UINT msg, DWORD mouse_position, WPARAM wparam, LPARAM lparam, UINT button, bool prevent_default);
+		LRESULT mouse_nc_down_(ui::io_surface &target, const MSG &info, DWORD mouse_position, UINT button, bool prevent_default);
 
-		LRESULT mouse_down_(ui::io_surface &target, UINT msg, DWORD mouse_position, WPARAM wparam, LPARAM lparam, UINT button, bool prevent_default);
+		LRESULT mouse_down_(ui::io_surface &target, const MSG &info, DWORD mouse_position, UINT button, bool prevent_default);
 
-		LRESULT mouse_nc_up_(ui::io_surface &target, UINT msg, DWORD mouse_position, WPARAM wparam, LPARAM lparam, UINT button, bool prevent_default);
+		LRESULT mouse_nc_up_(ui::io_surface &target, const MSG &info, DWORD mouse_position, UINT button, bool prevent_default);
 
-		LRESULT mouse_up_(ui::io_surface &target, UINT msg, DWORD mouse_position, WPARAM wparam, LPARAM lparam, UINT button, bool prevent_default);
+		LRESULT mouse_up_(ui::io_surface &target, const MSG &info, DWORD mouse_position, UINT button, bool prevent_default);
 
-		LRESULT mouse_nc_dbl_click_(ui::io_surface &target, UINT msg, DWORD mouse_position, WPARAM wparam, LPARAM lparam, UINT button, bool prevent_default);
+		LRESULT mouse_nc_dbl_click_(ui::io_surface &target, const MSG &info, DWORD mouse_position, UINT button, bool prevent_default);
 
-		LRESULT mouse_dbl_click_(ui::io_surface &target, UINT msg, DWORD mouse_position, WPARAM wparam, LPARAM lparam, UINT button, bool prevent_default);
+		LRESULT mouse_dbl_click_(ui::io_surface &target, const MSG &info, DWORD mouse_position, UINT button, bool prevent_default);
 
-		LRESULT mouse_wheel_(ui::io_surface &target, UINT msg, DWORD mouse_position, WPARAM wparam, LPARAM lparam, bool prevent_default);
+		LRESULT mouse_wheel_(ui::io_surface &target, const MSG &info, DWORD mouse_position, bool prevent_default);
 
-		LRESULT set_cursor_(ui::io_surface &target, WPARAM wparam, LPARAM lparam, bool prevent_default);
+		LRESULT set_cursor_(ui::io_surface &target, const MSG &info, bool prevent_default);
 
-		LRESULT set_focus_(ui::io_surface &target, WPARAM wparam, LPARAM lparam, bool prevent_default);
+		LRESULT set_focus_(ui::io_surface &target, const MSG &info, bool prevent_default);
 
-		LRESULT kill_focus_(ui::io_surface &target, WPARAM wparam, LPARAM lparam, bool prevent_default);
+		LRESULT kill_focus_(ui::io_surface &target, const MSG &info, bool prevent_default);
 
-		LRESULT key_(ui::io_surface &target, UINT msg, WPARAM wparam, LPARAM lparam, bool prevent_default);
+		LRESULT key_(ui::io_surface &target, const MSG &info, bool prevent_default);
 
 		message::dispatcher *find_dispatcher_(UINT msg);
 
@@ -147,6 +147,7 @@ namespace winp::thread{
 
 		mutable cache_info cache_{};
 		HHOOK hook_handle_ = nullptr;
+		wchar_t buffer_[256];
 
 		mouse_info mouse_info_{};
 		surface_state state_{};

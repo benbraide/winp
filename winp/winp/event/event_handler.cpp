@@ -1,7 +1,7 @@
 #include "../app/app_object.h"
 
 void winp::event::unhandled_handler::handle_unhandled_event_(object &e){
-	if (e.get_info()->code == WM_ERASEBKGND)
+	if (e.get_info()->message == WM_ERASEBKGND)
 		draw_dispatcher::erase_background_(dynamic_cast<draw &>(e));
 }
 

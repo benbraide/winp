@@ -40,18 +40,13 @@ namespace winp::event{
 	class object{
 	public:
 		using callback_type = std::function<void(object &)>;
+		using info_type = MSG;
 
 		struct state_type{
 			static constexpr unsigned int nil						= (0 << 0x0000);
 			static constexpr unsigned int default_prevented			= (1 << 0x0000);
 			static constexpr unsigned int propagation_stopped		= (1 << 0x0001);
 			static constexpr unsigned int result_set				= (1 << 0x0002);
-		};
-
-		struct info_type{
-			unsigned int code;
-			WPARAM wparam;
-			LPARAM lparam;
 		};
 
 		object(thread::object &thread, const callback_type &default_handler, const info_type &info);
