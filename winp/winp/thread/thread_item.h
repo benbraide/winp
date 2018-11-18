@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../message/message_object.h"
+#include "../utility/windows.h"
 
 #include "thread_queue.h"
 
@@ -17,8 +17,6 @@ namespace winp::thread{
 
 	class item{
 	public:
-		using m_message_type = message::object;
-
 		item();
 
 		explicit item(object &thread);

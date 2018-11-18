@@ -3,8 +3,6 @@
 #include "../ui/ui_window_surface.h"
 #include "../event/event_dispatcher.h"
 
-#include "message_object.h"
-
 namespace winp::thread{
 	class surface_manager;
 }
