@@ -20,6 +20,11 @@ namespace winp::thread{
 	class surface_manager;
 }
 
+namespace winp::menu{
+	class item;
+	class object;
+}
+
 namespace winp::ui{
 	class tree;
 	class window_surface;
@@ -101,7 +106,8 @@ namespace winp::ui{
 		friend class message::mouse_dispatcher;
 		friend class thread::surface_manager;
 
-		friend menu::item;
+		friend class menu::item;
+		friend class menu::object;
 
 		void init_();
 
@@ -109,7 +115,7 @@ namespace winp::ui{
 
 		virtual bool destroy_();
 
-		virtual void set_handle_(HWND value);
+		virtual void set_handle_(HANDLE value);
 
 		virtual HANDLE get_handle_() const;
 

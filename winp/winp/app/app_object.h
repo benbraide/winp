@@ -4,6 +4,7 @@
 #include <memory>
 #include <unordered_map>
 
+#include "../menu/menu_object.h"
 #include "../thread/thread_object.h"
 #include "../control/control_object.h"
 #include "../message/message_dispatcher.h"

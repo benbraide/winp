@@ -155,7 +155,7 @@ bool winp::ui::object::destroy_(){
 	return true;
 }
 
-void winp::ui::object::set_handle_(HWND value){
+void winp::ui::object::set_handle_(HANDLE value){
 	handle_ = value;
 }
 
@@ -302,7 +302,7 @@ LRESULT winp::ui::object::do_send_message_(UINT msg, WPARAM wparam, LPARAM lpara
 
 LRESULT winp::ui::object::send_message_(UINT msg, WPARAM wparam, LPARAM lparam){
 	auto handle = get_handle_();
-	if (handle != nullptr)
+	if (handle != nullptr && IsWindow(static_cast<HWND>(handle)) != FALSE)
 		return SendMessageW(static_cast<HWND>(handle), msg, wparam, lparam);
 
 	return dispatch_message_(msg, wparam, lparam);
@@ -319,7 +319,7 @@ bool winp::ui::object::do_post_message_(UINT msg, WPARAM wparam, LPARAM lparam, 
 
 bool winp::ui::object::post_message_(UINT msg, WPARAM wparam, LPARAM lparam){
 	auto handle = get_handle_();
-	if (handle != nullptr)
+	if (handle != nullptr && IsWindow(static_cast<HWND>(handle)) != FALSE)
 		return (PostMessageW(static_cast<HWND>(handle), msg, wparam, lparam) != FALSE);
 
 	dispatch_message_(msg, wparam, lparam, false);

@@ -170,7 +170,17 @@ bool winp::ui::window_surface::create_(){
 
 bool winp::ui::window_surface::destroy_(){
 	auto handle = get_handle_();
-	return ((handle == nullptr) ? true : (DestroyWindow(static_cast<HWND>(handle)) != FALSE));
+	if (handle == nullptr)
+		return true;
+
+	for (auto child : children_){//Check for menu
+		if (dynamic_cast<menu::object *>(child) != nullptr){
+			erase_child_(*child);
+			break;
+		}
+	}
+
+	return (DestroyWindow(static_cast<HWND>(handle)) != FALSE);
 }
 
 void winp::ui::window_surface::parent_changed_(tree *previous_parent, std::size_t previous_index){
