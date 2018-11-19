@@ -1,5 +1,4 @@
 #include "../app/app_object.h"
-#include "menu_item.h"
 
 winp::menu::item::item(){
 	local_id_ = thread_.menu_random_generator_(static_cast<WORD>(1), std::numeric_limits<WORD>::max());
@@ -16,10 +15,13 @@ winp::menu::item::item(ui::tree &parent)
 	set_parent_(&parent);
 }
 
+winp::menu::item::item(ui::tree &parent, bool)
+	: surface(parent.get_thread()){
+	set_parent_(&parent);
+}
+
 winp::menu::item::~item(){
-	thread_.queue.add([=]{
-		remove_parent_();
-	}, thread::queue::send_priority, id_).get();
+	destruct_();
 }
 
 std::size_t winp::menu::item::get_absolute_index(const std::function<void(std::size_t)> &callback) const{
@@ -202,12 +204,15 @@ HBITMAP winp::menu::item::get_unchecked_bitmap(const std::function<void(HBITMAP)
 }
 
 bool winp::menu::item::create_(){
+	if (is_created_)
+		return true;
+
 	auto parent = get_parent_();
 	if (parent == nullptr)
-		return false;;
+		return false;
 
 	auto handle = static_cast<HMENU>(parent->get_handle_());
-	if (handle == nullptr)//Parent not created
+	if (handle == nullptr || IsMenu(handle) == FALSE)//Parent not created
 		return true;
 
 	UINT mask = (MIIM_ID | MIIM_DATA);
@@ -253,11 +258,18 @@ bool winp::menu::item::create_(){
 	if (menu_parent != nullptr)
 		menu_parent->redraw_();
 
+	is_created_ = true;
 	return true;
 }
 
 bool winp::menu::item::destroy_(){
-	return remove_parent_();
+	if (!is_created_)
+		return true;
+
+	is_created_ = false;
+	auto parent = get_parent_();
+
+	return ((parent == nullptr) ? true : remove_from_parent_(*parent));
 }
 
 bool winp::menu::item::validate_parent_change_(ui::tree *value, std::size_t index) const{
@@ -265,23 +277,31 @@ bool winp::menu::item::validate_parent_change_(ui::tree *value, std::size_t inde
 }
 
 void winp::menu::item::parent_changed_(ui::tree *previous_parent, std::size_t previous_index){
-	if (previous_parent != nullptr)//Remove from previous parent
-		remove_from_parent_(*previous_parent);
+	if (is_created_){//Move to new parent
+		if (previous_parent != nullptr)//Remove from previous parent
+			remove_from_parent_(*previous_parent);
 
-	create_();
+		is_created_ = false;
+		create_();
+	}
+
 	surface::parent_changed_(previous_parent, previous_index);
 }
 
 void winp::menu::item::index_changed_(ui::tree *previous_parent, std::size_t previous_index){
-	auto parent = get_parent_();
-	if (previous_parent == parent && parent != nullptr && remove_from_parent_(*parent))
-		create_();
+	if (is_created_){//Adjust index
+		auto parent = get_parent_();
+		if (previous_parent == parent && parent != nullptr && remove_from_parent_(*parent)){
+			is_created_ = false;
+			create_();
+		}
+	}
 
 	surface::index_changed_(previous_parent, previous_index);
 }
 
 bool winp::menu::item::validate_child_insert_(const ui::object &child, std::size_t index) const{
-	return (dynamic_cast<const menu::object *>(&child) != nullptr);
+	return (surface::validate_child_insert_(child, index) && dynamic_cast<const menu::object *>(&child) != nullptr);
 }
 
 void winp::menu::item::child_inserted_(ui::object &child, tree *previous_parent, std::size_t previous_index){
@@ -293,7 +313,7 @@ void winp::menu::item::child_inserted_(ui::object &child, tree *previous_parent,
 }
 
 bool winp::menu::item::validate_child_remove_(const ui::object &child) const{
-	return (dynamic_cast<const ui::surface *>(&child) == target_);
+	return (surface::validate_child_remove_(child) && dynamic_cast<const ui::surface *>(&child) == target_);
 }
 
 void winp::menu::item::child_removed_(ui::object &child, std::size_t previous_index){
@@ -312,7 +332,7 @@ std::size_t winp::menu::item::get_absolute_index_() const{
 
 bool winp::menu::item::remove_from_parent_(ui::tree &parent){
 	auto handle = static_cast<HMENU>(parent.get_handle_());
-	if (handle == nullptr)//Parent not created
+	if (handle == nullptr || IsMenu(handle) == FALSE)//Parent not created
 		return true;
 
 	auto result = RemoveMenu(handle, local_id_, MF_BYCOMMAND);
@@ -492,4 +512,15 @@ bool winp::menu::item::update_check_marks_(){
 		checked_bitmap_,
 		unchecked_bitmap_
 	});
+}
+
+void winp::menu::item::destruct_(){
+	thread_.queue.add([=]{
+		destroy_();
+	}, thread::queue::send_priority, id_).get();
+}
+
+void winp::menu::item::generate_id_(){
+	if (local_id_ == 0u)
+		local_id_ = thread_.menu_random_generator_(static_cast<WORD>(1), std::numeric_limits<WORD>::max());
 }

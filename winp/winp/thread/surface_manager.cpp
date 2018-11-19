@@ -1,3 +1,4 @@
+#include "../window/frame_window.h"
 #include "../message/message_dispatcher.h"
 #include "../app/app_object.h"
 
@@ -73,13 +74,19 @@ winp::ui::surface *winp::thread::surface_manager::find_object_(HWND handle) cons
 }
 
 void winp::thread::surface_manager::create_window_(HWND handle, CBT_CREATEWNDW &info){
-	auto count = GetClassNameW(handle, buffer_, 256);
-	if (count == 6 && std::wcsncmp(buffer_, L"#32768", count) == 0){//Menu window
-
-	}
-
-	if (cache_.object == nullptr || cache_.handle != nullptr || static_cast<ui::window_surface *>(info.lpcs->lpCreateParams) != cache_.object)
+	if (cache_.object == nullptr || cache_.handle != nullptr)
 		return;//External source
+
+	auto menu_object = dynamic_cast<menu::object *>(cache_.object);
+	if (menu_object != nullptr){
+		auto count = GetClassNameW(handle, buffer_, 256);
+		if (count == 6 && std::wcsncmp(buffer_, L"#32768", count) == 0)
+			return;//Menu window required
+
+		cache_.object = &menu_object->window_;
+	}
+	else if (static_cast<ui::surface *>(info.lpcs->lpCreateParams) != cache_.object)
+		return;
 
 	cache_.handle = handle;
 	map_[handle] = cache_.object;
@@ -87,14 +94,13 @@ void winp::thread::surface_manager::create_window_(HWND handle, CBT_CREATEWNDW &
 	cache_.object->set_handle_(handle);
 	cache_.object->set_message_entry_(reinterpret_cast<LONG_PTR>(entry_));
 	cache_.object->add_to_toplevel_();
+
+	auto frame_object = dynamic_cast<window::frame *>(cache_.object);
+	if (frame_object != nullptr)//Update system menu
+		frame_object->system_menu_.init_(GetSystemMenu(handle, FALSE), nullptr);
 }
 
 void winp::thread::surface_manager::destroy_window_(HWND handle){
-	auto count = GetClassNameW(handle, buffer_, 256);
-	if (count == 6 && std::wcsncmp(buffer_, L"#32768", count) == 0){//Menu window
-
-	}
-
 	if (!toplevel_map_.empty())
 		toplevel_map_.erase(handle);
 
@@ -105,6 +111,10 @@ void winp::thread::surface_manager::destroy_window_(HWND handle){
 		cache_.handle = nullptr;
 		cache_.object = nullptr;
 	}
+
+	auto frame_object = dynamic_cast<window::frame *>(cache_.object);
+	if (frame_object != nullptr)//Destroy system menu
+		frame_object->system_menu_.destroy_();
 }
 
 LRESULT winp::thread::surface_manager::mouse_nc_leave_(ui::io_surface &target, const MSG &info, DWORD mouse_position, bool prevent_default){

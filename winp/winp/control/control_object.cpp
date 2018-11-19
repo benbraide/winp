@@ -1,5 +1,7 @@
 #include "../app/app_object.h"
 
+winp::control::object::object() = default;
+
 winp::control::object::object(thread::object &thread)
 	: window_surface(thread){}
 
@@ -41,9 +43,7 @@ std::wstring winp::control::object::get_text(const std::function<void(const std:
 	return thread_.queue.add([this]{ return get_text_(); }, thread::queue::send_priority, id_).get();
 }
 
-WNDPROC winp::control::object::get_default_message_entry_() const{
-	return app::object::get_default_message_entry(get_class_name_());
-}
+void winp::control::object::add_to_toplevel_(bool update){}
 
 void winp::control::object::post_create_(){
 	if (font_ != nullptr)//Update font

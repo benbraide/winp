@@ -5,6 +5,8 @@
 namespace winp::control{
 	class object : public ui::window_surface{
 	public:
+		object();
+
 		explicit object(thread::object &thread);
 
 		virtual ~object();
@@ -18,7 +20,9 @@ namespace winp::control{
 		virtual std::wstring get_text(const std::function<void(const std::wstring &)> &callback = nullptr) const;
 
 	protected:
-		virtual WNDPROC get_default_message_entry_() const override;
+		friend class menu::object;
+
+		virtual void add_to_toplevel_(bool update = false) override;
 
 		virtual void post_create_() override;
 

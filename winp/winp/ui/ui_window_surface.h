@@ -53,12 +53,13 @@ namespace winp::ui{
 
 		virtual bool has_styles(DWORD value, bool is_extended, bool has_all, const std::function<void(bool)> &callback = nullptr) const;
 
-		event::manager<window_surface, event::object> create_event{ *this };;
-		event::manager<window_surface, event::object> destroy_event{ *this };;
+		event::manager<window_surface, event::object> create_event{ *this };
+		event::manager<window_surface, event::object> destroy_event{ *this };
 
 	protected:
 		friend class message::dispatcher;
 		friend class thread::surface_manager;
+		friend class menu::object;
 
 		virtual bool create_() override;
 
@@ -67,6 +68,8 @@ namespace winp::ui{
 		virtual void parent_changed_(tree *previous_parent, std::size_t previous_index) override;
 
 		virtual WNDPROC get_default_message_entry_() const override;
+
+		virtual void set_message_entry_(LONG_PTR value) override;
 
 		virtual bool set_size_(const m_size_type &value) override;
 
@@ -158,7 +161,8 @@ namespace winp::ui{
 
 		virtual HWND get_first_window_ancestor_handle_() const;
 
-		DWORD styles_;
-		DWORD extended_styles_;
+		DWORD styles_ = 0u;
+		DWORD extended_styles_ = 0u;
+		std::wstring class_name_;
 	};
 }

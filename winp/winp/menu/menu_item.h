@@ -6,6 +6,10 @@
 
 namespace winp::menu{
 	class object;
+	class wrapper;
+
+	template <class base_type>
+	class generic_collection;
 
 	class item : public ui::surface, public component{
 	public:
@@ -14,6 +18,8 @@ namespace winp::menu{
 		explicit item(thread::object &thread);
 
 		explicit item(ui::tree &parent);
+
+		item(ui::tree &parent, bool);
 
 		virtual ~item();
 
@@ -67,6 +73,9 @@ namespace winp::menu{
 
 	protected:
 		friend class object;
+		friend class wrapper;
+
+		template <class> friend class generic_collection;
 
 		virtual bool create_() override;
 
@@ -142,7 +151,12 @@ namespace winp::menu{
 
 		virtual bool update_check_marks_();
 
-		WORD local_id_;
+		virtual void destruct_();
+
+		virtual void generate_id_();
+
+		WORD local_id_ = 0u;
+		bool is_created_ = false;
 		ui::surface *target_ = nullptr;
 
 		std::wstring label_;

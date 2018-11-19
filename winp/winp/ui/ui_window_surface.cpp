@@ -136,9 +136,11 @@ bool winp::ui::window_surface::create_(){
 	if (!pre_create_())
 		return false;
 
-	auto parent_handle = get_first_window_ancestor_handle_();
-	if (parent_handle == nullptr && get_parent_() != nullptr)
-		return false;
+	auto window_parent = get_first_ancestor_of_<window_surface>();
+	auto parent_handle = ((window_parent == nullptr) ? nullptr : window_parent->get_handle_());
+
+	if (parent_handle == nullptr && window_parent != nullptr)
+		return false;//Parent not created
 
 	auto styles = (styles_ | get_persistent_styles_());
 	auto extended_styles = (extended_styles_ | get_persistent_extended_styles_());
@@ -146,7 +148,7 @@ bool winp::ui::window_surface::create_(){
 	thread_.surface_manager_.cache_.handle = nullptr;
 	thread_.surface_manager_.cache_.object = this;
 
-	auto offset_from_window_ancestor = get_offset_from_ancestor_of_<window_surface>(m_point_type{});
+	auto offset_from_window_ancestor = ((window_parent == nullptr) ? m_point_type{} : get_offset_from_ancestor_of_<window_surface>(m_point_type{}));
 	auto result = CreateWindowExW(
 		extended_styles,
 		get_class_name_(),
@@ -156,10 +158,10 @@ bool winp::ui::window_surface::create_(){
 		(position_.y + offset_from_window_ancestor.y),
 		size_.cx,
 		size_.cy,
-		parent_handle,
+		static_cast<HWND>(parent_handle),
 		nullptr,
 		get_instance_(),
-		this
+		static_cast<surface *>(this)
 	);
 
 	if (result != nullptr)
@@ -200,7 +202,13 @@ void winp::ui::window_surface::parent_changed_(tree *previous_parent, std::size_
 }
 
 WNDPROC winp::ui::window_surface::get_default_message_entry_() const{
-	return DefWindowProcW;
+	return app::object::get_default_message_entry(get_class_name_());
+}
+
+void winp::ui::window_surface::set_message_entry_(LONG_PTR value){
+	auto def_msg_entry = get_default_message_entry_();
+	if (def_msg_entry != DefWindowProcW && reinterpret_cast<LONG_PTR>(def_msg_entry) != value)
+		SetWindowLongPtrW(static_cast<HWND>(get_handle_()), GWLP_WNDPROC, value);
 }
 
 bool winp::ui::window_surface::set_size_(const m_size_type &value){
@@ -628,7 +636,7 @@ HINSTANCE winp::ui::window_surface::get_instance_() const{
 }
 
 const wchar_t *winp::ui::window_surface::get_class_name_() const{
-	return WINP_CLASS_WUUID;
+	return (class_name_.empty() ? WINP_CLASS_WUUID : class_name_.data());
 }
 
 const wchar_t *winp::ui::window_surface::get_window_text_() const{

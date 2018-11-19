@@ -46,6 +46,10 @@ namespace winp::message{
 	class dispatcher;
 }
 
+namespace winp::menu{
+	class object;
+}
+
 namespace winp::thread{
 	class object;
 
@@ -87,6 +91,8 @@ namespace winp::thread{
 		friend class ui::object;
 		friend class ui::surface;
 		friend class ui::window_surface;
+
+		friend class menu::object;
 
 		void prepare_for_run_();
 

@@ -1,17 +1,17 @@
-#include "menu_object.h"
+#include "../app/app_object.h"
 
 winp::menu::object::object() = default;
 
 winp::menu::object::object(thread::object &thread)
-	: surface(thread){}
+	: io_surface(thread), window_(thread){}
 
 winp::menu::object::object(menu::item &parent)
-	: surface(parent.get_thread()){
+	: io_surface(parent.get_thread()), window_(parent.get_thread()){
 	set_parent_(&parent);
 }
 
 winp::menu::object::object(ui::window_surface &parent)
-	: surface(parent.get_thread()){
+	: io_surface(parent.get_thread()), window_(parent.get_thread()){
 	set_parent_(&parent);
 }
 
@@ -22,10 +22,19 @@ winp::menu::object::~object(){
 std::size_t winp::menu::object::get_absolute_index(const std::function<void(std::size_t)> &callback) const{
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(get_absolute_index_()); }, thread::queue::send_priority, id_);
-		return false;
+		return static_cast<std::size_t>(-1);
 	}
 
 	return thread_.queue.add([this]{ return get_absolute_index_(); }, thread::queue::send_priority, id_).get();
+}
+
+bool winp::menu::object::is_popup(const std::function<void(bool)> &callback) const{
+	if (callback != nullptr){
+		thread_.queue.post([=]{ callback(is_popup_()); }, thread::queue::send_priority, id_);
+		return false;
+	}
+
+	return thread_.queue.add([this]{ return is_popup_(); }, thread::queue::send_priority, id_).get();
 }
 
 bool winp::menu::object::create_(){
@@ -48,6 +57,13 @@ bool winp::menu::object::create_(){
 		DrawMenuBar(static_cast<HWND>(parent_handle));
 	}
 
+	window_.class_name_ = L"#32768";
+	window_.parent_ = this;
+
+	dispatch_message_(WM_CREATE, 0, 0);
+	for (auto child : children_)//Create children
+		child->create_();
+
 	return true;
 }
 
@@ -60,11 +76,13 @@ bool winp::menu::object::destroy_(){
 		return false;
 
 	set_handle_(nullptr);
+	dispatch_message_(WM_DESTROY, 0, 0);
+
 	return true;
 }
 
 bool winp::menu::object::validate_parent_change_(ui::tree *value, std::size_t index) const{
-	return (dynamic_cast<menu::item *>(value) != nullptr || dynamic_cast<ui::window_surface *>(value) != nullptr);
+	return (io_surface::validate_parent_change_ (value, index) && (dynamic_cast<menu::item *>(value) != nullptr || dynamic_cast<ui::window_surface *>(value) != nullptr));
 }
 
 void winp::menu::object::parent_changed_(ui::tree *previous_parent, std::size_t previous_index){
@@ -73,7 +91,11 @@ void winp::menu::object::parent_changed_(ui::tree *previous_parent, std::size_t 
 		create_();
 	}
 
-	surface::parent_changed_(previous_parent, previous_index);
+	io_surface::parent_changed_(previous_parent, previous_index);
+}
+
+LRESULT winp::menu::object::dispatch_message_(UINT msg, WPARAM wparam, LPARAM lparam, bool call_default){
+	return find_dispatcher_(msg)->dispatch_(*this, MSG{ nullptr, msg, wparam, lparam }, call_default);
 }
 
 std::size_t winp::menu::object::get_absolute_index_of_(const menu::component &child) const{
@@ -103,4 +125,8 @@ void winp::menu::object::redraw_(){
 
 	if (parent_handle != nullptr)
 		DrawMenuBar(static_cast<HWND>(parent_handle));
+}
+
+bool winp::menu::object::is_popup_() const{
+	return (dynamic_cast<ui::window_surface *>(get_parent_()) == nullptr);
 }

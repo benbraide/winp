@@ -11,6 +11,10 @@ namespace winp::event{
 	class dispatcher;
 }
 
+namespace winp::menu{
+	class object;
+}
+
 namespace winp::message{
 	class dispatcher{
 	public:
@@ -20,6 +24,7 @@ namespace winp::message{
 		friend class event::dispatcher;
 		friend class thread::surface_manager;
 		friend class ui::object;
+		friend class menu::object;
 
 		dispatcher(bool);
 
