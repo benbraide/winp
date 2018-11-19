@@ -215,14 +215,19 @@ bool winp::menu::item::create_(){
 	if (handle == nullptr || IsMenu(handle) == FALSE)//Parent not created
 		return true;
 
-	UINT mask = (MIIM_ID | MIIM_DATA);
+	UINT mask = MIIM_DATA;
+	if (local_id_ != 0u)
+		mask |= MIIM_ID;
+
 	if (!label_.empty())//Label set
 		mask |= MIIM_STRING;
 
-	if (types_ != 0u)//Type set
+	auto types = (types_ | dynamic_cast<menu::tree *>(parent)->get_types_(get_index_()));
+	if (types != 0u)//Type set
 		mask |= MIIM_FTYPE;
 
-	if (states_ != 0u)//States set
+	auto states = (states_ | dynamic_cast<menu::tree *>(parent)->get_states_(get_index_()));
+	if (states != 0u)//States set
 		mask |= MIIM_STATE;
 
 	if (bitmap_ != nullptr)//Bitmap set
@@ -239,8 +244,8 @@ bool winp::menu::item::create_(){
 	MENUITEMINFOW info{
 		sizeof(MENUITEMINFOW),
 		mask,
-		get_types_(),
-		states_,
+		types,
+		states,
 		local_id_,
 		((popup == nullptr) ? nullptr : static_cast<HMENU>(popup->get_handle_())),
 		checked_bitmap_,
@@ -335,7 +340,7 @@ bool winp::menu::item::remove_from_parent_(ui::tree &parent){
 	if (handle == nullptr || IsMenu(handle) == FALSE)//Parent not created
 		return true;
 
-	auto result = RemoveMenu(handle, local_id_, MF_BYCOMMAND);
+	auto result = ((local_id_ == 0u) ? RemoveMenu(handle, static_cast<UINT>(get_absolute_index_()), MF_BYPOSITION) : RemoveMenu(handle, local_id_, MF_BYCOMMAND));
 	auto menu_parent = dynamic_cast<menu::object *>(&parent);
 	if (menu_parent != nullptr)
 		menu_parent->redraw_();
@@ -378,13 +383,13 @@ const std::wstring &winp::menu::item::get_shortcut_() const{
 bool winp::menu::item::set_state_(UINT value){
 	auto old_states = states_;
 	states_ |= (value & ~get_filtered_states_());
-	return ((old_states == states_) ? true : update_state_());
+	return ((old_states == states_) ? true : update_states_());
 }
 
 bool winp::menu::item::remove_state_(UINT value){
 	auto old_states = states_;
 	states_ &= ~(value & ~get_filtered_states_());
-	return ((old_states == states_) ? true : update_state_());
+	return ((old_states == states_) ? true : update_states_());
 }
 
 UINT winp::menu::item::get_states_() const{
@@ -447,12 +452,8 @@ HBITMAP winp::menu::item::get_unchecked_bitmap_() const{
 	return unchecked_bitmap_;
 }
 
-UINT winp::menu::item::get_types_() const{
-	return types_;
-}
-
 bool winp::menu::item::has_type_(UINT value) const{
-	return ((get_types_() & value) == value);
+	return ((types_ & value) == value);
 }
 
 bool winp::menu::item::update_(const MENUITEMINFOW &info){
@@ -463,6 +464,9 @@ bool winp::menu::item::update_(const MENUITEMINFOW &info){
 	auto handle = static_cast<HMENU>(parent->get_handle_());
 	if (handle == nullptr)//Parent not created
 		return true;
+
+	if (local_id_ == 0u)
+		return (SetMenuItemInfoW(handle, static_cast<UINT>(get_absolute_index_()), TRUE, &info) != FALSE);
 
 	return (SetMenuItemInfoW(handle, local_id_, FALSE, &info) != FALSE);
 }
@@ -484,20 +488,28 @@ bool winp::menu::item::update_label_(){
 	});
 }
 
-bool winp::menu::item::update_state_(){
+bool winp::menu::item::update_states_(){
+	auto parent = get_parent_();
+	if (parent == nullptr)
+		return false;
+
 	return update_(MENUITEMINFOW{
 		sizeof(MENUITEMINFOW),
 		MIIM_STATE,												//Flags
 		0,														//Types
-		states_
+		(states_ | dynamic_cast<menu::tree *>(parent)->get_states_(get_index_()))
 	});
 }
 
-bool winp::menu::item::update_type_(){
+bool winp::menu::item::update_types_(){
+	auto parent = get_parent_();
+	if (parent == nullptr)
+		return false;
+
 	return update_(MENUITEMINFOW{
 		sizeof(MENUITEMINFOW),
 		MIIM_FTYPE,												//Flags
-		get_types_()
+		(types_ | dynamic_cast<menu::tree *>(parent)->get_types_(get_index_()))
 	});
 }
 
@@ -521,6 +533,16 @@ void winp::menu::item::destruct_(){
 }
 
 void winp::menu::item::generate_id_(){
-	if (local_id_ == 0u)
-		local_id_ = thread_.menu_random_generator_(static_cast<WORD>(1), std::numeric_limits<WORD>::max());
+	if (local_id_ == 0u){
+		auto id = thread_.menu_random_generator_(static_cast<WORD>(1), std::numeric_limits<WORD>::max());
+		if (update_(MENUITEMINFOW{
+			sizeof(MENUITEMINFOW),
+			MIIM_ID,												//Flags
+			0,														//Types
+			0,														//States
+			id
+		})){
+			local_id_ = id;
+		}
+	}
 }

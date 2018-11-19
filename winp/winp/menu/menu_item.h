@@ -137,17 +137,15 @@ namespace winp::menu{
 
 		virtual HBITMAP get_unchecked_bitmap_() const;
 
-		virtual UINT get_types_() const;
-
 		virtual bool has_type_(UINT value) const;
 
 		virtual bool update_(const MENUITEMINFOW &info);
 
 		virtual bool update_label_();
 
-		virtual bool update_state_();
+		virtual bool update_states_();
 
-		virtual bool update_type_();
+		virtual bool update_types_();
 
 		virtual bool update_check_marks_();
 

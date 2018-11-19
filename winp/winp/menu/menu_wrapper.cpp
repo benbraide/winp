@@ -118,7 +118,7 @@ void winp::menu::wrapper::wrap_(HMENU value){
 			}
 		}
 		else//Separator
-			item = std::make_shared<menu::item>(*this);
+			item = std::make_shared<menu::separator>(*this);
 
 		item_list_.push_back(item);
 	}

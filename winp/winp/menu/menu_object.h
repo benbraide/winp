@@ -3,6 +3,7 @@
 #include "../control/control_object.h"
 
 #include "menu_link.h"
+#include "menu_separator.h"
 
 namespace winp::menu{
 	class object : public ui::io_surface, public tree{
@@ -26,6 +27,7 @@ namespace winp::menu{
 
 	protected:
 		friend class menu::item;
+		friend class menu::separator;
 		friend class thread::surface_manager;
 
 		virtual bool create_() override;
@@ -37,6 +39,10 @@ namespace winp::menu{
 		virtual void parent_changed_(ui::tree *previous_parent, std::size_t previous_index) override;
 
 		virtual LRESULT dispatch_message_(UINT msg, WPARAM wparam, LPARAM lparam, bool call_default = false) override;
+
+		virtual UINT get_types_(std::size_t index) const override;
+
+		virtual UINT get_states_(std::size_t index) const override;
 
 		virtual std::size_t get_absolute_index_of_(const menu::component &child) const override;
 

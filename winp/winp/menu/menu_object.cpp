@@ -98,6 +98,14 @@ LRESULT winp::menu::object::dispatch_message_(UINT msg, WPARAM wparam, LPARAM lp
 	return find_dispatcher_(msg)->dispatch_(*this, MSG{ nullptr, msg, wparam, lparam }, call_default);
 }
 
+UINT winp::menu::object::get_types_(std::size_t index) const{
+	return 0u;
+}
+
+UINT winp::menu::object::get_states_(std::size_t index) const{
+	return 0u;
+}
+
 std::size_t winp::menu::object::get_absolute_index_of_(const menu::component &child) const{
 	return find_child_(dynamic_cast<const ui::object &>(child));
 }
