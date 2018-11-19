@@ -14,13 +14,13 @@ namespace winp::menu{
 
 		explicit wrapper(thread::object &thread);
 
-		explicit wrapper(HMENU value, menu::item *parent = nullptr);
+		explicit wrapper(HMENU value);
 
-		wrapper(thread::object &thread, HMENU value, menu::item *parent = nullptr);
+		wrapper(thread::object &thread, HMENU value);
 
 		virtual ~wrapper();
 
-		void init(HMENU value, menu::item *parent = nullptr);
+		void init(HMENU value);
 
 	protected:
 		friend class thread::surface_manager;
@@ -33,7 +33,7 @@ namespace winp::menu{
 
 		virtual void child_removed_(ui::object &child, std::size_t previous_index) override;
 
-		void init_(HMENU value, menu::item *parent);
+		void init_(HMENU value);
 
 		void wrap_(HMENU value);
 

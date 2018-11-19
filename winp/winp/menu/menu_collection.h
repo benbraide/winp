@@ -11,16 +11,9 @@ namespace winp::menu{
 		using item_ptr_type = std::shared_ptr<menu::component>;
 		using list_type = std::list<item_ptr_type>;
 
-		generic_collection_base() = default;
-
-		explicit generic_collection_base(thread::object &thread)
-			: base_type(thread){}
-
-		explicit generic_collection_base(menu::item &parent)
-			: base_type(parent){}
-
-		explicit generic_collection_base(ui::window_surface &parent)
-			: base_type(parent){}
+		template <typename... args_types>
+		explicit generic_collection_base(args_types &&... args)
+			: base_type(std::forward<args_types>(args)...){}
 
 		virtual ~generic_collection_base(){
 			base_type::destruct_();
@@ -59,16 +52,9 @@ namespace winp::menu{
 		using item_ptr_type = std::shared_ptr<menu::component>;
 		using list_type = std::list<item_ptr_type>;
 
-		generic_collection() = default;
-
-		explicit generic_collection(thread::object &thread)
-			: m_generic_base_type(thread){}
-
-		explicit generic_collection(menu::item &parent)
-			: m_generic_base_type(parent){}
-
-		explicit generic_collection(ui::window_surface &parent)
-			: m_generic_base_type(parent){}
+		template <typename... args_types>
+		explicit generic_collection(args_types &&... args)
+			: m_generic_base_type(std::forward<args_types>(args)...){}
 
 		virtual ~generic_collection(){
 			m_generic_base_type::template destruct_();
@@ -101,16 +87,9 @@ namespace winp::menu{
 		using item_ptr_type = std::shared_ptr<menu::component>;
 		using list_type = std::list<item_ptr_type>;
 
-		generic_collection() = default;
-
-		explicit generic_collection(thread::object &thread)
-			: m_generic_base_type(thread){}
-
-		explicit generic_collection(menu::item &parent)
-			: m_generic_base_type(parent){}
-
-		explicit generic_collection(ui::window_surface &parent)
-			: m_generic_base_type(parent){}
+		template <typename... args_types>
+		explicit generic_collection(args_types &&... args)
+			: m_generic_base_type(std::forward<args_types>(args)...){}
 
 		virtual ~generic_collection(){
 			m_generic_base_type::destruct_();

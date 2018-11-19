@@ -24,10 +24,19 @@ void winp::window::frame::set_caption(const std::wstring &value, const std::func
 std::wstring winp::window::frame::get_caption(const std::function<void(const std::wstring &)> &callback) const{
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(get_caption_()); }, thread::queue::send_priority, id_);
-		return false;
+		return L"";
 	}
 
 	return thread_.queue.add([=]{ return get_caption_(); }, thread::queue::send_priority, id_).get();
+}
+
+winp::menu::wrapper_collection *winp::window::frame::get_system_menu(const std::function<void(menu::wrapper_collection &)> &callback){
+	if (callback != nullptr){
+		thread_.queue.post([=]{ callback(*get_system_menu_()); }, thread::queue::send_priority, id_);
+		return nullptr;
+	}
+
+	return thread_.queue.add([=]{ return get_system_menu_(); }, thread::queue::send_priority, id_).get();
 }
 
 DWORD winp::window::frame::get_persistent_styles_() const{
@@ -53,4 +62,8 @@ bool winp::window::frame::set_caption_(const std::wstring &value){
 
 const std::wstring &winp::window::frame::get_caption_() const{
 	return caption_;
+}
+
+winp::menu::wrapper_collection *winp::window::frame::get_system_menu_(){
+	return &system_menu_;
 }

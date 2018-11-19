@@ -97,7 +97,7 @@ void winp::thread::surface_manager::create_window_(HWND handle, CBT_CREATEWNDW &
 
 	auto frame_object = dynamic_cast<window::frame *>(cache_.object);
 	if (frame_object != nullptr)//Update system menu
-		frame_object->system_menu_.init_(GetSystemMenu(handle, FALSE), nullptr);
+		frame_object->system_menu_.init_(GetSystemMenu(handle, FALSE));
 }
 
 void winp::thread::surface_manager::destroy_window_(HWND handle){

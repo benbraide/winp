@@ -5,22 +5,22 @@ winp::menu::wrapper::wrapper() = default;
 winp::menu::wrapper::wrapper(thread::object &thread)
 	: object(thread){}
 
-winp::menu::wrapper::wrapper(HMENU value, menu::item *parent){
-	init(value, parent);
+winp::menu::wrapper::wrapper(HMENU value){
+	init(value);
 }
 
-winp::menu::wrapper::wrapper(thread::object &thread, HMENU value, menu::item *parent)
+winp::menu::wrapper::wrapper(thread::object &thread, HMENU value)
 	: object(thread){
-	init(value, parent);
+	init(value);
 }
 
 winp::menu::wrapper::~wrapper(){
 	destruct_();
 }
 
-void winp::menu::wrapper::init(HMENU value, menu::item *parent){
+void winp::menu::wrapper::init(HMENU value){
 	thread_.queue.post([=]{
-		init_(value, parent);
+		init_(value);
 	}, thread::queue::send_priority, id_);
 }
 
@@ -55,10 +55,7 @@ void winp::menu::wrapper::child_removed_(ui::object &child, std::size_t previous
 	object::child_removed_(child, previous_index);
 }
 
-void winp::menu::wrapper::init_(HMENU value, menu::item *parent){
-	if (parent != nullptr)
-		change_parent_(parent);
-
+void winp::menu::wrapper::init_(HMENU value){
 	wrap_(value);
 	set_handle_(value);
 }

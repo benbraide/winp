@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../menu/menu_wrapper.h"
+#include "../menu/menu_collection.h"
 
 namespace winp::window{
 	class frame : public ui::window_surface{
@@ -15,6 +15,8 @@ namespace winp::window{
 
 		virtual std::wstring get_caption(const std::function<void(const std::wstring &)> &callback = nullptr) const;
 
+		virtual menu::wrapper_collection *get_system_menu(const std::function<void(menu::wrapper_collection &)> &callback = nullptr);
+
 	protected:
 		friend class thread::surface_manager;
 
@@ -28,7 +30,9 @@ namespace winp::window{
 
 		virtual const std::wstring &get_caption_() const;
 
+		virtual menu::wrapper_collection *get_system_menu_();
+
 		std::wstring caption_;
-		menu::wrapper system_menu_;
+		menu::wrapper_collection system_menu_;
 	};
 }
