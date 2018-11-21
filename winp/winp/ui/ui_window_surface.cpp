@@ -145,8 +145,7 @@ bool winp::ui::window_surface::create_(){
 	auto styles = (styles_ | get_persistent_styles_());
 	auto extended_styles = (extended_styles_ | get_persistent_extended_styles_());
 
-	thread_.surface_manager_.cache_.handle = nullptr;
-	thread_.surface_manager_.cache_.object = this;
+	thread_.surface_manager_.cache_.creating = this;
 
 	auto offset_from_window_ancestor = ((window_parent == nullptr) ? m_point_type{} : get_offset_from_ancestor_of_<window_surface>(m_point_type{}));
 	auto result = CreateWindowExW(

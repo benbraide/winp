@@ -56,6 +56,14 @@ namespace winp::ui{
 		event::manager<window_surface, event::object> create_event{ *this };
 		event::manager<window_surface, event::object> destroy_event{ *this };
 
+		event::manager<window_surface, event::object> menu_uninit_event{ *this };
+		event::manager<window_surface, event::object> menu_init_event{ *this };
+		event::manager<window_surface, event::object> menu_init_item_event{ *this };
+
+		event::manager<window_surface, event::object> menu_select_event{ *this };
+		event::manager<window_surface, event::object> menu_check_event{ *this };
+		event::manager<window_surface, event::object> menu_uncheck_event{ *this };
+
 	protected:
 		friend class message::dispatcher;
 		friend class thread::surface_manager;

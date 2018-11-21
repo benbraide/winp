@@ -3,15 +3,15 @@
 winp::menu::object::object() = default;
 
 winp::menu::object::object(thread::object &thread)
-	: io_surface(thread), window_(thread){}
+	: io_surface(thread){}
 
 winp::menu::object::object(menu::item &parent)
-	: io_surface(parent.get_thread()), window_(parent.get_thread()){
+	: io_surface(parent.get_thread()){
 	set_parent_(&parent);
 }
 
 winp::menu::object::object(ui::window_surface &parent)
-	: io_surface(parent.get_thread()), window_(parent.get_thread()){
+	: io_surface(parent.get_thread()){
 	set_parent_(&parent);
 }
 
@@ -57,10 +57,9 @@ bool winp::menu::object::create_(){
 		DrawMenuBar(static_cast<HWND>(parent_handle));
 	}
 
-	window_.class_name_ = L"#32768";
-	window_.parent_ = this;
+	thread_.surface_manager_.map_[handle] = this;
+	dispatch_message_(WM_NCCREATE, 0, 0);
 
-	dispatch_message_(WM_CREATE, 0, 0);
 	for (auto child : children_)//Create children
 		child->create_();
 
@@ -76,7 +75,10 @@ bool winp::menu::object::destroy_(){
 		return false;
 
 	set_handle_(nullptr);
-	dispatch_message_(WM_DESTROY, 0, 0);
+	dispatch_message_(WM_NCDESTROY, 0, 0);
+
+	if (!thread_.surface_manager_.map_.empty())
+		thread_.surface_manager_.map_.erase(handle);
 
 	return true;
 }
@@ -116,6 +118,17 @@ std::size_t winp::menu::object::get_count_() const{
 
 std::size_t winp::menu::object::get_absolute_index_() const{
 	return 0u;
+}
+
+void winp::menu::object::update_surface_manager_(bool add){
+	auto handle = get_handle_();
+	if (handle == nullptr)
+		return;
+
+	if (add)
+		thread_.surface_manager_.map_[handle] = this;
+	else if (!thread_.surface_manager_.map_.empty())
+		thread_.surface_manager_.map_.erase(handle);
 }
 
 void winp::menu::object::destruct_(){

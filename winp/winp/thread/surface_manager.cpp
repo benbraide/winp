@@ -12,8 +12,8 @@ winp::thread::surface_manager::surface_manager(){
 	dispatchers_[WINP_WM_CHILD_INSERTED] = std::make_shared<message::tree_dispatcher>();
 	dispatchers_[WINP_WM_CHILD_REMOVED] = std::make_shared<message::tree_dispatcher>();
 
-	dispatchers_[WM_CREATE] = std::make_shared<message::create_destroy_dispatcher>();
-	dispatchers_[WM_DESTROY] = std::make_shared<message::create_destroy_dispatcher>();
+	dispatchers_[WM_NCCREATE] = std::make_shared<message::create_destroy_dispatcher>();
+	dispatchers_[WM_NCDESTROY] = std::make_shared<message::create_destroy_dispatcher>();
 
 	dispatchers_[WM_ERASEBKGND] = std::make_shared<message::draw_dispatcher>();
 	dispatchers_[WM_PAINT] = std::make_shared<message::draw_dispatcher>();
@@ -36,6 +36,8 @@ winp::thread::surface_manager::surface_manager(){
 	dispatchers_[WM_SETCURSOR] = std::make_shared<message::cursor_dispatcher>();
 	dispatchers_[WINP_WM_FOCUS] = std::make_shared<message::focus_dispatcher>();
 	dispatchers_[WINP_WM_KEY] = std::make_shared<message::key_dispatcher>();
+
+	dispatchers_[WM_UNINITMENUPOPUP] = std::make_shared<message::menu_uninit_dispatcher>();
 }
 
 void winp::thread::surface_manager::prepare_for_run_(){
@@ -59,37 +61,34 @@ void winp::thread::surface_manager::dispatch_message_(MSG &msg) const{
 	}
 }
 
-winp::ui::surface *winp::thread::surface_manager::find_object_(HWND handle) const{
+winp::ui::surface *winp::thread::surface_manager::find_object_(HANDLE handle) const{
 	if (handle == cache_.handle)
 		return cache_.object;
+
+	if (map_.empty())
+		return nullptr;
 
 	auto it = map_.find(handle);
 	if (it == map_.end())
 		return nullptr;
 
-	cache_.handle = handle;
-	cache_.object = it->second;
+	if (IsWindow(static_cast<HWND>(handle)) != FALSE){
+		cache_.handle = handle;
+		cache_.object = it->second;
+	}
 
-	return cache_.object;
+	return it->second;
 }
 
 void winp::thread::surface_manager::create_window_(HWND handle, CBT_CREATEWNDW &info){
-	if (cache_.object == nullptr || cache_.handle != nullptr)
+	if (cache_.creating == nullptr || static_cast<ui::surface *>(info.lpcs->lpCreateParams) != cache_.creating)
 		return;//External source
 
-	auto menu_object = dynamic_cast<menu::object *>(cache_.object);
-	if (menu_object != nullptr){
-		auto count = GetClassNameW(handle, buffer_, 256);
-		if (count == 6 && std::wcsncmp(buffer_, L"#32768", count) == 0)
-			return;//Menu window required
-
-		cache_.object = &menu_object->window_;
-	}
-	else if (static_cast<ui::surface *>(info.lpcs->lpCreateParams) != cache_.object)
-		return;
-
 	cache_.handle = handle;
-	map_[handle] = cache_.object;
+	cache_.object = cache_.creating;
+
+	map_[handle] = cache_.creating;
+	cache_.creating = nullptr;
 
 	cache_.object->set_handle_(handle);
 	cache_.object->set_message_entry_(reinterpret_cast<LONG_PTR>(entry_));
@@ -100,21 +99,23 @@ void winp::thread::surface_manager::create_window_(HWND handle, CBT_CREATEWNDW &
 		frame_object->system_menu_.init_(GetSystemMenu(handle, FALSE));
 }
 
-void winp::thread::surface_manager::destroy_window_(HWND handle){
+LRESULT winp::thread::surface_manager::destroy_window_(ui::surface &target, const MSG &info){
 	if (!toplevel_map_.empty())
-		toplevel_map_.erase(handle);
+		toplevel_map_.erase(info.hwnd);
 
 	if (!map_.empty())
-		map_.erase(handle);
+		map_.erase(info.hwnd);
 
-	if (cache_.handle == handle){
+	if (cache_.handle == info.hwnd){
 		cache_.handle = nullptr;
 		cache_.object = nullptr;
 	}
 
-	auto frame_object = dynamic_cast<window::frame *>(cache_.object);
+	auto frame_object = dynamic_cast<window::frame *>(&target);
 	if (frame_object != nullptr)//Destroy system menu
 		frame_object->system_menu_.destroy_();
+
+	return find_dispatcher_(info.message)->dispatch_(target, info, true);
 }
 
 LRESULT winp::thread::surface_manager::mouse_nc_leave_(ui::io_surface &target, const MSG &info, DWORD mouse_position, bool prevent_default){
@@ -211,7 +212,7 @@ LRESULT winp::thread::surface_manager::mouse_move_(ui::io_surface &target, const
 		track_mouse_leave_(static_cast<HWND>(target.get_handle_()), 0);
 
 	m_point_type computed_mouse_position{ GET_X_LPARAM(mouse_position), GET_Y_LPARAM(mouse_position) };
-	if (mouse_info_.mouse_target != nullptr && mouse_info_.mouse_target->hit_test_(computed_mouse_position, true) != utility::hit_target::inside)
+	if (mouse_info_.mouse_target != nullptr && mouse_info_.mouse_target != &target && mouse_info_.mouse_target->hit_test_(computed_mouse_position, true) != utility::hit_target::inside)
 		mouse_leave_(*mouse_info_.mouse_target, MSG{ info.hwnd, WM_MOUSELEAVE, info.wParam, info.lParam }, mouse_position, true);
 
 	if (mouse_info_.mouse_target == nullptr)
@@ -251,9 +252,12 @@ LRESULT winp::thread::surface_manager::mouse_nc_down_(ui::io_surface &target, co
 }
 
 LRESULT winp::thread::surface_manager::mouse_down_(ui::io_surface &target, const MSG &info, DWORD mouse_position, UINT button, bool prevent_default){
-	auto result = find_dispatcher_(WINP_WM_MOUSEDOWN)->dispatch_(*mouse_info_.mouse_target, info, !prevent_default);
+	if (mouse_info_.mouse_target == nullptr)
+		mouse_info_.mouse_target = &target;
 
 	state_.mouse_focused = mouse_info_.mouse_target;
+	auto result = find_dispatcher_(WINP_WM_MOUSEDOWN)->dispatch_(*mouse_info_.mouse_target, info, !prevent_default);
+
 	if (!prevent_default && mouse_info_.first_button_pressed == 0u){
 		mouse_info_.pressed_position = m_point_type{ GET_X_LPARAM(mouse_position), GET_Y_LPARAM(mouse_position) };
 		mouse_info_.first_button_pressed = mouse_info_.button_pressed = button;
@@ -278,8 +282,10 @@ LRESULT winp::thread::surface_manager::mouse_up_(ui::io_surface &target, const M
 	mouse_info_.button_pressed &= ~button;
 	if (!prevent_default && button == mouse_info_.first_button_pressed){
 		mouse_info_.first_button_pressed = 0u;
-		find_dispatcher_(WINP_WM_MOUSEDRAGEND)->dispatch_(*mouse_info_.drag_target, MSG{ info.hwnd, WINP_WM_MOUSEDRAGEND, info.wParam, info.lParam }, false);
-		mouse_info_.drag_target = nullptr;
+		if (mouse_info_.drag_target != nullptr){
+			find_dispatcher_(WINP_WM_MOUSEDRAGEND)->dispatch_(*mouse_info_.drag_target, MSG{ info.hwnd, WINP_WM_MOUSEDRAGEND, info.wParam, info.lParam }, false);
+			mouse_info_.drag_target = nullptr;
+		}
 	}
 
 	return result;
@@ -345,6 +351,13 @@ LRESULT CALLBACK winp::thread::surface_manager::entry_(HWND handle, UINT msg, WP
 
 	MSG info{ handle, msg, wparam, lparam };
 	auto io_surface = dynamic_cast<ui::io_surface *>(object);
+
+	switch (msg){
+	case WM_NCDESTROY:
+		return manager.destroy_window_(*object, info);
+	default:
+		break;
+	}
 
 	if (io_surface != nullptr){
 		switch (msg){
@@ -416,9 +429,6 @@ LRESULT CALLBACK winp::thread::surface_manager::hook_entry_(int code, WPARAM wpa
 	switch (code){
 	case HCBT_CREATEWND:
 		app::object::get_current_thread()->surface_manager_.create_window_(reinterpret_cast<HWND>(wparam), *reinterpret_cast<CBT_CREATEWNDW *>(lparam));
-		break;
-	case HCBT_DESTROYWND:
-		app::object::get_current_thread()->surface_manager_.destroy_window_(reinterpret_cast<HWND>(wparam));
 		break;
 	default:
 		break;

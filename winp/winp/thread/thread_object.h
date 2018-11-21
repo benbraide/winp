@@ -69,6 +69,7 @@ namespace winp::thread{
 
 		friend class event::draw;
 		friend class message::object;
+		friend class message::dispatcher;
 
 		friend class item;
 		friend class post_message;
@@ -76,6 +77,8 @@ namespace winp::thread{
 		friend class ui::object;
 		friend class ui::surface;
 		friend class ui::window_surface;
+
+		friend class menu::object;
 
 		friend menu::item;
 		friend class surface_manager;

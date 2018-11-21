@@ -90,6 +90,8 @@ namespace winp::event{
 
 		virtual LRESULT get_result_() const;
 
+		virtual void set_context_(ui::object &value);
+
 		virtual bool bubble_();
 
 		template <typename target_type>
@@ -175,7 +177,7 @@ namespace winp::event{
 		friend class unhandled_handler;
 		friend class draw_handler;
 
-		virtual void set_target_(ui::object *target, POINT &offset);
+		virtual void set_context_(ui::object &value) override;
 
 		virtual void begin_();
 

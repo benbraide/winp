@@ -28,9 +28,9 @@ namespace winp::message{
 
 		dispatcher(bool);
 
-		virtual void cleanup_();
+		virtual LRESULT dispatch_(ui::object &target, const MSG &info, bool call_default);
 
-		virtual LRESULT dispatch_(ui::object &target, const MSG &info, bool call_default, bool is_post = false);
+		virtual LRESULT dispatch_(event::object &e, bool call_default);
 
 		virtual void pre_dispatch_(event::object &e, bool &call_default);
 
@@ -53,6 +53,8 @@ namespace winp::message{
 			}, info, std::forward<other_types>(others)...);
 		}
 
+		static ui::object *find_object_(HANDLE handle);
+
 		static std::size_t event_handlers_count_of_(ui::object &target, event::manager_base &ev);
 
 		static void fire_event_of_(ui::object &target, event::manager_base &ev, event::object &e);
@@ -71,6 +73,8 @@ namespace winp::message{
 		static void set_result_of_(event::object &e, LRESULT value, bool always_set);
 
 		static LRESULT get_result_of_(event::object &e);
+
+		static void set_context_of_(event::object &e, ui::object &value);
 
 		static bool bubble_of_(event::object &e);
 
@@ -116,16 +120,11 @@ namespace winp::message{
 		draw_dispatcher();
 
 	protected:
-		virtual void cleanup_() override;
-
 		virtual void post_dispatch_(event::object &e) override;
 
 		virtual void fire_event_(event::object &e) override;
 
 		virtual std::shared_ptr<event::object> create_event_(ui::object &target, const MSG &info, bool call_default) override;
-
-		std::shared_ptr<event::draw> e_;
-		POINT offset_{};
 	};
 
 	class cursor_dispatcher : public dispatcher{
@@ -147,19 +146,15 @@ namespace winp::message{
 		mouse_dispatcher();
 
 	protected:
-		virtual void cleanup_() override;
-
 		virtual void post_dispatch_(event::object &e) override;
 
 		virtual void fire_event_(event::object &e) override;
 
 		virtual std::shared_ptr<event::object> create_event_(ui::object &target, const MSG &info, bool call_default) override;
 
-		virtual void resolve_(ui::io_surface &target, UINT msg);
+		virtual event::mouse::button_type get_button_(const MSG &info);
 
-		std::shared_ptr<event::mouse> e_;
-		event::manager_base *ev_;
-		event::mouse::button_type button_;
+		virtual event::manager_base *get_event_manager_(event::object &e);
 	};
 
 	class focus_dispatcher : public dispatcher{
@@ -175,17 +170,24 @@ namespace winp::message{
 		key_dispatcher();
 
 	protected:
-		virtual void cleanup_() override;
-
 		virtual void post_dispatch_(event::object &e) override;
 
 		virtual void fire_event_(event::object &e) override;
 
 		virtual std::shared_ptr<event::object> create_event_(ui::object &target, const MSG &info, bool call_default) override;
 
-		virtual void resolve_(ui::io_surface &target, UINT msg);
+		virtual event::manager_base *get_event_manager_(event::object &e);
+	};
 
-		std::shared_ptr<event::key> e_;
-		event::manager_base *ev_;
+	class menu_uninit_dispatcher : public dispatcher{
+	public:
+		menu_uninit_dispatcher();
+
+	protected:
+		virtual void post_dispatch_(event::object &e) override;
+
+		virtual void fire_event_(event::object &e) override;
+
+		virtual std::shared_ptr<event::object> create_event_(ui::object &target, const MSG &info, bool call_default) override;
 	};
 }

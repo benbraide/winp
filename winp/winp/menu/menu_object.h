@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../control/control_object.h"
+#include "../ui/ui_window_surface.h"
 
 #include "menu_link.h"
 #include "menu_separator.h"
@@ -24,6 +24,14 @@ namespace winp::menu{
 
 		event::manager<object, event::object> create_event{ *this };
 		event::manager<object, event::object> destroy_event{ *this };
+
+		event::manager<object, event::object> uninit_event{ *this };
+		event::manager<object, event::object> init_event{ *this };
+		event::manager<object, event::object> init_item_event{ *this };
+
+		event::manager<object, event::object> select_event{ *this };
+		event::manager<object, event::object> check_event{ *this };
+		event::manager<object, event::object> uncheck_event{ *this };
 
 	protected:
 		friend class menu::item;
@@ -50,12 +58,12 @@ namespace winp::menu{
 
 		virtual std::size_t get_absolute_index_() const;
 
+		virtual void update_surface_manager_(bool add);
+
 		virtual void destruct_();
 
 		virtual void redraw_();
 
 		virtual bool is_popup_() const;
-
-		control::object window_;
 	};
 }

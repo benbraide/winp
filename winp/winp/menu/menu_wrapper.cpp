@@ -29,6 +29,10 @@ bool winp::menu::wrapper::create_(){
 }
 
 bool winp::menu::wrapper::destroy_(){
+	if (get_handle_() == nullptr)
+		return true;
+
+	update_surface_manager_(false);
 	set_handle_(nullptr);
 
 	if (!item_list_.empty())
@@ -56,8 +60,10 @@ void winp::menu::wrapper::child_removed_(ui::object &child, std::size_t previous
 }
 
 void winp::menu::wrapper::init_(HMENU value){
+	destroy_();
 	wrap_(value);
 	set_handle_(value);
+	update_surface_manager_(true);
 }
 
 void winp::menu::wrapper::wrap_(HMENU value){

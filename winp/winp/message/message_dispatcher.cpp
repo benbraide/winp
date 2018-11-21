@@ -6,23 +6,19 @@ winp::message::dispatcher::dispatcher()
 
 winp::message::dispatcher::dispatcher(bool){}
 
-void winp::message::dispatcher::cleanup_(){}
-
-LRESULT winp::message::dispatcher::dispatch_(ui::object &target, const MSG &info, bool call_default, bool is_post){
+LRESULT winp::message::dispatcher::dispatch_(ui::object &target, const MSG &info, bool call_default){
 	auto e = create_event_(target, info, call_default);
-	if (e == nullptr)//Error
-		return 0;
+	return ((e == nullptr) ? 0 : dispatch_(*e, call_default));
+}
 
-	pre_dispatch_(*e, call_default);
-	if (!e->default_prevented_()){
-		do_dispatch_(*e, call_default);
-		post_dispatch_(*e);
+LRESULT winp::message::dispatcher::dispatch_(event::object &e, bool call_default){
+	pre_dispatch_(e, call_default);
+	if (!e.default_prevented_()){
+		do_dispatch_(e, call_default);
+		post_dispatch_(e);
 	}
 
-	if (!is_post)
-		cleanup_();
-
-	return e->get_result_();
+	return e.get_result_();
 }
 
 void winp::message::dispatcher::pre_dispatch_(event::object &e, bool &call_default){}
@@ -52,13 +48,25 @@ void winp::message::dispatcher::do_default_(event::object &e, bool call_default)
 
 LRESULT winp::message::dispatcher::call_default_(event::object &e){
 	auto &info = *e.get_info();
-	return CallWindowProcW(get_default_message_entry_of_(*e.get_context()), info.hwnd, info.message, info.wParam, info.lParam);
+	auto object = find_object_(info.hwnd);
+
+	if (object == nullptr){
+		if ((IsWindowUnicode(info.hwnd) == FALSE))
+			return CallWindowProcW(DefWindowProcA, info.hwnd, info.message, info.wParam, info.lParam);
+		return CallWindowProcW(DefWindowProcW, info.hwnd, info.message, info.wParam, info.lParam);
+	}
+
+	return CallWindowProcW(get_default_message_entry_of_(*object), info.hwnd, info.message, info.wParam, info.lParam);
 }
 
 void winp::message::dispatcher::fire_event_(event::object &e){}
 
 std::shared_ptr<winp::event::object> winp::message::dispatcher::create_event_(ui::object &target, const MSG &info, bool call_default){
 	return create_new_event_<event::object>(target, info, call_default);
+}
+
+winp::ui::object *winp::message::dispatcher::find_object_(HANDLE handle){
+	return app::object::get_current_thread()->surface_manager_.find_object_(handle);
 }
 
 std::size_t winp::message::dispatcher::event_handlers_count_of_(ui::object &target, event::manager_base &ev){
@@ -87,6 +95,10 @@ void winp::message::dispatcher::set_result_of_(event::object &e, LRESULT value, 
 
 LRESULT winp::message::dispatcher::get_result_of_(event::object &e){
 	return e.get_result_();
+}
+
+void winp::message::dispatcher::set_context_of_(event::object &e, ui::object &value){
+	e.set_context_(value);
 }
 
 bool winp::message::dispatcher::bubble_of_(event::object &e){
@@ -176,23 +188,22 @@ winp::message::draw_dispatcher::draw_dispatcher()
 	event_dispatcher_ = std::make_shared<event::draw_dispatcher>();
 }
 
-void winp::message::draw_dispatcher::cleanup_(){
-	e_ = nullptr;
-}
-
 void winp::message::draw_dispatcher::post_dispatch_(event::object &e){
-	ui::surface *child_target;
-	auto saved_offset = offset_;
-	auto saved_result = get_result_of_(e);
+	auto tree_target = dynamic_cast<ui::tree *>(e.get_context());
+	if (tree_target == nullptr)
+		return;//Tree required
 
 	auto &info = *e.get_info();
-	for (auto child : get_children_of_(*dynamic_cast<ui::surface *>(e.get_context()))){
-		if ((child_target = dynamic_cast<ui::surface *>(child)) != nullptr && dynamic_cast<ui::window_surface *>(child) == nullptr)
-			dispatch_(*child_target, info, false, true);
+	auto saved_result = get_result_of_(e);
 
-		offset_ = saved_offset;//Restore saved offset
-		set_result_of_(e, saved_result, true);//Restore result
+	for (auto child : get_children_of_(*tree_target)){
+		if (dynamic_cast<ui::window_surface *>(child) == nullptr){
+			dynamic_cast<event::draw &>(e).set_context_(*child);
+			dispatch_(e, false);
+		}
 	}
+
+	set_result_of_(e, saved_result, true);//Restore result
 }
 
 void winp::message::draw_dispatcher::fire_event_(event::object &e){
@@ -200,20 +211,14 @@ void winp::message::draw_dispatcher::fire_event_(event::object &e){
 	if (visible_target == nullptr)
 		return;//Visible target required
 
-	e_->set_target_(visible_target, offset_);
-	if (e_->get_info()->message == WM_ERASEBKGND)
-		fire_event_of_(*visible_target, visible_target->background_erase_event, *e_);
+	if (e.get_info()->message == WM_ERASEBKGND)
+		fire_event_of_(*visible_target, visible_target->background_erase_event, e);
 	else
-		fire_event_of_(*visible_target, visible_target->draw_event, *e_);
+		fire_event_of_(*visible_target, visible_target->draw_event, e);
 }
 
 std::shared_ptr<winp::event::object> winp::message::draw_dispatcher::create_event_(ui::object &target, const MSG &info, bool call_default){
-	if (e_ == nullptr){//Initialize
-		e_ = create_new_event_<event::draw>(target, info, call_default);
-		offset_ = POINT{};
-	}
-
-	return e_;
+	return create_new_event_<event::draw>(target, info, call_default);
 }
 
 winp::message::cursor_dispatcher::cursor_dispatcher()
@@ -276,123 +281,110 @@ winp::message::mouse_dispatcher::mouse_dispatcher()
 	event_dispatcher_ = std::make_shared<event::mouse_dispatcher>();
 }
 
-void winp::message::mouse_dispatcher::cleanup_(){
-	e_ = nullptr;
-	ev_ = nullptr;
-}
-
 void winp::message::mouse_dispatcher::post_dispatch_(event::object &e){
-	if (e_->bubble_to_type_<ui::io_surface>()){
-		auto &info = *e.get_info();
-		auto saved_result = get_result_of_(e);
+	if (!dynamic_cast<event::mouse &>(e).bubble_to_type_<ui::io_surface>())
+		return;//Failed to bubble
 
-		dispatch_(*dynamic_cast<ui::surface *>(e_->get_context()), info, false, true);
-		set_result_of_(e, saved_result, true);//Restore result
-	}
+	auto saved_result = get_result_of_(e);
+	dispatch_(e, false);
+	set_result_of_(e, saved_result, true);//Restore result
 }
 
 void winp::message::mouse_dispatcher::fire_event_(event::object &e){
-	if (ev_ != nullptr)
-		fire_event_of_(*dynamic_cast<ui::io_surface *>(e.get_context()), *ev_, *e_);
+	auto manager = get_event_manager_(e);
+	if (manager != nullptr)
+		fire_event_of_(*dynamic_cast<ui::io_surface *>(e.get_context()), *manager, e);
 }
 
 std::shared_ptr<winp::event::object> winp::message::mouse_dispatcher::create_event_(ui::object &target, const MSG &info, bool call_default){
-	if (e_ == nullptr){//Initialize
-		auto io_target = dynamic_cast<ui::io_surface *>(&target);
-		if (io_target == nullptr && (io_target = get_first_ancestor_of_<ui::io_surface>(target)) == nullptr)
-			return nullptr;//IO target required
-
-		auto mouse_position = GetMessagePos();
-		POINT computed_mouse_position{ GET_X_LPARAM(mouse_position), GET_Y_LPARAM(mouse_position) };
-
-		resolve_(*io_target, info.message);
-		e_ = create_new_event_<event::mouse>(target, info, call_default, computed_mouse_position, button_);
-	}
-
-	return e_;
+	auto mouse_position = GetMessagePos();
+	POINT computed_mouse_position{ GET_X_LPARAM(mouse_position), GET_Y_LPARAM(mouse_position) };
+	return create_new_event_<event::mouse>(target, info, call_default, computed_mouse_position, get_button_(info));
 }
 
-void winp::message::mouse_dispatcher::resolve_(ui::io_surface &target, UINT msg){
-	switch (msg){
-	case WINP_WM_MOUSELEAVE:
-		ev_ = &target.mouse_event.leave;
-		button_ = event::mouse::button_type::nil;
-		break;
-	case WINP_WM_MOUSEENTER:
-		ev_ = &target.mouse_event.enter;
-		button_ = event::mouse::button_type::nil;
-		break;
-	case WINP_WM_MOUSEMOVE:
-		ev_ = &target.mouse_event.move;
-		button_ = event::mouse::button_type::nil;
-		break;
-	case WM_MOUSEWHEEL:
-	case WM_MOUSEHWHEEL:
-		ev_ = &target.mouse_event.wheel;
-		button_ = event::mouse::button_type::nil;
-		break;
+winp::event::mouse::button_type winp::message::mouse_dispatcher::get_button_(const MSG &info){
+	switch (info.message){
 	case WM_NCLBUTTONDOWN:
 	case WM_LBUTTONDOWN:
-		ev_ = &target.mouse_event.down;
-		button_ = event::mouse::button_type::left;
-		break;
-	case WM_NCMBUTTONDOWN:
-	case WM_MBUTTONDOWN:
-		ev_ = &target.mouse_event.down;
-		button_ = event::mouse::button_type::middle;
-		break;
-	case WM_NCRBUTTONDOWN:
-	case WM_RBUTTONDOWN:
-		ev_ = &target.mouse_event.down;
-		button_ = event::mouse::button_type::right;
-		break;
 	case WM_NCLBUTTONUP:
 	case WM_LBUTTONUP:
-		ev_ = &target.mouse_event.up;
-		button_ = event::mouse::button_type::left;
-		break;
-	case WM_NCMBUTTONUP:
-	case WM_MBUTTONUP:
-		ev_ = &target.mouse_event.up;
-		button_ = event::mouse::button_type::middle;
-		break;
-	case WM_NCRBUTTONUP:
-	case WM_RBUTTONUP:
-		ev_ = &target.mouse_event.up;
-		button_ = event::mouse::button_type::right;
-		break;
 	case WM_NCLBUTTONDBLCLK:
 	case WM_LBUTTONDBLCLK:
-		ev_ = &target.mouse_event.double_click;
-		button_ = event::mouse::button_type::left;
-		break;
+		return event::mouse::button_type::left;
+	case WM_NCMBUTTONDOWN:
+	case WM_MBUTTONDOWN:
+	case WM_NCMBUTTONUP:
+	case WM_MBUTTONUP:
 	case WM_NCMBUTTONDBLCLK:
 	case WM_MBUTTONDBLCLK:
-		ev_ = &target.mouse_event.double_click;
-		button_ = event::mouse::button_type::middle;
-		break;
+		return event::mouse::button_type::middle;
+	case WM_NCRBUTTONDOWN:
+	case WM_RBUTTONDOWN:
+	case WM_NCRBUTTONUP:
+	case WM_RBUTTONUP:
 	case WM_NCRBUTTONDBLCLK:
 	case WM_RBUTTONDBLCLK:
-		ev_ = &target.mouse_event.double_click;
-		button_ = event::mouse::button_type::right;
-		break;
-	case WINP_WM_MOUSEDRAG:
-		ev_ = &target.mouse_event.drag;
-		button_ = event::mouse::button_type::nil;
-		break;
-	case WINP_WM_MOUSEDRAGBEGIN:
-		ev_ = &target.mouse_event.drag_begin;
-		button_ = event::mouse::button_type::nil;
-		break;
-	case WINP_WM_MOUSEDRAGEND:
-		ev_ = &target.mouse_event.drag_end;
-		button_ = event::mouse::button_type::nil;
-		break;
+		return event::mouse::button_type::right;
 	default:
-		ev_ = nullptr;
-		button_ = event::mouse::button_type::nil;
 		break;
 	}
+
+	return event::mouse::button_type::nil;
+}
+
+winp::event::manager_base *winp::message::mouse_dispatcher::get_event_manager_(event::object &e){
+	auto surface_target = dynamic_cast<ui::io_surface *>(e.get_context());
+	if (surface_target == nullptr)//IO surface required
+		return nullptr;
+
+	switch (e.get_info()->message){
+	case WINP_WM_MOUSELEAVE:
+		return &surface_target->mouse_event.leave;
+	case WINP_WM_MOUSEENTER:
+		return &surface_target->mouse_event.enter;
+	case WINP_WM_MOUSEMOVE:
+		return &surface_target->mouse_event.move;
+	case WM_MOUSEWHEEL:
+	case WM_MOUSEHWHEEL:
+		return &surface_target->mouse_event.wheel;
+	case WM_NCLBUTTONDOWN:
+	case WM_LBUTTONDOWN:
+		return &surface_target->mouse_event.down;
+	case WM_NCMBUTTONDOWN:
+	case WM_MBUTTONDOWN:
+		return &surface_target->mouse_event.down;
+	case WM_NCRBUTTONDOWN:
+	case WM_RBUTTONDOWN:
+		return &surface_target->mouse_event.down;
+	case WM_NCLBUTTONUP:
+	case WM_LBUTTONUP:
+		return &surface_target->mouse_event.up;
+	case WM_NCMBUTTONUP:
+	case WM_MBUTTONUP:
+		return &surface_target->mouse_event.up;
+	case WM_NCRBUTTONUP:
+	case WM_RBUTTONUP:
+		return &surface_target->mouse_event.up;
+	case WM_NCLBUTTONDBLCLK:
+	case WM_LBUTTONDBLCLK:
+		return &surface_target->mouse_event.double_click;
+	case WM_NCMBUTTONDBLCLK:
+	case WM_MBUTTONDBLCLK:
+		return &surface_target->mouse_event.double_click;
+	case WM_NCRBUTTONDBLCLK:
+	case WM_RBUTTONDBLCLK:
+		return &surface_target->mouse_event.double_click;
+	case WINP_WM_MOUSEDRAG:
+		return &surface_target->mouse_event.drag;
+	case WINP_WM_MOUSEDRAGBEGIN:
+		return &surface_target->mouse_event.drag_begin;
+	case WINP_WM_MOUSEDRAGEND:
+		return &surface_target->mouse_event.drag_end;
+	default:
+		break;
+	}
+
+	return nullptr;
 }
 
 winp::message::focus_dispatcher::focus_dispatcher()
@@ -416,51 +408,81 @@ winp::message::key_dispatcher::key_dispatcher()
 	event_dispatcher_ = std::make_shared<event::key_dispatcher>();
 }
 
-void winp::message::key_dispatcher::cleanup_(){
-	e_ = nullptr;
-	ev_ = nullptr;
-}
-
 void winp::message::key_dispatcher::post_dispatch_(event::object &e){
-	if (e_->bubble_to_type_<ui::io_surface>()){
-		auto &info = *e.get_info();
-		auto saved_result = get_result_of_(e);
+	if (!dynamic_cast<event::key &>(e).bubble_to_type_<ui::io_surface>())
+		return;//Failed to bubble
 
-		dispatch_(*dynamic_cast<ui::surface *>(e_->get_context()), info, false, true);
-		set_result_of_(e, saved_result, true);//Restore result
-	}
+	auto saved_result = get_result_of_(e);
+	dispatch_(e, false);
+	set_result_of_(e, saved_result, true);//Restore result
 }
 
 void winp::message::key_dispatcher::fire_event_(event::object &e){
-	if (ev_ != nullptr)
-		fire_event_of_(*dynamic_cast<ui::io_surface *>(e.get_context()), *ev_, *e_);
+	auto manager = get_event_manager_(e);
+	if (manager != nullptr)
+		fire_event_of_(*dynamic_cast<ui::io_surface *>(e.get_context()), *manager, e);
 }
 
 std::shared_ptr<winp::event::object> winp::message::key_dispatcher::create_event_(ui::object &target, const MSG &info, bool call_default){
-	if (e_ == nullptr){//Initialize
-		auto io_target = dynamic_cast<ui::io_surface *>(&target);
-		if (io_target == nullptr && (io_target = get_first_ancestor_of_<ui::io_surface>(target)) == nullptr)
-			return nullptr;//IO target required
-
-		resolve_(*io_target, info.message);
-		e_ = create_new_event_<event::key>(target, info, call_default);
-	}
-
-	return e_;
+	return create_new_event_<event::key>(target, info, call_default);
 }
 
-void winp::message::key_dispatcher::resolve_(ui::io_surface &target, UINT msg){
-	switch (msg){
+winp::event::manager_base *winp::message::key_dispatcher::get_event_manager_(event::object &e){
+	auto surface_target = dynamic_cast<ui::io_surface *>(e.get_context());
+	if (surface_target == nullptr)//IO surface required
+		return nullptr;
+
+	switch (e.get_info()->message){
 	case WM_KEYDOWN:
-		ev_ = &target.key_event.down;
-		break;
+		return &surface_target->key_event.down;
 	case WM_KEYUP:
-		ev_ = &target.key_event.up;
-		break;
+		return &surface_target->key_event.up;
 	case WM_CHAR:
-		ev_ = &target.key_event.press;
-		break;
+		return &surface_target->key_event.press;
 	default:
 		break;
 	}
+
+	return nullptr;
+}
+
+winp::message::menu_uninit_dispatcher::menu_uninit_dispatcher()
+	/*: dispatcher(false)*/{
+	//event_dispatcher_ = std::make_shared<event::menu_dispatcher>();
+}
+
+void winp::message::menu_uninit_dispatcher::post_dispatch_(event::object &e){
+	auto context = e.get_context();
+	if (!bubble_to_type_of_<menu::object>(e)){
+		if (propagation_stopped_of_(e) || dynamic_cast<ui::window_surface *>(context) != nullptr)
+			return;//Bubbling prevented
+
+		auto object = find_object_(e.get_info()->hwnd);
+		if (object == nullptr)//Object required
+			return;
+
+		set_context_of_(e, *object);//Bubble to window
+	}
+
+	auto saved_result = get_result_of_(e);
+	dispatch_(e, false);
+	set_result_of_(e, saved_result, true);//Restore result
+}
+
+void winp::message::menu_uninit_dispatcher::fire_event_(event::object &e){
+	auto menu_target = dynamic_cast<menu::object *>(e.get_context());
+	if (menu_target == nullptr){
+		auto window_target = dynamic_cast<ui::window_surface *>(e.get_context());
+		if (window_target != nullptr)
+			fire_event_of_(*window_target, window_target->menu_uninit_event, e);
+	}
+	else
+		fire_event_of_(*menu_target, menu_target->uninit_event, e);
+}
+
+std::shared_ptr<winp::event::object> winp::message::menu_uninit_dispatcher::create_event_(ui::object &target, const MSG &info, bool call_default){
+	auto menu_target = find_object_(reinterpret_cast<HMENU>(info.wParam));
+	if (menu_target == nullptr)
+		return create_new_event_<event::object>(target, info, call_default);
+	return create_new_event_<event::object>(*menu_target, info, call_default);
 }

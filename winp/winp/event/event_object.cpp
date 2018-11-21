@@ -64,6 +64,10 @@ LRESULT winp::event::object::get_result_() const{
 	return result_;
 }
 
+void winp::event::object::set_context_(ui::object &value){
+	context_ = &value;
+}
+
 bool winp::event::object::bubble_(){
 	return (((state_ & state_type::propagation_stopped) == 0u) && (context_ != nullptr) && (context_ = context_->get_parent_()) != nullptr);
 }
@@ -167,19 +171,22 @@ bool winp::event::draw::erase_background(){
 	return (thread_.is_thread_context() ? erase_background_() : false);
 }
 
-void winp::event::draw::set_target_(ui::object *target, POINT &offset){
-	auto surface_target = dynamic_cast<ui::surface *>(target);
-	if (surface_target == nullptr || target == context_)
+void winp::event::draw::set_context_(ui::object &value){
+	auto surface_target = dynamic_cast<ui::visible_surface *>(&value);
+	if (surface_target == nullptr || &value == context_)
 		return;//Do nothing
 
-	auto poffset = surface_target->get_position_();
-	{//Update offset
-		offset.x += poffset.x;
-		offset.y += poffset.y;
+	POINT parent_offset;
+	ui::surface *surface_parent;
+
+	current_offset_ = surface_target->get_position_();
+	for (auto parent = surface_target->get_parent_(); parent != nullptr && parent != target_ && (surface_parent = dynamic_cast<ui::surface *>(parent)) != nullptr; parent = parent->get_parent_()){
+		parent_offset = surface_parent->get_position_();
+		current_offset_.x += parent_offset.x;
+		current_offset_.y += parent_offset.y;
 	}
 
-	target_ = target;
-	current_offset_ = offset;
+	context_ = &value;
 	drawer_ = nullptr;
 
 	if (struct_.hdc != nullptr){//Reset device

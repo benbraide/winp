@@ -57,11 +57,12 @@ namespace winp::thread{
 	public:
 		using m_point_type = POINT;
 		using m_size_type = SIZE;
-		using map_type = std::unordered_map<HWND, ui::surface *>;
+		using map_type = std::unordered_map<HANDLE, ui::surface *>;
 
 		struct cache_info{
-			HWND handle;
+			HANDLE handle;
 			ui::surface *object;
+			ui::surface *creating;
 		};
 
 		struct mouse_info{
@@ -92,6 +93,7 @@ namespace winp::thread{
 		friend class ui::surface;
 		friend class ui::window_surface;
 
+		friend class message::dispatcher;
 		friend class menu::object;
 
 		void prepare_for_run_();
@@ -102,11 +104,11 @@ namespace winp::thread{
 
 		void dispatch_message_(MSG &msg) const;
 
-		ui::surface *find_object_(HWND handle) const;
+		ui::surface *find_object_(HANDLE handle) const;
 
 		void create_window_(HWND handle, CBT_CREATEWNDW &info);
 
-		void destroy_window_(HWND handle);
+		LRESULT destroy_window_(ui::surface &target, const MSG &info);
 
 		LRESULT mouse_nc_leave_(ui::io_surface &target, const MSG &info, DWORD mouse_position, bool prevent_default);
 
