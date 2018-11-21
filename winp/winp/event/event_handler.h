@@ -15,6 +15,7 @@ namespace winp::event{
 	class mouse_dispatcher;
 	class focus_dispatcher;
 	class key_dispatcher;
+	class menu_dispatcher;
 
 	class unhandled_handler{
 	public:
@@ -131,5 +132,25 @@ namespace winp::event{
 		virtual bool handle_key_up_event_(key &e);
 
 		virtual bool handle_key_char_event_(key &e);
+	};
+
+	class menu_handler{
+	public:
+		virtual ~menu_handler() = default;
+
+	protected:
+		friend class menu_dispatcher;
+
+		virtual void handle_menu_uninit_event_(object &e);
+
+		virtual void handle_menu_init_event_(object &e);
+
+		virtual void handle_menu_init_item_event_(object &e);
+
+		virtual void handle_menu_select_event_(object &e);
+
+		virtual void handle_menu_check_event_(object &e);
+
+		virtual void handle_menu_uncheck_event_(object &e);
 	};
 }

@@ -179,9 +179,9 @@ namespace winp::message{
 		virtual event::manager_base *get_event_manager_(event::object &e);
 	};
 
-	class menu_uninit_dispatcher : public dispatcher{
+	class menu_dispatcher : public dispatcher{
 	public:
-		menu_uninit_dispatcher();
+		menu_dispatcher();
 
 	protected:
 		virtual void post_dispatch_(event::object &e) override;

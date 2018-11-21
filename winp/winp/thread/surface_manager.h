@@ -31,6 +31,11 @@
 #define WINP_WM_CHILD_INSERTED			(WM_APP + 0x10)
 #define WINP_WM_CHILD_REMOVED			(WM_APP + 0x11)
 
+#define WINP_WM_MENU_INIT_ITEM			(WM_APP + 0x12)
+#define WINP_WM_MENU_SELECT				(WM_APP + 0x13)
+#define WINP_WM_MENU_CHECK				(WM_APP + 0x14)
+#define WINP_WM_MENU_UNCHECK			(WM_APP + 0x15)
+
 namespace winp::app{
 	class object;
 }
@@ -47,6 +52,7 @@ namespace winp::message{
 }
 
 namespace winp::menu{
+	class item;
 	class object;
 }
 
@@ -141,6 +147,16 @@ namespace winp::thread{
 		LRESULT kill_focus_(ui::io_surface &target, const MSG &info, bool prevent_default);
 
 		LRESULT key_(ui::io_surface &target, const MSG &info, bool prevent_default);
+
+		LRESULT command_(ui::surface &target, const MSG &info, bool prevent_default);
+
+		LRESULT menu_init_(ui::surface &target, const MSG &info, bool prevent_default);
+
+		LRESULT menu_init_items_(ui::surface &target, ui::surface &tree);
+
+		void menu_init_item_(ui::surface &target, menu::item &item);
+
+		LRESULT menu_select_(ui::surface &target, const MSG &info, bool prevent_default);
 
 		message::dispatcher *find_dispatcher_(UINT msg);
 

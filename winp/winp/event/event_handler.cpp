@@ -62,3 +62,15 @@ bool winp::event::key_handler::handle_key_up_event_(key &e){
 bool winp::event::key_handler::handle_key_char_event_(key &e){
 	return true;
 }
+
+void winp::event::menu_handler::handle_menu_uninit_event_(object &e){}
+
+void winp::event::menu_handler::handle_menu_init_event_(object &e){}
+
+void winp::event::menu_handler::handle_menu_init_item_event_(object &e){}
+
+void winp::event::menu_handler::handle_menu_select_event_(object &e){}
+
+void winp::event::menu_handler::handle_menu_check_event_(object &e){}
+
+void winp::event::menu_handler::handle_menu_uncheck_event_(object &e){}

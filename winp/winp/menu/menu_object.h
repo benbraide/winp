@@ -4,9 +4,10 @@
 
 #include "menu_link.h"
 #include "menu_separator.h"
+#include "menu_group.h"
 
 namespace winp::menu{
-	class object : public ui::io_surface, public tree{
+	class object : public group{
 	public:
 		object();
 
@@ -17,8 +18,6 @@ namespace winp::menu{
 		explicit object(ui::window_surface &parent);
 
 		virtual ~object();
-
-		virtual std::size_t get_absolute_index(const std::function<void(std::size_t)> &callback = nullptr) const override;
 
 		virtual bool is_popup(const std::function<void(bool)> &callback = nullptr) const;
 
@@ -47,12 +46,6 @@ namespace winp::menu{
 		virtual void parent_changed_(ui::tree *previous_parent, std::size_t previous_index) override;
 
 		virtual LRESULT dispatch_message_(UINT msg, WPARAM wparam, LPARAM lparam, bool call_default = false) override;
-
-		virtual UINT get_types_(std::size_t index) const override;
-
-		virtual UINT get_states_(std::size_t index) const override;
-
-		virtual std::size_t get_absolute_index_of_(const menu::component &child) const override;
 
 		virtual std::size_t get_count_() const override;
 

@@ -5,6 +5,7 @@
 #include "menu_tree.h"
 
 namespace winp::menu{
+	class group;
 	class object;
 	class wrapper;
 
@@ -71,11 +72,18 @@ namespace winp::menu{
 
 		virtual HBITMAP get_unchecked_bitmap(const std::function<void(HBITMAP)> &callback = nullptr) const;
 
+		event::manager<item, event::object> init_event{ *this };
+		event::manager<item, event::object> select_event{ *this };
+		event::manager<item, event::object> check_event{ *this };
+		event::manager<item, event::object> uncheck_event{ *this };
+
 	protected:
-		friend class object;
-		friend class wrapper;
+		friend class menu::object;
+		friend class menu::wrapper;
+		friend class menu::group;
 
 		template <class> friend class generic_collection;
+		friend class thread::surface_manager;
 
 		virtual bool create_() override;
 

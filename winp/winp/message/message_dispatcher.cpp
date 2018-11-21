@@ -446,12 +446,12 @@ winp::event::manager_base *winp::message::key_dispatcher::get_event_manager_(eve
 	return nullptr;
 }
 
-winp::message::menu_uninit_dispatcher::menu_uninit_dispatcher()
-	/*: dispatcher(false)*/{
-	//event_dispatcher_ = std::make_shared<event::menu_dispatcher>();
+winp::message::menu_dispatcher::menu_dispatcher()
+	: dispatcher(false){
+	event_dispatcher_ = std::make_shared<event::menu_dispatcher>();
 }
 
-void winp::message::menu_uninit_dispatcher::post_dispatch_(event::object &e){
+void winp::message::menu_dispatcher::post_dispatch_(event::object &e){
 	auto context = e.get_context();
 	if (!bubble_to_type_of_<menu::object>(e)){
 		if (propagation_stopped_of_(e) || dynamic_cast<ui::window_surface *>(context) != nullptr)
@@ -467,22 +467,75 @@ void winp::message::menu_uninit_dispatcher::post_dispatch_(event::object &e){
 	auto saved_result = get_result_of_(e);
 	dispatch_(e, false);
 	set_result_of_(e, saved_result, true);//Restore result
+
+	if (e.get_info()->message == WM_INITMENUPOPUP && default_prevented_of_(e))
+		set_result_of_(e, 1, true);//Prevent individual iteration
+	else if (e.get_info()->message == WINP_WM_MENU_INIT_ITEM && default_prevented_of_(e))
+		set_result_of_(e, 1, true);//Disable item
 }
 
-void winp::message::menu_uninit_dispatcher::fire_event_(event::object &e){
+void winp::message::menu_dispatcher::fire_event_(event::object &e){
 	auto menu_target = dynamic_cast<menu::object *>(e.get_context());
-	if (menu_target == nullptr){
-		auto window_target = dynamic_cast<ui::window_surface *>(e.get_context());
-		if (window_target != nullptr)
+	auto menu_item_target = ((menu_target == nullptr) ? dynamic_cast<menu::item *>(e.get_context()) : nullptr);
+	auto window_target = ((menu_target == nullptr && menu_item_target == nullptr) ? dynamic_cast<ui::window_surface *>(e.get_context()) : nullptr);
+
+	switch (e.get_info()->message){
+	case WM_UNINITMENUPOPUP:
+		if (menu_target != nullptr)
+			fire_event_of_(*menu_target, menu_target->uninit_event, e);
+		else if (window_target != nullptr)
 			fire_event_of_(*window_target, window_target->menu_uninit_event, e);
+		break;
+	case WM_INITMENUPOPUP:
+		if (menu_target != nullptr)
+			fire_event_of_(*menu_target, menu_target->init_event, e);
+		else if (window_target != nullptr)
+			fire_event_of_(*window_target, window_target->menu_init_event, e);
+		break;
+	case WINP_WM_MENU_INIT_ITEM:
+		if (menu_target != nullptr)
+			fire_event_of_(*menu_target, menu_target->init_item_event, e);
+		else if (menu_item_target != nullptr)
+			fire_event_of_(*menu_item_target, menu_item_target->init_event, e);
+		else if (window_target != nullptr)
+			fire_event_of_(*window_target, window_target->menu_init_item_event, e);
+		break;
+	case WINP_WM_MENU_SELECT:
+		if (menu_target != nullptr)
+			fire_event_of_(*menu_target, menu_target->select_event, e);
+		else if (menu_item_target != nullptr)
+			fire_event_of_(*menu_item_target, menu_item_target->select_event, e);
+		else if (window_target != nullptr)
+			fire_event_of_(*window_target, window_target->menu_select_event, e);
+		break;
+	case WINP_WM_MENU_CHECK:
+		if (menu_target != nullptr)
+			fire_event_of_(*menu_target, menu_target->check_event, e);
+		else if (menu_item_target != nullptr)
+			fire_event_of_(*menu_item_target, menu_item_target->check_event, e);
+		else if (window_target != nullptr)
+			fire_event_of_(*window_target, window_target->menu_check_event, e);
+		break;
+	case WINP_WM_MENU_UNCHECK:
+		if (menu_target != nullptr)
+			fire_event_of_(*menu_target, menu_target->uncheck_event, e);
+		else if (menu_item_target != nullptr)
+			fire_event_of_(*menu_item_target, menu_item_target->uncheck_event, e);
+		else if (window_target != nullptr)
+			fire_event_of_(*window_target, window_target->menu_uncheck_event, e);
+		break;
+	default:
+		break;
 	}
-	else
-		fire_event_of_(*menu_target, menu_target->uninit_event, e);
 }
 
-std::shared_ptr<winp::event::object> winp::message::menu_uninit_dispatcher::create_event_(ui::object &target, const MSG &info, bool call_default){
+std::shared_ptr<winp::event::object> winp::message::menu_dispatcher::create_event_(ui::object &target, const MSG &info, bool call_default){
+	if (info.message == WINP_WM_MENU_INIT_ITEM)
+		return create_new_event_<event::object>(*reinterpret_cast<menu::item *>(info.wParam), info, call_default);
+
 	auto menu_target = find_object_(reinterpret_cast<HMENU>(info.wParam));
 	if (menu_target == nullptr)
 		return create_new_event_<event::object>(target, info, call_default);
+
 	return create_new_event_<event::object>(*menu_target, info, call_default);
 }

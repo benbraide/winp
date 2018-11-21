@@ -196,3 +196,33 @@ void winp::event::key_dispatcher::dispatch_(object &e){
 	else//Events are not subscribed to
 		dispatcher::dispatch_(e);
 }
+
+void winp::event::menu_dispatcher::dispatch_(object &e){
+	auto handler = dynamic_cast<menu_handler *>(e.get_context());
+	if (handler != nullptr){
+		switch (e.get_info()->message){
+		case WM_UNINITMENUPOPUP:
+			handler->handle_menu_uninit_event_(e);
+			break;
+		case WM_INITMENUPOPUP:
+			handler->handle_menu_init_event_(e);
+			break;
+		case WINP_WM_MENU_INIT_ITEM:
+			handler->handle_menu_init_item_event_(e);
+			break;
+		case WINP_WM_MENU_SELECT:
+			handler->handle_menu_select_event_(e);
+			break;
+		case WINP_WM_MENU_CHECK:
+			handler->handle_menu_check_event_(e);
+			break;
+		case WINP_WM_MENU_UNCHECK:
+			handler->handle_menu_uncheck_event_(e);
+			break;
+		default:
+			break;
+		}
+	}
+	else//Events are not subscribed to
+		dispatcher::dispatch_(e);
+}

@@ -64,4 +64,9 @@ namespace winp::event{
 	protected:
 		virtual void dispatch_(object &e) override;
 	};
+
+	class menu_dispatcher : public dispatcher{
+	protected:
+		virtual void dispatch_(object &e) override;
+	};
 }
