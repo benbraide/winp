@@ -27,7 +27,13 @@ namespace winp::menu{
 
 		virtual bool validate_parent_change_(ui::tree *value, std::size_t index) const override;
 
+		virtual void parent_changing_() override;
+
 		virtual void parent_changed_(ui::tree *previous_parent, std::size_t previous_index) override;
+
+		virtual void index_changing_() override;
+
+		virtual void index_changed_(ui::tree *previous_parent, std::size_t previous_index) override;
 
 		virtual UINT get_types_(std::size_t index) const override;
 

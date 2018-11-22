@@ -57,8 +57,24 @@ bool winp::menu::group::validate_parent_change_(ui::tree *value, std::size_t ind
 	return (surface::validate_parent_change_(value, index) && dynamic_cast<menu::item *>(value) != nullptr);
 }
 
-void winp::menu::group::parent_changed_(ui::tree *previous_parent, std::size_t previous_index){
+void winp::menu::group::parent_changing_(){
+	for (auto child : children_)
+		child->parent_changing_();
+}
 
+void winp::menu::group::parent_changed_(ui::tree *previous_parent, std::size_t previous_index){
+	for (auto child : children_)
+		child->parent_changed_(previous_parent, previous_index);
+}
+
+void winp::menu::group::index_changing_(){
+	for (auto child : children_)
+		child->index_changing_();
+}
+
+void winp::menu::group::index_changed_(ui::tree *previous_parent, std::size_t previous_index){
+	for (auto child : children_)
+		child->index_changed_(previous_parent, previous_index);
 }
 
 UINT winp::menu::group::get_types_(std::size_t index) const{

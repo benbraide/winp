@@ -198,21 +198,31 @@ bool winp::menu::item_component::validate_parent_change_(ui::tree *value, std::s
 }
 
 void winp::menu::item_component::parent_changing_(){
+	auto is_created = is_created_;
 	destroy_();
+	is_created_ = is_created;
 }
 
 void winp::menu::item_component::parent_changed_(ui::tree *previous_parent, std::size_t previous_index){
 	generate_id_();//Check if a new ID is necessary
-	create_();
+	if (is_created_){//Ignore if item wasn't previously created
+		is_created_ = false;
+		create_();
+	}
 	surface::parent_changed_(previous_parent, previous_index);
 }
 
 void winp::menu::item_component::index_changing_(){
+	auto is_created = is_created_;
 	destroy_();
+	is_created_ = is_created;
 }
 
 void winp::menu::item_component::index_changed_(ui::tree *previous_parent, std::size_t previous_index){
-	create_();
+	if (is_created_ && previous_parent == get_parent_()){
+		is_created_ = false;
+		create_();
+	}
 	surface::index_changed_(previous_parent, previous_index);
 }
 
@@ -294,6 +304,9 @@ HBITMAP winp::menu::item_component::get_unchecked_bitmap_() const{
 }
 
 bool winp::menu::item_component::update_(const MENUITEMINFOW &info){
+	if (!is_created_)
+		return true;
+
 	auto parent = get_parent_();
 	if (parent == nullptr)
 		return true;
