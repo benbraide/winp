@@ -9,43 +9,86 @@ winp::ui::window_surface::~window_surface(){
 	destruct();
 }
 
-void winp::ui::window_surface::show(int how, const std::function<void(object &, bool)> &callback){
+bool winp::ui::window_surface::show(int how, const std::function<void(object &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = show_(how);
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
 	thread_.queue.post([=]{
 		auto result = show_(how);
 		if (callback != nullptr)
 			callback(*this, result);
 	}, thread::queue::send_priority, id_);
+
+	return true;
 }
 
-void winp::ui::window_surface::hide(const std::function<void(object &, bool)> &callback){
-	show(SW_HIDE, callback);
+bool winp::ui::window_surface::hide(const std::function<void(object &, bool)> &callback){
+	return show(SW_HIDE, callback);
 }
 
-void winp::ui::window_surface::maximize(const std::function<void(object &, bool)> &callback){
+bool winp::ui::window_surface::maximize(const std::function<void(object &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = maximize_();
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
 	thread_.queue.post([=]{
 		auto result = maximize_();
 		if (callback != nullptr)
 			callback(*this, result);
 	}, thread::queue::send_priority, id_);
+
+	return true;
 }
 
-void winp::ui::window_surface::restore_maximized(const std::function<void(object &, bool)> &callback){
+bool winp::ui::window_surface::restore_maximized(const std::function<void(object &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = restore_maximized_();
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
 	thread_.queue.post([=]{
 		auto result = restore_maximized_();
 		if (callback != nullptr)
 			callback(*this, result);
 	}, thread::queue::send_priority, id_);
+
+	return true;
 }
 
-void winp::ui::window_surface::toggle_maximized(const std::function<void(object &, bool)> &callback){
+bool winp::ui::window_surface::toggle_maximized(const std::function<void(object &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = toggle_maximized_();
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
 	thread_.queue.post([=]{
 		auto result = toggle_maximized_();
 		if (callback != nullptr)
 			callback(*this, result);
 	}, thread::queue::send_priority, id_);
+
+	return true;
 }
 
 bool winp::ui::window_surface::is_maximized(const std::function<void(bool)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = is_maximized_();
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(is_maximized_()); }, thread::queue::send_priority, id_);
 		return false;
@@ -54,31 +97,65 @@ bool winp::ui::window_surface::is_maximized(const std::function<void(bool)> &cal
 	return thread_.queue.add([this]{ return is_maximized_(); }, thread::queue::send_priority, id_).get();
 }
 
-void winp::ui::window_surface::minimize(const std::function<void(object &, bool)> &callback){
+bool winp::ui::window_surface::minimize(const std::function<void(object &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = minimize_();
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
 	thread_.queue.post([=]{
 		auto result = minimize_();
 		if (callback != nullptr)
 			callback(*this, result);
 	}, thread::queue::send_priority, id_);
+
+	return true;
 }
 
-void winp::ui::window_surface::restore_minimized(const std::function<void(object &, bool)> &callback){
+bool winp::ui::window_surface::restore_minimized(const std::function<void(object &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = restore_minimized_();
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
 	thread_.queue.post([=]{
 		auto result = restore_minimized_();
 		if (callback != nullptr)
 			callback(*this, result);
 	}, thread::queue::send_priority, id_);
+
+	return true;
 }
 
-void winp::ui::window_surface::toggle_minimized(const std::function<void(object &, bool)> &callback){
+bool winp::ui::window_surface::toggle_minimized(const std::function<void(object &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = toggle_minimized_();
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
 	thread_.queue.post([=]{
 		auto result = toggle_minimized_();
 		if (callback != nullptr)
 			callback(*this, result);
 	}, thread::queue::send_priority, id_);
+
+	return true;
 }
 
 bool winp::ui::window_surface::is_minimized(const std::function<void(bool)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = is_minimized_();
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(is_minimized_()); }, thread::queue::send_priority, id_);
 		return false;
@@ -87,31 +164,65 @@ bool winp::ui::window_surface::is_minimized(const std::function<void(bool)> &cal
 	return thread_.queue.add([this]{ return is_minimized_(); }, thread::queue::send_priority, id_).get();
 }
 
-void winp::ui::window_surface::set_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback){
+bool winp::ui::window_surface::set_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = set_styles_(value, is_extended);
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
 	thread_.queue.post([=]{
 		auto result = set_styles_(value, is_extended);
 		if (callback != nullptr)
 			callback(*this, result);
 	}, thread::queue::send_priority, id_);
+
+	return true;
 }
 
-void winp::ui::window_surface::add_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback){
+bool winp::ui::window_surface::add_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = add_styles_(value, is_extended);
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
 	thread_.queue.post([=]{
 		auto result = add_styles_(value, is_extended);
 		if (callback != nullptr)
 			callback(*this, result);
 	}, thread::queue::send_priority, id_);
+
+	return true;
 }
 
-void winp::ui::window_surface::remove_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback){
+bool winp::ui::window_surface::remove_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = remove_styles_(value, is_extended);
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
 	thread_.queue.post([=]{
 		auto result = remove_styles_(value, is_extended);
 		if (callback != nullptr)
 			callback(*this, result);
 	}, thread::queue::send_priority, id_);
+
+	return true;
 }
 
 DWORD winp::ui::window_surface::get_styles(bool is_extended, const std::function<void(DWORD)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = get_styles_(is_extended);
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(get_styles_(is_extended)); }, thread::queue::send_priority, id_);
 		return false;
@@ -121,6 +232,13 @@ DWORD winp::ui::window_surface::get_styles(bool is_extended, const std::function
 }
 
 bool winp::ui::window_surface::has_styles(DWORD value, bool is_extended, bool has_all, const std::function<void(bool)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = has_styles_(value, is_extended, has_all);
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(has_styles_(value, is_extended, has_all)); }, thread::queue::send_priority, id_);
 		return false;

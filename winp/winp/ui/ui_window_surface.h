@@ -23,31 +23,31 @@ namespace winp::ui{
 
 		using io_surface::show;
 
-		virtual void show(int how, const std::function<void(object &, bool)> &callback = nullptr) override;
+		virtual bool show(int how, const std::function<void(object &, bool)> &callback = nullptr) override;
 
-		virtual void hide(const std::function<void(object &, bool)> &callback = nullptr) override;
+		virtual bool hide(const std::function<void(object &, bool)> &callback = nullptr) override;
 
-		virtual void maximize(const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool maximize(const std::function<void(object &, bool)> &callback = nullptr);
 
-		virtual void restore_maximized(const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool restore_maximized(const std::function<void(object &, bool)> &callback = nullptr);
 
-		virtual void toggle_maximized(const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool toggle_maximized(const std::function<void(object &, bool)> &callback = nullptr);
 
 		virtual bool is_maximized(const std::function<void(bool)> &callback = nullptr) const;
 
-		virtual void minimize(const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool minimize(const std::function<void(object &, bool)> &callback = nullptr);
 
-		virtual void restore_minimized(const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool restore_minimized(const std::function<void(object &, bool)> &callback = nullptr);
 
-		virtual void toggle_minimized(const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool toggle_minimized(const std::function<void(object &, bool)> &callback = nullptr);
 
 		virtual bool is_minimized(const std::function<void(bool)> &callback = nullptr) const;
 
-		virtual void set_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback = nullptr);
 
-		virtual void add_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool add_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback = nullptr);
 
-		virtual void remove_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool remove_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback = nullptr);
 
 		virtual DWORD get_styles(bool is_extended, const std::function<void(DWORD)> &callback = nullptr) const;
 

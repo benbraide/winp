@@ -20,6 +20,13 @@ winp::menu::object::~object(){
 }
 
 bool winp::menu::object::is_popup(const std::function<void(bool)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = is_popup_();
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(is_popup_()); }, thread::queue::send_priority, id_);
 		return false;

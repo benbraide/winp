@@ -40,31 +40,31 @@ namespace winp::ui{
 
 		virtual ~object();
 
-		virtual void create(const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool create(const std::function<void(object &, bool)> &callback = nullptr);
 
-		virtual void destroy(const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool destroy(const std::function<void(object &, bool)> &callback = nullptr);
 
 		virtual HANDLE get_handle(const std::function<void(HANDLE)> &callback = nullptr) const;
 
-		virtual void set_parent(tree *value, const std::function<void(object &, bool, std::size_t)> &callback = nullptr);
+		virtual std::size_t set_parent(tree *value, const std::function<void(object &, bool, std::size_t)> &callback = nullptr);
 
 		virtual tree *get_parent(const std::function<void(tree *)> &callback = nullptr) const;
 
-		virtual void set_index(std::size_t value, const std::function<void(object &, bool, std::size_t)> &callback = nullptr);
+		virtual std::size_t set_index(std::size_t value, const std::function<void(object &, bool, std::size_t)> &callback = nullptr);
 
 		virtual std::size_t get_index(const std::function<void(std::size_t)> &callback = nullptr) const;
 
-		virtual void set_previous_sibling(object *target, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_previous_sibling(object *target, const std::function<void(object &, bool)> &callback = nullptr);
 
 		virtual object *get_previous_sibling(const std::function<void(object *)> &callback = nullptr) const;
 
-		virtual void set_next_sibling(object *target, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_next_sibling(object *target, const std::function<void(object &, bool)> &callback = nullptr);
 
 		virtual object *get_next_sibling(const std::function<void(object *)> &callback = nullptr) const;
 
-		virtual utility::dynamic_list<tree, object> get_ancestors(const std::function<void(utility::dynamic_list<tree, object>)> &callback = nullptr) const;
+		virtual utility::dynamic_list<tree, object> get_ancestors() const;
 
-		virtual utility::dynamic_list<object, object> get_siblings(const std::function<void(utility::dynamic_list<object, object>)> &callback = nullptr) const;
+		virtual utility::dynamic_list<object, object> get_siblings() const;
 
 		LRESULT send_message(UINT msg, const std::function<void(LRESULT)> &callback = nullptr);
 

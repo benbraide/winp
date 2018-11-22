@@ -40,7 +40,10 @@ void winp::thread::item::destruct(){
 }
 
 void winp::thread::item::use_context(const queue::callback_type &task, int priority){
-	thread_.queue.post(task, priority, id_);
+	if (thread_.is_thread_context())
+		task();
+	else
+		thread_.queue.post(task, priority, id_);
 }
 
 void winp::thread::item::destruct_(){

@@ -24,6 +24,11 @@ namespace winp::menu{
 			if (callback == nullptr)
 				return;//Callback required
 
+			if (base_type::thread_.is_thread_context()){
+				add_(callback);
+				return;
+			}
+
 			base_type::thread_.queue.post([=]{
 				add_(callback);
 			}, thread::queue::send_priority, base_type::id_);

@@ -21,21 +21,21 @@ namespace winp::ui{
 
 		virtual ~surface();
 
-		virtual void set_size(const m_size_type &value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_size(const m_size_type &value, const std::function<void(object &, bool)> &callback = nullptr);
 
-		virtual void offset_size(const m_size_type &value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool offset_size(const m_size_type &value, const std::function<void(object &, bool)> &callback = nullptr);
 
 		virtual m_size_type get_size(const std::function<void(const m_size_type &)> &callback = nullptr) const;
 
 		virtual m_size_type get_client_position_offset(const std::function<void(const m_size_type &)> &callback = nullptr) const;
 
-		virtual void set_position(const m_point_type &value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_position(const m_point_type &value, const std::function<void(object &, bool)> &callback = nullptr);
 
-		virtual void offset_position(const m_size_type &value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool offset_position(const m_size_type &value, const std::function<void(object &, bool)> &callback = nullptr);
 
 		virtual m_point_type get_position(const std::function<void(const m_point_type &)> &callback = nullptr) const;
 
-		virtual void set_absolute_position(const m_point_type &value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_absolute_position(const m_point_type &value, const std::function<void(object &, bool)> &callback = nullptr);
 
 		virtual m_point_type get_absolute_position(const std::function<void(const m_point_type &)> &callback = nullptr) const;
 

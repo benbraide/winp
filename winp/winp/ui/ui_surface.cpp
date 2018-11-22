@@ -7,23 +7,48 @@ winp::ui::surface::surface(thread::object &thread)
 
 winp::ui::surface::~surface() = default;
 
-void winp::ui::surface::set_size(const m_size_type &value, const std::function<void(object &, bool)> &callback){
+bool winp::ui::surface::set_size(const m_size_type &value, const std::function<void(object &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = set_size_(value);
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
 	thread_.queue.post([=]{
 		auto result = set_size_(value);
 		if (callback != nullptr)
 			callback(*this, result);
 	}, thread::queue::send_priority, id_);
+
+	return true;
 }
 
-void winp::ui::surface::offset_size(const m_size_type &value, const std::function<void(object &, bool)> &callback){
+bool winp::ui::surface::offset_size(const m_size_type &value, const std::function<void(object &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = offset_size_(value);
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
 	thread_.queue.post([=]{
 		auto result = offset_size_(value);
 		if (callback != nullptr)
 			callback(*this, result);
 	}, thread::queue::send_priority, id_);
+
+	return true;
 }
 
 winp::ui::surface::m_size_type winp::ui::surface::get_size(const std::function<void(const m_size_type &)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = get_size_();
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(get_size_()); }, thread::queue::send_priority, id_);
 		return m_size_type{};
@@ -33,6 +58,13 @@ winp::ui::surface::m_size_type winp::ui::surface::get_size(const std::function<v
 }
 
 winp::ui::surface::m_size_type winp::ui::surface::get_client_position_offset(const std::function<void(const m_size_type &)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = get_client_position_offset_();
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(get_client_position_offset_()); }, thread::queue::send_priority, id_);
 		return m_size_type{};
@@ -41,23 +73,48 @@ winp::ui::surface::m_size_type winp::ui::surface::get_client_position_offset(con
 	return thread_.queue.add([this]{ return get_client_position_offset_(); }, thread::queue::send_priority, id_).get();
 }
 
-void winp::ui::surface::set_position(const m_point_type &value, const std::function<void(object &, bool)> &callback){
+bool winp::ui::surface::set_position(const m_point_type &value, const std::function<void(object &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = set_position_(value);
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
 	thread_.queue.post([=]{
 		auto result = set_position_(value);
 		if (callback != nullptr)
 			callback(*this, result);
 	}, thread::queue::send_priority, id_);
+
+	return true;
 }
 
-void winp::ui::surface::offset_position(const m_size_type &value, const std::function<void(object &, bool)> &callback){
+bool winp::ui::surface::offset_position(const m_size_type &value, const std::function<void(object &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = offset_position_(value);
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
 	thread_.queue.post([=]{
 		auto result = offset_position_(value);
 		if (callback != nullptr)
 			callback(*this, result);
 	}, thread::queue::send_priority, id_);
+
+	return true;
 }
 
 winp::ui::surface::m_point_type winp::ui::surface::get_position(const std::function<void(const m_point_type &)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = get_position_();
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(get_position_()); }, thread::queue::send_priority, id_);
 		return m_point_type{};
@@ -66,15 +123,31 @@ winp::ui::surface::m_point_type winp::ui::surface::get_position(const std::funct
 	return thread_.queue.add([this]{ return get_position_(); }, thread::queue::send_priority, id_).get();
 }
 
-void winp::ui::surface::set_absolute_position(const m_point_type &value, const std::function<void(object &, bool)> &callback){
+bool winp::ui::surface::set_absolute_position(const m_point_type &value, const std::function<void(object &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = set_absolute_position_(value);
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
 	thread_.queue.post([=]{
 		auto result = set_absolute_position_(value);
 		if (callback != nullptr)
 			callback(*this, result);
 	}, thread::queue::send_priority, id_);
+
+	return true;
 }
 
 winp::ui::surface::m_point_type winp::ui::surface::get_absolute_position(const std::function<void(const m_point_type &)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = get_absolute_position_();
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(get_absolute_position_()); }, thread::queue::send_priority, id_);
 		return m_point_type{};
@@ -84,6 +157,13 @@ winp::ui::surface::m_point_type winp::ui::surface::get_absolute_position(const s
 }
 
 winp::ui::surface::m_rect_type winp::ui::surface::get_dimension(const std::function<void(const m_rect_type &)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = get_dimension_();
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(get_dimension_()); }, thread::queue::send_priority, id_);
 		return m_rect_type{};
@@ -93,6 +173,13 @@ winp::ui::surface::m_rect_type winp::ui::surface::get_dimension(const std::funct
 }
 
 winp::ui::surface::m_rect_type winp::ui::surface::get_absolute_dimension(const std::function<void(const m_rect_type &)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = get_absolute_dimension_();
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(get_absolute_dimension_()); }, thread::queue::send_priority, id_);
 		return m_rect_type{};
@@ -102,6 +189,13 @@ winp::ui::surface::m_rect_type winp::ui::surface::get_absolute_dimension(const s
 }
 
 winp::ui::surface::m_point_type winp::ui::surface::convert_position_from_absolute_value(const m_point_type &value, const std::function<void(const m_point_type &)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = convert_position_from_absolute_value_(value);
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(convert_position_from_absolute_value_(value)); }, thread::queue::send_priority, id_);
 		return m_point_type{};
@@ -111,6 +205,13 @@ winp::ui::surface::m_point_type winp::ui::surface::convert_position_from_absolut
 }
 
 winp::ui::surface::m_point_type winp::ui::surface::convert_position_to_absolute_value(const m_point_type &value, const std::function<void(const m_point_type &)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = convert_position_to_absolute_value_(value);
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(convert_position_to_absolute_value_(value)); }, thread::queue::send_priority, id_);
 		return m_point_type{};
@@ -120,6 +221,13 @@ winp::ui::surface::m_point_type winp::ui::surface::convert_position_to_absolute_
 }
 
 winp::ui::surface::m_rect_type winp::ui::surface::convert_dimension_from_absolute_value(const m_rect_type &value, const std::function<void(const m_rect_type &)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = convert_dimension_from_absolute_value_(value);
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(convert_dimension_from_absolute_value_(value)); }, thread::queue::send_priority, id_);
 		return m_rect_type{};
@@ -129,6 +237,13 @@ winp::ui::surface::m_rect_type winp::ui::surface::convert_dimension_from_absolut
 }
 
 winp::ui::surface::m_rect_type winp::ui::surface::convert_dimension_to_absolute_value(const m_rect_type &value, const std::function<void(const m_rect_type &)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = convert_dimension_to_absolute_value_(value);
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(convert_dimension_to_absolute_value_(value)); }, thread::queue::send_priority, id_);
 		return m_rect_type{};
@@ -138,6 +253,13 @@ winp::ui::surface::m_rect_type winp::ui::surface::convert_dimension_to_absolute_
 }
 
 winp::utility::hit_target winp::ui::surface::hit_test(const m_point_type &pt, bool is_absolute, const std::function<void(utility::hit_target)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = hit_test_(pt, is_absolute);
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(hit_test_(pt, is_absolute)); }, thread::queue::send_priority, id_);
 		return utility::hit_target::nil;
@@ -147,6 +269,13 @@ winp::utility::hit_target winp::ui::surface::hit_test(const m_point_type &pt, bo
 }
 
 winp::utility::hit_target winp::ui::surface::hit_test(const m_rect_type &rect, bool is_absolute, const std::function<void(utility::hit_target)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = hit_test_(rect, is_absolute);
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(hit_test_(rect, is_absolute)); }, thread::queue::send_priority, id_);
 		return utility::hit_target::nil;
@@ -156,6 +285,13 @@ winp::utility::hit_target winp::ui::surface::hit_test(const m_rect_type &rect, b
 }
 
 winp::utility::hit_target winp::ui::surface::hit_test(const m_point_type &pt, const m_point_type &pos, const m_size_type &size, const std::function<void(utility::hit_target)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = hit_test_(pt, pos, size);
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(hit_test_(pt, pos, size)); }, thread::queue::send_priority, id_);
 		return utility::hit_target::nil;

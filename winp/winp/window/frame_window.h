@@ -11,7 +11,7 @@ namespace winp::window{
 
 		virtual ~frame();
 
-		virtual void set_caption(const std::wstring &value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_caption(const std::wstring &value, const std::function<void(object &, bool)> &callback = nullptr);
 
 		virtual std::wstring get_caption(const std::function<void(const std::wstring &)> &callback = nullptr) const;
 

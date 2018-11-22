@@ -20,6 +20,13 @@ winp::menu::item_component::~item_component(){
 }
 
 std::size_t winp::menu::item_component::get_absolute_index(const std::function<void(std::size_t)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = get_absolute_index_();
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(get_absolute_index_()); }, thread::queue::send_priority, id_);
 		return false;
@@ -29,6 +36,13 @@ std::size_t winp::menu::item_component::get_absolute_index(const std::function<v
 }
 
 UINT winp::menu::item_component::get_local_id(const std::function<void(UINT)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = get_local_id_();
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(get_local_id_()); }, thread::queue::send_priority, id_);
 		return 0u;
@@ -37,23 +51,48 @@ UINT winp::menu::item_component::get_local_id(const std::function<void(UINT)> &c
 	return thread_.queue.add([this]{ return get_local_id_(); }, thread::queue::send_priority, id_).get();
 }
 
-void winp::menu::item_component::set_state(UINT value, const std::function<void(item_component &, bool)> &callback){
+bool winp::menu::item_component::set_state(UINT value, const std::function<void(item_component &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = set_state_(value);
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
 	thread_.queue.post([=]{
 		auto result = set_state_(value);
 		if (callback != nullptr)
 			callback(*this, result);
 	}, thread::queue::send_priority, id_);
+
+	return true;
 }
 
-void winp::menu::item_component::remove_state(UINT value, const std::function<void(item_component &, bool)> &callback){
+bool winp::menu::item_component::remove_state(UINT value, const std::function<void(item_component &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = remove_state_(value);
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
 	thread_.queue.post([=]{
 		auto result = remove_state_(value);
 		if (callback != nullptr)
 			callback(*this, result);
 	}, thread::queue::send_priority, id_);
+
+	return true;
 }
 
 UINT winp::menu::item_component::get_states(const std::function<void(UINT)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = get_states_();
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(get_states_()); }, thread::queue::send_priority, id_);
 		return 0u;
@@ -63,6 +102,13 @@ UINT winp::menu::item_component::get_states(const std::function<void(UINT)> &cal
 }
 
 bool winp::menu::item_component::has_state(UINT value, const std::function<void(bool)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = has_state_(value);
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(has_state_(value)); }, thread::queue::send_priority, id_);
 		return false;
@@ -72,6 +118,13 @@ bool winp::menu::item_component::has_state(UINT value, const std::function<void(
 }
 
 bool winp::menu::item_component::has_states(UINT value, const std::function<void(bool)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = has_states_(value);
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(has_states_(value)); }, thread::queue::send_priority, id_);
 		return false;
@@ -80,12 +133,12 @@ bool winp::menu::item_component::has_states(UINT value, const std::function<void
 	return thread_.queue.add([=]{ return has_states_(value); }, thread::queue::send_priority, id_).get();
 }
 
-void winp::menu::item_component::enable(const std::function<void(item_component &, bool)> &callback){
-	remove_state(MFS_DISABLED, callback);
+bool winp::menu::item_component::enable(const std::function<void(item_component &, bool)> &callback){
+	return remove_state(MFS_DISABLED, callback);
 }
 
-void winp::menu::item_component::disable(const std::function<void(item_component &, bool)> &callback){
-	set_state(MFS_DISABLED, callback);
+bool winp::menu::item_component::disable(const std::function<void(item_component &, bool)> &callback){
+	return set_state(MFS_DISABLED, callback);
 }
 
 bool winp::menu::item_component::is_disabled(const std::function<void(bool)> &callback) const{
@@ -93,6 +146,13 @@ bool winp::menu::item_component::is_disabled(const std::function<void(bool)> &ca
 }
 
 bool winp::menu::item_component::is_owner_drawn(const std::function<void(bool)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = has_type_(MFT_OWNERDRAW);
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(has_type_(MFT_OWNERDRAW)); }, thread::queue::send_priority, id_);
 		return false;

@@ -19,13 +19,13 @@ namespace winp::ui{
 
 		virtual ~tree();
 
-		virtual void add_child(object &child, const std::function<void(object &, bool, std::size_t)> &callback = nullptr);
+		virtual std::size_t add_child(object &child, const std::function<void(object &, bool, std::size_t)> &callback = nullptr);
 
-		virtual void add_child(object &child, std::size_t index, const std::function<void(object &, bool, std::size_t)> &callback = nullptr);
+		virtual std::size_t add_child(object &child, std::size_t index, const std::function<void(object &, bool, std::size_t)> &callback = nullptr);
 
-		virtual void remove_child(object &child, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool remove_child(object &child, const std::function<void(object &, bool)> &callback = nullptr);
 
-		virtual void remove_child_at(std::size_t index, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool remove_child_at(std::size_t index, const std::function<void(object &, bool)> &callback = nullptr);
 
 		virtual std::size_t find_child(const object &child, const std::function<void(std::size_t)> &callback = nullptr) const;
 

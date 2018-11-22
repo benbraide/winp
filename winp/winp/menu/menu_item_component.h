@@ -28,9 +28,9 @@ namespace winp::menu{
 
 		virtual UINT get_local_id(const std::function<void(UINT)> &callback = nullptr) const;
 
-		virtual void set_state(UINT value, const std::function<void(item_component &, bool)> &callback = nullptr);
+		virtual bool set_state(UINT value, const std::function<void(item_component &, bool)> &callback = nullptr);
 
-		virtual void remove_state(UINT value, const std::function<void(item_component &, bool)> &callback = nullptr);
+		virtual bool remove_state(UINT value, const std::function<void(item_component &, bool)> &callback = nullptr);
 
 		virtual UINT get_states(const std::function<void(UINT)> &callback = nullptr) const;
 
@@ -38,9 +38,9 @@ namespace winp::menu{
 
 		virtual bool has_states(UINT value, const std::function<void(bool)> &callback = nullptr) const;
 
-		virtual void enable(const std::function<void(item_component &, bool)> &callback = nullptr);
+		virtual bool enable(const std::function<void(item_component &, bool)> &callback = nullptr);
 
-		virtual void disable(const std::function<void(item_component &, bool)> &callback = nullptr);
+		virtual bool disable(const std::function<void(item_component &, bool)> &callback = nullptr);
 
 		virtual bool is_disabled(const std::function<void(bool)> &callback = nullptr) const;
 

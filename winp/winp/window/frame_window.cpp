@@ -11,15 +11,31 @@ winp::window::frame::frame(thread::object &thread)
 
 winp::window::frame::~frame() = default;
 
-void winp::window::frame::set_caption(const std::wstring &value, const std::function<void(object &, bool)> &callback){
+bool winp::window::frame::set_caption(const std::wstring &value, const std::function<void(object &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = set_caption_(value);
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
 	thread_.queue.post([=]{
 		auto result = set_caption_(value);
 		if (callback != nullptr)
 			callback(*this, result);
 	}, thread::queue::send_priority, id_);
+
+	return true;
 }
 
 std::wstring winp::window::frame::get_caption(const std::function<void(const std::wstring &)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = get_caption_();
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(get_caption_()); }, thread::queue::send_priority, id_);
 		return L"";
@@ -29,6 +45,13 @@ std::wstring winp::window::frame::get_caption(const std::function<void(const std
 }
 
 winp::menu::wrapper_collection *winp::window::frame::get_system_menu(const std::function<void(menu::wrapper_collection &)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = get_system_menu_();
+		if (callback != nullptr)
+			callback(*result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(*get_system_menu_()); }, thread::queue::send_priority, id_);
 		return nullptr;

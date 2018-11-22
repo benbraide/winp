@@ -7,15 +7,31 @@ winp::control::object::object(thread::object &thread)
 
 winp::control::object::~object() = default;
 
-void winp::control::object::set_font(HFONT value, const std::function<void(object &, bool)> &callback){
+bool winp::control::object::set_font(HFONT value, const std::function<void(object &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = set_font_(value);
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
 	thread_.queue.post([=]{
 		auto result = set_font_(value);
 		if (callback != nullptr)
 			callback(*this, result);
 	}, thread::queue::send_priority, id_);
+
+	return true;
 }
 
 HFONT winp::control::object::get_font(const std::function<void(HFONT)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = get_font_();
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(get_font_()); }, thread::queue::send_priority, id_);
 		return nullptr;
@@ -24,15 +40,31 @@ HFONT winp::control::object::get_font(const std::function<void(HFONT)> &callback
 	return thread_.queue.add([this]{ return get_font_(); }, thread::queue::send_priority, id_).get();
 }
 
-void winp::control::object::set_text(const std::wstring &value, const std::function<void(object &, bool)> &callback){
+bool winp::control::object::set_text(const std::wstring &value, const std::function<void(object &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = set_text_(value);
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
 	thread_.queue.post([=]{
 		auto result = set_text_(value);
 		if (callback != nullptr)
 			callback(*this, result);
 	}, thread::queue::send_priority, id_);
+
+	return true;
 }
 
 std::wstring winp::control::object::get_text(const std::function<void(const std::wstring &)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = get_text_();
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(get_text_()); }, thread::queue::send_priority, id_);
 		return L"";

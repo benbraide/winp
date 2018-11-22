@@ -19,6 +19,11 @@ winp::menu::wrapper::~wrapper(){
 }
 
 void winp::menu::wrapper::init(HMENU value){
+	if (thread_.is_thread_context()){
+		init_(value);
+		return;
+	}
+
 	thread_.queue.post([=]{
 		init_(value);
 	}, thread::queue::send_priority, id_);

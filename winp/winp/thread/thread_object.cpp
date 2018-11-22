@@ -72,9 +72,8 @@ int winp::thread::object::run(){
 	auto task_was_run_ = true;
 
 	message_hwnd_ = CreateWindowExW(0, app::object::class_info_.lpszClassName, L"", 0, 0, 0, 0, 0, HWND_MESSAGE, nullptr, GetModuleHandleW(nullptr), nullptr);
-	surface_manager_.prepare_for_run_();
-
 	get_all_sent_tasks_(sent_task_list);
+
 	for (auto &task : sent_task_list)
 		task();//Execute initially sent tasks
 
@@ -190,6 +189,8 @@ void winp::thread::object::init_(bool is_main){
 			&color_brush_
 		);
 	}
+
+	surface_manager_.prepare_for_run_();
 }
 
 void winp::thread::object::add_to_black_list_(unsigned __int64 id){
