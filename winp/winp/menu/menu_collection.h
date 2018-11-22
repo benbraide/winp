@@ -8,7 +8,7 @@ namespace winp::menu{
 	public:
 		using m_base_type = base_type;
 
-		using item_ptr_type = std::shared_ptr<menu::component>;
+		using item_ptr_type = std::shared_ptr<menu::item_component>;
 		using list_type = std::list<item_ptr_type>;
 
 		template <typename... args_types>
@@ -49,7 +49,7 @@ namespace winp::menu{
 	public:
 		using m_generic_base_type = generic_collection_base<base_type>;
 
-		using item_ptr_type = std::shared_ptr<menu::component>;
+		using item_ptr_type = std::shared_ptr<menu::item_component>;
 		using list_type = std::list<item_ptr_type>;
 
 		template <typename... args_types>
@@ -84,7 +84,7 @@ namespace winp::menu{
 	public:
 		using m_generic_base_type = generic_collection_base<wrapper>;
 
-		using item_ptr_type = std::shared_ptr<menu::component>;
+		using item_ptr_type = std::shared_ptr<menu::item_component>;
 		using list_type = std::list<item_ptr_type>;
 
 		template <typename... args_types>

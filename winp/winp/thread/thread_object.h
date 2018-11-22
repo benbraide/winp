@@ -21,6 +21,7 @@ namespace winp::message{
 }
 
 namespace winp::menu{
+	class item_component;
 	class item;
 }
 
@@ -80,7 +81,9 @@ namespace winp::thread{
 
 		friend class menu::object;
 
+		friend class menu::item_component;
 		friend menu::item;
+
 		friend class surface_manager;
 
 		explicit object(bool);

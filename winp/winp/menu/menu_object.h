@@ -33,6 +33,7 @@ namespace winp::menu{
 		event::manager<object, event::object> uncheck_event{ *this };
 
 	protected:
+		friend class menu::item_component;
 		friend class menu::item;
 		friend class menu::separator;
 		friend class thread::surface_manager;

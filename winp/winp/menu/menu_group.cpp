@@ -23,16 +23,16 @@ std::size_t winp::menu::group::get_absolute_index(const std::function<void(std::
 	return thread_.queue.add([this]{ return get_absolute_index_(); }, thread::queue::send_priority, id_).get();
 }
 
-winp::menu::item *winp::menu::group::find_component(WORD id, const std::function<void(menu::item *)> &callback) const{
+winp::menu::item_component *winp::menu::group::find_component(UINT id, const std::function<void(menu::item_component *)> &callback) const{
 	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(find_component_(id)); }, thread::queue::send_priority, id_);
+		thread_.queue.post([=]{ callback(find_component_(id, nullptr)); }, thread::queue::send_priority, id_);
 		return nullptr;
 	}
 
-	return thread_.queue.add([=]{ return find_component_(id); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.add([=]{ return find_component_(id, nullptr); }, thread::queue::send_priority, id_).get();
 }
 
-winp::menu::component *winp::menu::group::get_component_at_absolute_index(std::size_t index, const std::function<void(menu::component *)> &callback) const{
+winp::menu::item_component *winp::menu::group::get_component_at_absolute_index(std::size_t index, const std::function<void(menu::item_component *)> &callback) const{
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(get_component_at_absolute_index_(index)); }, thread::queue::send_priority, id_);
 		return nullptr;
@@ -42,10 +42,14 @@ winp::menu::component *winp::menu::group::get_component_at_absolute_index(std::s
 }
 
 bool winp::menu::group::create_(){
+	for (auto child : children_)
+		child->create_();
 	return true;
 }
 
 bool winp::menu::group::destroy_(){
+	for (auto child : children_)
+		child->destroy_();
 	return true;
 }
 
@@ -87,24 +91,24 @@ std::size_t winp::menu::group::get_absolute_index_of_(const menu::component &chi
 	return static_cast<std::size_t>(-1);
 }
 
-winp::menu::item *winp::menu::group::find_component_(WORD id) const{
-	menu::item *item;
+winp::menu::item_component *winp::menu::group::find_component_(UINT id, item_component *exclude) const{
+	menu::item_component *item;
 	menu::tree *tree_child;
 
 	for (auto child : children_){
 		if ((tree_child = dynamic_cast<menu::tree *>(child)) != nullptr){
-			if ((item = tree_child->find_component_(id)) != nullptr)
+			if ((item = tree_child->find_component_(id, exclude)) != nullptr)
 				return item;
 		}
-		else if ((item = dynamic_cast<menu::item *>(child)) != nullptr && item->local_id_ == id)
+		else if ((item = dynamic_cast<menu::item *>(child)) != nullptr && item != exclude && item->local_id_ == id)
 			return item;
 	}
 
 	return nullptr;
 }
 
-winp::menu::component *winp::menu::group::get_component_at_absolute_index_(std::size_t index) const{
-	menu::component *item;
+winp::menu::item_component *winp::menu::group::get_component_at_absolute_index_(std::size_t index) const{
+	menu::item_component *item;
 	menu::tree *tree_child;
 
 	for (auto child : children_){
@@ -117,7 +121,7 @@ winp::menu::component *winp::menu::group::get_component_at_absolute_index_(std::
 		else if (index > 0u)
 			--index;
 		else
-			return dynamic_cast<menu::component *>(child);
+			return dynamic_cast<menu::item_component *>(child);
 	}
 
 	return nullptr;

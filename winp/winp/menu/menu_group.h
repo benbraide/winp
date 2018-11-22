@@ -16,9 +16,9 @@ namespace winp::menu{
 
 		virtual std::size_t get_absolute_index(const std::function<void(std::size_t)> &callback = nullptr) const override;
 
-		virtual menu::item *find_component(WORD id, const std::function<void(menu::item *)> &callback = nullptr) const override;
+		virtual menu::item_component *find_component(UINT id, const std::function<void(menu::item_component *)> &callback = nullptr) const override;
 
-		virtual menu::component *get_component_at_absolute_index(std::size_t index, const std::function<void(menu::component *)> &callback = nullptr) const override;
+		virtual menu::item_component *get_component_at_absolute_index(std::size_t index, const std::function<void(menu::item_component *)> &callback = nullptr) const override;
 
 	protected:
 		virtual bool create_() override;
@@ -35,9 +35,9 @@ namespace winp::menu{
 
 		virtual std::size_t get_absolute_index_of_(const menu::component &child) const override;
 
-		virtual menu::item *find_component_(WORD id) const override;
+		virtual menu::item_component *find_component_(UINT id, item_component *exclude) const override;
 
-		virtual menu::component *get_component_at_absolute_index_(std::size_t index) const override;
+		virtual menu::item_component *get_component_at_absolute_index_(std::size_t index) const override;
 
 		virtual std::size_t get_count_() const override;
 

@@ -339,10 +339,10 @@ LRESULT winp::thread::surface_manager::command_(ui::surface &target, const MSG &
 	if (info.lParam == 0){//Accelerator | Menu
 		if (HIWORD(info.wParam) == 0){//Menu
 			menu::object *menu;
-			menu::item *item = nullptr;
+			menu::item_component *item = nullptr;
 
 			for (auto &entry : map_){
-				if ((menu = dynamic_cast<menu::object *>(entry.second)) != nullptr && (item = menu->find_component_(LOWORD(info.wParam))) != nullptr)
+				if ((menu = dynamic_cast<menu::object *>(entry.second)) != nullptr && (item = menu->find_component_(LOWORD(info.wParam), nullptr)) != nullptr)
 					break;//Item found
 			}
 
@@ -386,7 +386,7 @@ LRESULT winp::thread::surface_manager::system_command_(ui::surface &target, cons
 	if (frame_target == nullptr)
 		return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
 
-	auto item = frame_target->system_menu_.find_component_(static_cast<WORD>(info.wParam));
+	auto item = frame_target->system_menu_.find_component_(static_cast<WORD>(info.wParam), nullptr);
 	if (item == nullptr)
 		return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
 

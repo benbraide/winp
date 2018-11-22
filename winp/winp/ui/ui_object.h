@@ -21,7 +21,9 @@ namespace winp::thread{
 }
 
 namespace winp::menu{
+	class item_component;
 	class item;
+	class group;
 	class object;
 	class separator;
 }
@@ -107,8 +109,11 @@ namespace winp::ui{
 		friend class message::mouse_dispatcher;
 		friend class thread::surface_manager;
 
+		friend class menu::item_component;
 		friend class menu::item;
 		friend class menu::separator;
+
+		friend class menu::group;
 		friend class menu::object;
 
 		void init_();
