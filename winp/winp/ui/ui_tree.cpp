@@ -131,7 +131,9 @@ bool winp::ui::tree::remove_child_at_(std::size_t index){
 	auto it = std::next(children_.begin(), index);
 	auto child = *it;
 
+	child->parent_changing_();
 	children_.erase(it);
+
 	child->set_parent_(nullptr);
 	child_removed_(*child, index);
 
@@ -165,7 +167,9 @@ std::size_t winp::ui::tree::change_child_index_(object &child, std::size_t index
 	if (previous_index == adjusted_index)
 		return adjusted_index;//No changes
 
+	(*it)->index_changing_();
 	children_.erase(it);
+
 	if (index < children_.size())
 		children_.insert(std::next(children_.begin(), index), &child);
 	else

@@ -178,36 +178,41 @@ bool winp::menu::item_component::destroy_(){
 
 	is_created_ = false;
 	auto parent = get_parent_();
+	if (parent == nullptr)
+		return true;
 
-	return ((parent == nullptr) ? true : remove_from_parent_(*parent));
+	auto handle = static_cast<HMENU>(parent->get_handle_());
+	if (handle == nullptr || IsMenu(handle) == FALSE)//Parent not created
+		return true;
+
+	auto result = ((local_id_ == 0u) ? RemoveMenu(handle, static_cast<UINT>(get_absolute_index_()), MF_BYPOSITION) : RemoveMenu(handle, local_id_, MF_BYCOMMAND));
+	auto menu_parent = dynamic_cast<menu::object *>(parent);
+	if (menu_parent != nullptr)
+		menu_parent->redraw_();
+
+	return (result != FALSE);
 }
 
 bool winp::menu::item_component::validate_parent_change_(ui::tree *value, std::size_t index) const{
 	return (surface::validate_parent_change_(value, index) && (value == nullptr || dynamic_cast<menu::tree *>(value) != nullptr));
 }
 
+void winp::menu::item_component::parent_changing_(){
+	destroy_();
+}
+
 void winp::menu::item_component::parent_changed_(ui::tree *previous_parent, std::size_t previous_index){
 	generate_id_();//Check if a new ID is necessary
-	if (is_created_){//Move to new parent
-		if (previous_parent != nullptr)//Remove from previous parent
-			remove_from_parent_(*previous_parent);
-
-		is_created_ = false;
-		create_();
-	}
-
+	create_();
 	surface::parent_changed_(previous_parent, previous_index);
 }
 
-void winp::menu::item_component::index_changed_(ui::tree *previous_parent, std::size_t previous_index){
-	if (is_created_){//Adjust index
-		auto parent = get_parent_();
-		if (previous_parent == parent && parent != nullptr && remove_from_parent_(*parent)){
-			is_created_ = false;
-			create_();
-		}
-	}
+void winp::menu::item_component::index_changing_(){
+	destroy_();
+}
 
+void winp::menu::item_component::index_changed_(ui::tree *previous_parent, std::size_t previous_index){
+	create_();
 	surface::index_changed_(previous_parent, previous_index);
 }
 
@@ -222,19 +227,6 @@ UINT winp::menu::item_component::get_local_id_() const{
 std::size_t winp::menu::item_component::get_absolute_index_() const{
 	auto parent = dynamic_cast<menu::tree *>(get_parent_());
 	return ((parent == nullptr) ? get_index_() : parent->get_absolute_index_of_(*this));
-}
-
-bool winp::menu::item_component::remove_from_parent_(ui::tree &parent){
-	auto handle = static_cast<HMENU>(parent.get_handle_());
-	if (handle == nullptr || IsMenu(handle) == FALSE)//Parent not created
-		return true;
-
-	auto result = ((local_id_ == 0u) ? RemoveMenu(handle, static_cast<UINT>(get_absolute_index_()), MF_BYPOSITION) : RemoveMenu(handle, local_id_, MF_BYCOMMAND));
-	auto menu_parent = dynamic_cast<menu::object *>(&parent);
-	if (menu_parent != nullptr)
-		menu_parent->redraw_();
-
-	return (result != FALSE);
 }
 
 winp::ui::surface *winp::menu::item_component::get_popup_() const{

@@ -60,7 +60,11 @@ namespace winp::menu{
 
 		virtual bool validate_parent_change_(ui::tree *value, std::size_t index) const override;
 
+		virtual void parent_changing_() override;
+
 		virtual void parent_changed_(ui::tree *previous_parent, std::size_t previous_index) override;
+
+		virtual void index_changing_() override;
 
 		virtual void index_changed_(ui::tree *previous_parent, std::size_t previous_index) override;
 
@@ -69,8 +73,6 @@ namespace winp::menu{
 		virtual UINT get_local_id_() const;
 
 		virtual std::size_t get_absolute_index_() const;
-
-		virtual bool remove_from_parent_(ui::tree &parent);
 
 		virtual ui::surface *get_popup_() const;
 

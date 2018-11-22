@@ -138,11 +138,15 @@ namespace winp::ui{
 
 		virtual bool remove_parent_();
 
+		virtual void parent_changing_();
+
 		virtual void parent_changed_(tree *previous_parent, std::size_t previous_index);
 
 		virtual bool validate_index_change_(std::size_t value) const;
 
 		virtual std::size_t change_index_(std::size_t value);
+
+		virtual void index_changing_();
 
 		virtual void index_changed_(tree *previous_parent, std::size_t previous_index);
 
