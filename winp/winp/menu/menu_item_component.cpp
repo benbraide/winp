@@ -420,7 +420,8 @@ void winp::menu::item_component::generate_id_(std::size_t max_tries){
 		return;//ID is unique
 
 	for (; max_tries > 0u; --max_tries){
-		if (parent->find_component_(local_id_ = thread_.menu_random_generator_(static_cast<UINT>(1), std::numeric_limits<UINT>::max()), this) == nullptr)
+		local_id_ = thread_.menu_random_generator_(static_cast<UINT>(1), std::numeric_limits<UINT>::max());
+		if (local_id_ != (static_cast<UINT>(std::numeric_limits<WORD>::max()) + 1u) && parent->find_component_(local_id_, this) == nullptr)
 			break;//ID is unique
 	}
 

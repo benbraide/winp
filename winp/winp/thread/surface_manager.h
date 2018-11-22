@@ -61,6 +61,8 @@ namespace winp::menu{
 
 	template <class base_type>
 	class generic_collection;
+
+	using collection = generic_collection<object>;
 }
 
 namespace winp::thread{
@@ -76,8 +78,9 @@ namespace winp::thread{
 			HANDLE handle;
 			ui::surface *object;
 			ui::surface *creating;
+
 			menu::object *active_menu;
-			menu::object *active_menu_2;
+			std::shared_ptr<menu::collection> context_menu;
 		};
 
 		struct mouse_info{
@@ -178,7 +181,7 @@ namespace winp::thread{
 
 		LRESULT menu_select_(ui::surface &target, const MSG &info, menu::item_component &item, bool prevent_default);
 
-		LRESULT context_menu_(ui::surface &target, const MSG &info, bool prevent_default);
+		LRESULT context_menu_(ui::io_surface &target, const MSG &info, bool prevent_default);
 
 		message::dispatcher *find_dispatcher_(UINT msg);
 

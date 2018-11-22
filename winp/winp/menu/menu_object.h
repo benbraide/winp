@@ -57,5 +57,7 @@ namespace winp::menu{
 		virtual void redraw_();
 
 		virtual bool is_popup_() const;
+
+		ui::surface *context_target_ = nullptr;
 	};
 }
