@@ -30,6 +30,8 @@ namespace winp::menu{
 		}
 
 	protected:
+		friend class thread::surface_manager;
+
 		template <typename item_type>
 		void add_(const std::function<bool(item_type &)> &callback){
 			auto item = std::make_shared<item_type>(*this);

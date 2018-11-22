@@ -454,6 +454,10 @@ winp::message::menu_dispatcher::menu_dispatcher()
 }
 
 void winp::message::menu_dispatcher::post_dispatch_(event::object &e){
+	auto info = *e.get_info();
+	if (info.message == WINP_WM_CONTEXT_MENU_QUERY || info.message == WINP_WM_CONTEXT_MENU_REQUEST || info.message == WM_CONTEXTMENU)
+		return;//No bubbling
+
 	auto context = e.get_context();
 	if (!bubble_to_type_of_<menu::object>(e)){
 		if (propagation_stopped_of_(e) || dynamic_cast<ui::window_surface *>(context) != nullptr)
@@ -534,6 +538,16 @@ void winp::message::menu_dispatcher::fire_event_(event::object &e){
 std::shared_ptr<winp::event::object> winp::message::menu_dispatcher::create_event_(ui::object &target, const MSG &info, bool call_default){
 	if (info.message == WINP_WM_MENU_INIT_ITEM)
 		return create_new_event_<event::object>(*reinterpret_cast<menu::item *>(info.wParam), info, call_default);
+
+	if (info.message == WINP_WM_CONTEXT_MENU_QUERY || info.message == WINP_WM_CONTEXT_MENU_REQUEST)
+		return create_new_event_<event::context_menu_prefix>(target, info, call_default);
+
+	if (info.message == WM_CONTEXTMENU){
+		auto context_targets = reinterpret_cast<thread::surface_manager::context_menu_targets_info *>(info.wParam);
+		if (context_targets->surface == nullptr)
+			return create_new_event_<event::context_menu>(target, MSG{ info.hwnd, info.message, reinterpret_cast<WPARAM>(context_targets->menu), info.lParam }, call_default);
+		return create_new_event_with_context_<event::context_menu>(*context_targets->surface, target, MSG{ info.hwnd, info.message, reinterpret_cast<WPARAM>(context_targets->menu), info.lParam }, call_default);
+	}
 
 	auto menu_target = find_object_(reinterpret_cast<HMENU>(info.wParam));
 	if (menu_target == nullptr)

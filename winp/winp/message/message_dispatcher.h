@@ -53,6 +53,13 @@ namespace winp::message{
 			}, info, std::forward<other_types>(others)...);
 		}
 
+		template <typename event_type, typename... other_types>
+		std::shared_ptr<event_type> create_new_event_with_context_(ui::object &target, ui::object &context, const MSG &info, bool call_default, other_types &&... others){
+			return std::make_shared<event_type>(target, context, [this, call_default](event::object &e){
+				do_default_(e, call_default);
+			}, info, std::forward<other_types>(others)...);
+		}
+
 		static ui::object *find_object_(HANDLE handle);
 
 		static std::size_t event_handlers_count_of_(ui::object &target, event::manager_base &ev);

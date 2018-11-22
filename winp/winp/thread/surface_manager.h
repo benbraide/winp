@@ -36,6 +36,9 @@
 #define WINP_WM_MENU_CHECK				(WM_APP + 0x14)
 #define WINP_WM_MENU_UNCHECK			(WM_APP + 0x15)
 
+#define WINP_WM_CONTEXT_MENU_QUERY		(WM_APP + 0x16)
+#define WINP_WM_CONTEXT_MENU_REQUEST	(WM_APP + 0x17)
+
 namespace winp::app{
 	class object;
 }
@@ -55,6 +58,9 @@ namespace winp::menu{
 	class item_component;
 	class item;
 	class object;
+
+	template <class base_type>
+	class generic_collection;
 }
 
 namespace winp::thread{
@@ -90,6 +96,11 @@ namespace winp::thread{
 		struct surface_state{
 			ui::io_surface *focused;
 			ui::io_surface *mouse_focused;
+		};
+
+		struct context_menu_targets_info{
+			ui::surface *surface;
+			menu::generic_collection<menu::object> *menu;
 		};
 
 		surface_manager();
@@ -166,6 +177,8 @@ namespace winp::thread{
 		LRESULT menu_select_(ui::surface &target, const MSG &info, bool prevent_default);
 
 		LRESULT menu_select_(ui::surface &target, const MSG &info, menu::item_component &item, bool prevent_default);
+
+		LRESULT context_menu_(ui::surface &target, const MSG &info, bool prevent_default);
 
 		message::dispatcher *find_dispatcher_(UINT msg);
 

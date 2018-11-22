@@ -440,3 +440,27 @@ const winp::event::key::keyboard_state &winp::event::key::get_keyboard_state() c
 
 thread_local bool winp::event::key::keyboard_states_retrieved_ = false;
 thread_local BYTE winp::event::key::keyboard_states_[0x100];
+
+winp::event::context_menu_prefix::context_menu_prefix(ui::object &target, const callback_type &default_handler, const info_type &info)
+	: object(target, default_handler, info){}
+
+winp::event::context_menu_prefix::context_menu_prefix(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
+	: object(target, context, default_handler, info){}
+
+winp::event::context_menu_prefix::~context_menu_prefix() = default;
+
+POINT winp::event::context_menu_prefix::get_position() const{
+	return POINT{ GET_X_LPARAM(info_.lParam), GET_Y_LPARAM(info_.lParam) };
+}
+
+winp::event::context_menu::context_menu(ui::object &target, const callback_type &default_handler, const info_type &info)
+	: context_menu_prefix(target, default_handler, info){}
+
+winp::event::context_menu::context_menu(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
+	: context_menu_prefix(target, context, default_handler, info){}
+
+winp::event::context_menu::~context_menu() = default;
+
+winp::event::context_menu::menu_type &winp::event::context_menu::get_menu(){
+	return *reinterpret_cast<menu_type *>(info_.wParam);
+}

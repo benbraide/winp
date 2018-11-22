@@ -44,6 +44,10 @@ winp::thread::surface_manager::surface_manager(){
 	dispatchers_[WINP_WM_MENU_SELECT] = std::make_shared<message::menu_dispatcher>();
 	dispatchers_[WINP_WM_MENU_CHECK] = std::make_shared<message::menu_dispatcher>();
 	dispatchers_[WINP_WM_MENU_UNCHECK] = std::make_shared<message::menu_dispatcher>();
+
+	dispatchers_[WINP_WM_CONTEXT_MENU_QUERY] = std::make_shared<message::menu_dispatcher>();
+	dispatchers_[WINP_WM_CONTEXT_MENU_REQUEST] = std::make_shared<message::menu_dispatcher>();
+	dispatchers_[WM_CONTEXTMENU] = std::make_shared<message::menu_dispatcher>();
 }
 
 void winp::thread::surface_manager::prepare_for_run_(){
@@ -452,6 +456,36 @@ LRESULT winp::thread::surface_manager::menu_select_(ui::surface &target, const M
 	return find_dispatcher_(WINP_WM_MENU_SELECT)->dispatch_(target, info, !prevent_default);
 }
 
+LRESULT winp::thread::surface_manager::context_menu_(ui::surface &target, const MSG &info, bool prevent_default){
+	auto query = find_dispatcher_(WINP_WM_CONTEXT_MENU_QUERY)->dispatch_(target, MSG{ info.hwnd, WINP_WM_CONTEXT_MENU_QUERY, info.wParam, info.lParam }, false);
+	//if (query == 0)
+		//return CallWindowProcW(target.get_default_message_entry_(), info.hwnd, info.message, info.wParam, info.lParam);
+
+	auto request = reinterpret_cast<menu::object *>(find_dispatcher_(WINP_WM_CONTEXT_MENU_REQUEST)->dispatch_(target, MSG{ info.hwnd, WINP_WM_CONTEXT_MENU_REQUEST, info.wParam, info.lParam }, false));
+	if (request != nullptr){
+		TrackPopupMenu(static_cast<HMENU>(request->get_handle_()), TPM_RIGHTBUTTON, GET_X_LPARAM(info.lParam), GET_Y_LPARAM(info.lParam), 0, static_cast<HWND>(target.get_handle_()), nullptr);
+		return 0;
+	}
+
+	menu::collection menu;
+	context_menu_targets_info context_targets{
+		find_object_(reinterpret_cast<HWND>(info.wParam)),
+		&menu
+	};
+
+	menu.add_<winp::menu::item>([](winp::menu::item &it){
+		it.set_label_(L"Last Item");
+		it.create_();
+		return true;
+	});
+
+	auto prepare = find_dispatcher_(WM_CONTEXTMENU)->dispatch_(target, MSG{ info.hwnd, info.message, reinterpret_cast<WPARAM>(&context_targets), info.lParam }, false);
+	if (prepare == 0 && !menu.children_.empty())
+		TrackPopupMenu(static_cast<HMENU>(menu.get_handle_()), TPM_RIGHTBUTTON, GET_X_LPARAM(info.lParam), GET_Y_LPARAM(info.lParam), 0, static_cast<HWND>(target.get_handle_()), nullptr);
+
+	return 0;
+}
+
 winp::message::dispatcher *winp::thread::surface_manager::find_dispatcher_(UINT msg){
 	auto it = dispatchers_.find(msg);
 	return ((it == dispatchers_.end()) ? default_dispatcher_.get() : it->second.get());
@@ -488,6 +522,8 @@ LRESULT CALLBACK winp::thread::surface_manager::entry_(HWND handle, UINT msg, WP
 		return manager.menu_init_(*object, info, false);
 	case WM_MENUCOMMAND:
 		return manager.menu_select_(*object, info, false);
+	case WM_CONTEXTMENU:
+		return manager.context_menu_(*object, info, false);
 	default:
 		break;
 	}

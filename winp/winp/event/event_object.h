@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bitset>
+#include <memory>
 #include <functional>
 
 #include "../utility/windows.h"
@@ -21,6 +22,13 @@ namespace winp::ui{
 	class object;
 	class tree;
 	class visible_surface;
+}
+
+namespace winp::menu{
+	class object;
+
+	template <class base_type>
+	class generic_collection;
 }
 
 namespace winp::event{
@@ -323,5 +331,29 @@ namespace winp::event{
 
 		static thread_local bool keyboard_states_retrieved_;
 		static thread_local BYTE keyboard_states_[0x100];
+	};
+
+	class context_menu_prefix : public object{
+	public:
+		context_menu_prefix(ui::object &target, const callback_type &default_handler, const info_type &info);
+
+		context_menu_prefix(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info);
+
+		virtual ~context_menu_prefix();
+
+		virtual POINT get_position() const;
+	};
+
+	class context_menu : public context_menu_prefix{
+	public:
+		using menu_type = menu::generic_collection<menu::object>;
+
+		context_menu(ui::object &target, const callback_type &default_handler, const info_type &info);
+
+		context_menu(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info);
+
+		virtual ~context_menu();
+
+		virtual menu_type &get_menu();
 	};
 }

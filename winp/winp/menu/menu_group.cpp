@@ -48,8 +48,9 @@ bool winp::menu::group::create_(){
 }
 
 bool winp::menu::group::destroy_(){
-	for (auto child : children_)
-		child->destroy_();
+	/*auto children = children_;
+	for (auto child : children)
+		child->destroy_();*/
 	return true;
 }
 

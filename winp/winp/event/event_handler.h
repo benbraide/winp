@@ -152,5 +152,11 @@ namespace winp::event{
 		virtual void handle_menu_check_event_(object &e);
 
 		virtual void handle_menu_uncheck_event_(object &e);
+
+		virtual bool handle_context_menu_query_event_(context_menu_prefix &e);
+
+		virtual menu::object *handle_context_menu_request_event_(context_menu_prefix &e);
+
+		virtual void handle_context_menu_event_(context_menu &e);
 	};
 }
