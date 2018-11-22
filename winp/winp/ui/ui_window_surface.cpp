@@ -508,21 +508,13 @@ bool winp::ui::window_surface::is_visible_() const{
 	return (IsWindowVisible(static_cast<HWND>(handle)) != FALSE);
 }
 
-winp::utility::hit_target winp::ui::window_surface::hit_test_(const m_point_type &pt, bool is_absolute) const{
+UINT winp::ui::window_surface::hit_test_(const m_point_type &pt, bool is_absolute) const{
 	auto handle = get_handle_();
 	if (handle == nullptr)
 		return io_surface::hit_test_(pt, is_absolute);
 
 	auto absolute_pt = (is_absolute ? pt : convert_position_to_absolute_value_(pt));
-	switch (SendMessageW(static_cast<HWND>(handle), WM_NCHITTEST, 0, MAKELONG(absolute_pt.x, absolute_pt.y))){
-	case HTNOWHERE:
-	case HTERROR://Outside window
-		return utility::hit_target::nil;
-	default:
-		break;
-	}
-
-	return utility::hit_target::inside;
+	return static_cast<UINT>(SendMessageW(static_cast<HWND>(handle), WM_NCHITTEST, 0, MAKELONG(absolute_pt.x, absolute_pt.y)));
 }
 
 winp::utility::hit_target winp::ui::window_surface::hit_test_(const m_rect_type &rect, bool is_absolute) const{

@@ -51,7 +51,7 @@ namespace winp::ui{
 
 		virtual m_rect_type convert_dimension_to_absolute_value(const m_rect_type &value, const std::function<void(const m_rect_type &)> &callback = nullptr) const;
 
-		virtual utility::hit_target hit_test(const m_point_type &pt, bool is_absolute, const std::function<void(utility::hit_target)> &callback = nullptr) const;
+		virtual UINT hit_test(const m_point_type &pt, bool is_absolute, const std::function<void(UINT)> &callback = nullptr) const;
 
 		virtual utility::hit_target hit_test(const m_rect_type &rect, bool is_absolute, const std::function<void(utility::hit_target)> &callback = nullptr) const;
 
@@ -93,6 +93,8 @@ namespace winp::ui{
 
 		virtual m_point_type get_position_() const;
 
+		virtual m_point_type get_cursor_position_() const;
+
 		virtual bool set_absolute_position_(const m_point_type &value);
 
 		virtual m_point_type get_absolute_position_() const;
@@ -111,7 +113,7 @@ namespace winp::ui{
 
 		virtual m_rect_type convert_dimension_to_absolute_value_(const m_rect_type &value) const;
 
-		virtual utility::hit_target hit_test_(const m_point_type &pt, bool is_absolute) const;
+		virtual UINT hit_test_(const m_point_type &pt, bool is_absolute) const;
 
 		virtual utility::hit_target hit_test_(const m_rect_type &rect, bool is_absolute) const;
 

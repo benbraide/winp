@@ -113,7 +113,7 @@ namespace winp::ui{
 
 		virtual bool is_visible_() const override;
 
-		virtual utility::hit_target hit_test_(const m_point_type &pt, bool is_absolute) const override;
+		virtual UINT hit_test_(const m_point_type &pt, bool is_absolute) const override;
 
 		virtual utility::hit_target hit_test_(const m_rect_type &rect, bool is_absolute) const override;
 

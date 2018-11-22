@@ -24,7 +24,7 @@ winp::ui::io_surface *winp::ui::io_surface::get_top_moused_() const{
 winp::ui::io_surface *winp::ui::io_surface::find_moused_child_(const m_point_type &position) const{
 	io_surface *io_child = nullptr;
 	for (auto child : children_){
-		if ((io_child = dynamic_cast<io_surface *>(io_child)) != nullptr && dynamic_cast<window_surface *>(io_child) == nullptr && io_child->hit_test_(position, true) == utility::hit_target::inside)
+		if ((io_child = dynamic_cast<io_surface *>(io_child)) != nullptr && dynamic_cast<window_surface *>(io_child) == nullptr && io_child->hit_test_(position, true) == HTCLIENT)
 			return io_child;
 	}
 

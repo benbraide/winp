@@ -252,7 +252,7 @@ winp::ui::surface::m_rect_type winp::ui::surface::convert_dimension_to_absolute_
 	return thread_.queue.add([=]{ return convert_dimension_to_absolute_value_(value); }, thread::queue::send_priority, id_).get();
 }
 
-winp::utility::hit_target winp::ui::surface::hit_test(const m_point_type &pt, bool is_absolute, const std::function<void(utility::hit_target)> &callback) const{
+UINT winp::ui::surface::hit_test(const m_point_type &pt, bool is_absolute, const std::function<void(UINT)> &callback) const{
 	if (thread_.is_thread_context()){
 		auto result = hit_test_(pt, is_absolute);
 		if (callback != nullptr)
@@ -262,7 +262,7 @@ winp::utility::hit_target winp::ui::surface::hit_test(const m_point_type &pt, bo
 
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(hit_test_(pt, is_absolute)); }, thread::queue::send_priority, id_);
-		return utility::hit_target::nil;
+		return HTNOWHERE;
 	}
 
 	return thread_.queue.add([=]{ return hit_test_(pt, is_absolute); }, thread::queue::send_priority, id_).get();
@@ -360,6 +360,10 @@ winp::ui::surface::m_point_type winp::ui::surface::get_position_() const{
 	return position_;
 }
 
+winp::ui::surface::m_point_type winp::ui::surface::get_cursor_position_() const{
+	return m_point_type{};
+}
+
 bool winp::ui::surface::set_absolute_position_(const m_point_type &value){
 	auto surface_parent = get_surface_parent_();
 	return set_position_((surface_parent == nullptr) ? value : surface_parent->convert_position_from_absolute_value_(value));
@@ -433,7 +437,7 @@ winp::ui::surface::m_rect_type winp::ui::surface::convert_dimension_to_absolute_
 	return m_rect_type{ (value.left + h_offset), (value.top + v_offset), (value.right + h_offset), (value.bottom + v_offset) };
 }
 
-winp::utility::hit_target winp::ui::surface::hit_test_(const m_point_type &pt, bool is_absolute) const{
+UINT winp::ui::surface::hit_test_(const m_point_type &pt, bool is_absolute) const{
 	auto pos = (is_absolute ? get_absolute_position_() : get_position_());
 	auto client_offset = get_client_position_offset_();
 	{//Update position
@@ -441,7 +445,7 @@ winp::utility::hit_target winp::ui::surface::hit_test_(const m_point_type &pt, b
 		pos.y += client_offset.cy;
 	}
 
-	return hit_test_(pt, pos, get_size_());
+	return ((hit_test_(pt, pos, get_size_()) == utility::hit_target::inside) ? HTCLIENT : HTNOWHERE);
 }
 
 winp::utility::hit_target winp::ui::surface::hit_test_(const m_rect_type &rect, bool is_absolute) const{

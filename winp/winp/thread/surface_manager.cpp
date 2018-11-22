@@ -133,7 +133,7 @@ LRESULT winp::thread::surface_manager::mouse_nc_leave_(ui::io_surface &target, c
 
 	auto dispatcher = find_dispatcher_(WINP_WM_MOUSELEAVE);
 	for (ui::io_surface *surface = target.get_first_ancestor_of_<ui::io_surface>(), *surface_parent = nullptr; surface != nullptr; surface = surface_parent){
-		if (surface->hit_test_(m_point_type{ GET_X_LPARAM(mouse_position), GET_Y_LPARAM(mouse_position) }, true) == utility::hit_target::inside)
+		if (surface->hit_test_(m_point_type{ GET_X_LPARAM(mouse_position), GET_Y_LPARAM(mouse_position) }, true) == HTCLIENT)
 			break;//Mouse is inside surface
 
 		dispatcher->dispatch_(*surface, info, false);
@@ -154,7 +154,7 @@ LRESULT winp::thread::surface_manager::mouse_leave_(ui::io_surface &target, cons
 
 	auto do_hit_test = false;
 	for (ui::io_surface *surface = mouse_info_.mouse_target, *surface_parent = nullptr; surface != nullptr; surface = surface_parent){
-		if (do_hit_test && surface->hit_test_(m_point_type{ GET_X_LPARAM(mouse_position), GET_Y_LPARAM(mouse_position) }, true) == utility::hit_target::inside)
+		if (do_hit_test && surface->hit_test_(m_point_type{ GET_X_LPARAM(mouse_position), GET_Y_LPARAM(mouse_position) }, true) == HTCLIENT)
 			break;//Mouse is inside surface
 
 		if (!do_hit_test && surface == &target)
@@ -222,7 +222,7 @@ LRESULT winp::thread::surface_manager::mouse_move_(ui::io_surface &target, const
 		track_mouse_leave_(static_cast<HWND>(target.get_handle_()), 0);
 
 	m_point_type computed_mouse_position{ GET_X_LPARAM(mouse_position), GET_Y_LPARAM(mouse_position) };
-	if (mouse_info_.mouse_target != nullptr && mouse_info_.mouse_target != &target && mouse_info_.mouse_target->hit_test_(computed_mouse_position, true) != utility::hit_target::inside)
+	if (mouse_info_.mouse_target != nullptr && mouse_info_.mouse_target != &target && mouse_info_.mouse_target->hit_test_(computed_mouse_position, true) != HTCLIENT)
 		mouse_leave_(*mouse_info_.mouse_target, MSG{ info.hwnd, WM_MOUSELEAVE, info.wParam, info.lParam }, mouse_position, true);
 
 	if (mouse_info_.mouse_target == nullptr)
@@ -441,22 +441,24 @@ LRESULT winp::thread::surface_manager::menu_select_(ui::surface &target, const M
 }
 
 LRESULT winp::thread::surface_manager::context_menu_(ui::io_surface &target, const MSG &info, bool prevent_default){
-	auto query_dispatcher = find_dispatcher_(WINP_WM_CONTEXT_MENU_QUERY);
+	POINT position{ GET_X_LPARAM(info.lParam), GET_Y_LPARAM(info.lParam) };
+	if ((position.x != -1 || position.y != -1) && target.hit_test_(position, true) != HTCLIENT)
+		return CallWindowProcW(target.get_default_message_entry_(), info.hwnd, info.message, info.wParam, info.lParam);
 
 	LRESULT query_result = 0;
 	ui::io_surface *surface = nullptr;
+	auto query_dispatcher = find_dispatcher_(WINP_WM_CONTEXT_MENU_QUERY);
 
 	for (surface = target.get_top_moused_(); ; surface = surface->get_first_ancestor_of_<ui::io_surface>()){
 		if ((query_result = query_dispatcher->dispatch_(target, MSG{ info.hwnd, WINP_WM_CONTEXT_MENU_QUERY, info.wParam, info.lParam }, false)) != 0 || surface == &target)
 			break;
 	}
 
-	//if (query == 0)
-		//return CallWindowProcW(target.get_default_message_entry_(), info.hwnd, info.message, info.wParam, info.lParam);
+	if (query_result == 0)
+		return CallWindowProcW(target.get_default_message_entry_(), info.hwnd, info.message, info.wParam, info.lParam);
 
-	POINT position{ GET_X_LPARAM(info.lParam), GET_Y_LPARAM(info.lParam) };
 	if (position.x == -1 && position.y == -1)
-		position = surface->convert_position_to_absolute_value_(POINT{});
+		position = surface->convert_position_to_absolute_value_(surface->get_cursor_position_());
 
 	auto request_result = reinterpret_cast<menu::object *>(find_dispatcher_(WINP_WM_CONTEXT_MENU_REQUEST)->dispatch_(*surface, MSG{ info.hwnd, WINP_WM_CONTEXT_MENU_REQUEST, info.wParam, info.lParam }, false));
 	if (request_result != nullptr){
@@ -475,12 +477,6 @@ LRESULT winp::thread::surface_manager::context_menu_(ui::io_surface &target, con
 		find_object_(reinterpret_cast<HWND>(info.wParam)),
 		cache_.context_menu.get()
 	};
-
-	cache_.context_menu->add_<winp::menu::item>([](winp::menu::item &it){
-		it.set_label_(L"Last Item");
-		it.create_();
-		return true;
-	});
 
 	auto prepare = find_dispatcher_(WM_CONTEXTMENU)->dispatch_(*surface, MSG{ info.hwnd, info.message, reinterpret_cast<WPARAM>(&context_targets), info.lParam }, false);
 	if (prepare == 0 && !cache_.context_menu->children_.empty())

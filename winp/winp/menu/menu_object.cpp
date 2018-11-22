@@ -54,7 +54,7 @@ bool winp::menu::object::create_(){
 		MIM_STYLE,
 		MNS_NOTIFYBYPOS
 	};
-	//SetMenuInfo(static_cast<HMENU>(handle), &info);
+	SetMenuInfo(static_cast<HMENU>(handle), &info);
 
 	auto parent_handle = ((window_parent == nullptr) ? nullptr : window_parent->get_handle_());
 	if (parent_handle != nullptr){
