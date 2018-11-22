@@ -118,6 +118,8 @@ namespace winp::ui{
 
 		void init_();
 
+		virtual void destruct_() override;
+
 		virtual bool create_();
 
 		virtual bool destroy_();

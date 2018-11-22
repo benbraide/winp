@@ -9,9 +9,7 @@ winp::window::frame::frame(thread::object &thread)
 	styles_ = WS_OVERLAPPEDWINDOW;
 }
 
-winp::window::frame::~frame(){
-	destruct_();
-}
+winp::window::frame::~frame() = default;
 
 void winp::window::frame::set_caption(const std::wstring &value, const std::function<void(object &, bool)> &callback){
 	thread_.queue.post([=]{

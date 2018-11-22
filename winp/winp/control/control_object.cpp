@@ -5,9 +5,7 @@ winp::control::object::object() = default;
 winp::control::object::object(thread::object &thread)
 	: window_surface(thread){}
 
-winp::control::object::~object(){
-	destruct_();
-}
+winp::control::object::~object() = default;
 
 void winp::control::object::set_font(HFONT value, const std::function<void(object &, bool)> &callback){
 	thread_.queue.post([=]{

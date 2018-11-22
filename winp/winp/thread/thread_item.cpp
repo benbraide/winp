@@ -12,7 +12,7 @@ winp::thread::item::item(object &thread)
 }
 
 winp::thread::item::~item(){
-	thread_.add_to_black_list_(id_);
+	destruct();
 }
 
 const winp::thread::object &winp::thread::item::get_thread() const{
@@ -23,6 +23,26 @@ winp::thread::object &winp::thread::item::get_thread(){
 	return thread_;
 }
 
+void winp::thread::item::destruct(){
+	static bool called = false;
+	if (called)//Already called
+		return;
+
+	if (!thread_.is_thread_context()){
+		thread_.queue.add([=]{
+			destruct_();
+		}, thread::queue::send_priority, id_).get();
+	}
+	else//Inside thread context
+		destruct_();
+
+	called = true;
+}
+
 void winp::thread::item::use_context(const queue::callback_type &task, int priority){
 	thread_.queue.post(task, priority, id_);
+}
+
+void winp::thread::item::destruct_(){
+	thread_.add_to_black_list_(id_);
 }

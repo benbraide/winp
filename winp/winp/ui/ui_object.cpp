@@ -10,7 +10,9 @@ winp::ui::object::object(thread::object &thread)
 	init_();
 }
 
-winp::ui::object::~object() = default;
+winp::ui::object::~object(){
+	destruct();
+}
 
 void winp::ui::object::create(const std::function<void(object &, bool)> &callback){
 	thread_.queue.post([=]{
@@ -145,6 +147,11 @@ void winp::ui::object::init_(){
 			return ((value == this) ? parent_->get_child_at_(index + 2u) : value);
 		}, thread::queue::send_priority, id_).get();
 	});
+}
+
+void winp::ui::object::destruct_(){
+	remove_parent_();
+	item::destruct_();
 }
 
 bool winp::ui::object::create_(){

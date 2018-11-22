@@ -6,7 +6,7 @@ winp::ui::window_surface::window_surface(thread::object &thread)
 	: io_surface(thread){}
 
 winp::ui::window_surface::~window_surface(){
-	destruct_();
+	destruct();
 }
 
 void winp::ui::window_surface::show(int how, const std::function<void(object &, bool)> &callback){
@@ -127,6 +127,11 @@ bool winp::ui::window_surface::has_styles(DWORD value, bool is_extended, bool ha
 	}
 
 	return thread_.queue.add([=]{ return has_styles_(value, is_extended, has_all); }, thread::queue::send_priority, id_).get();
+}
+
+void winp::ui::window_surface::destruct_(){
+	destroy_();
+	io_surface::destruct_();
 }
 
 bool winp::ui::window_surface::create_(){
@@ -439,12 +444,6 @@ winp::utility::hit_target winp::ui::window_surface::hit_test_(const m_rect_type 
 bool winp::ui::window_surface::is_dialog_message_(MSG &msg) const{
 	auto handle = get_handle_();
 	return (handle != nullptr && IsDialogMessageW(static_cast<HWND>(handle), &msg) != FALSE);
-}
-
-void winp::ui::window_surface::destruct_(){
-	thread_.queue.add([=]{
-		destroy_();
-	}, thread::queue::send_priority, id_).get();
 }
 
 bool winp::ui::window_surface::pre_create_(){

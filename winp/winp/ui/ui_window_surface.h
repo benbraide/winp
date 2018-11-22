@@ -69,6 +69,8 @@ namespace winp::ui{
 		friend class thread::surface_manager;
 		friend class menu::object;
 
+		virtual void destruct_() override;
+
 		virtual bool create_() override;
 
 		virtual bool destroy_() override;
@@ -116,8 +118,6 @@ namespace winp::ui{
 		virtual utility::hit_target hit_test_(const m_rect_type &rect, bool is_absolute) const override;
 
 		virtual bool is_dialog_message_(MSG &msg) const override;
-
-		virtual void destruct_();
 
 		virtual bool pre_create_();
 
