@@ -15,9 +15,7 @@ namespace winp::menu{
 		explicit generic_collection_base(args_types &&... args)
 			: base_type(std::forward<args_types>(args)...){}
 
-		virtual ~generic_collection_base(){
-			base_type::destruct_();
-		}
+		virtual ~generic_collection_base() = default;
 
 		template <typename item_type>
 		void add(const std::function<bool(item_type &)> &callback){
@@ -63,9 +61,7 @@ namespace winp::menu{
 		explicit generic_collection(args_types &&... args)
 			: m_generic_base_type(std::forward<args_types>(args)...){}
 
-		virtual ~generic_collection(){
-			m_generic_base_type::template destruct_();
-		}
+		virtual ~generic_collection() = default;
 
 	protected:
 		virtual void child_removed_(ui::object &child, std::size_t previous_index) override{
@@ -98,9 +94,7 @@ namespace winp::menu{
 		explicit generic_collection(args_types &&... args)
 			: m_generic_base_type(std::forward<args_types>(args)...){}
 
-		virtual ~generic_collection(){
-			m_generic_base_type::destruct_();
-		}
+		virtual ~generic_collection() = default;
 
 	protected:
 		virtual void add_to_list_(item_ptr_type item) override{

@@ -11,9 +11,7 @@ winp::menu::item::item(ui::tree &parent)
 winp::menu::item::item(ui::tree &parent, bool)
 	: item_component(parent){}
 
-winp::menu::item::~item(){
-	destruct_();
-}
+winp::menu::item::~item() = default;
 
 winp::ui::surface *winp::menu::item::get_popup(const std::function<void(ui::surface *)> &callback) const{
 	if (thread_.is_thread_context()){

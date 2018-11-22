@@ -54,8 +54,6 @@ namespace winp::menu{
 
 		virtual void update_surface_manager_(bool add);
 
-		virtual void destruct_();
-
 		virtual void redraw_();
 
 		virtual bool is_popup_() const;

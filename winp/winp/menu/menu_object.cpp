@@ -16,7 +16,7 @@ winp::menu::object::object(ui::window_surface &parent)
 }
 
 winp::menu::object::~object(){
-	destruct_();
+	destruct();
 }
 
 bool winp::menu::object::is_popup(const std::function<void(bool)> &callback) const{
@@ -122,12 +122,6 @@ void winp::menu::object::update_surface_manager_(bool add){
 		thread_.surface_manager_.map_[handle] = this;
 	else if (!thread_.surface_manager_.map_.empty())
 		thread_.surface_manager_.map_.erase(handle);
-}
-
-void winp::menu::object::destruct_(){
-	thread_.queue.add([=]{
-		destroy_();
-	}, thread::queue::send_priority, id_).get();
 }
 
 void winp::menu::object::redraw_(){

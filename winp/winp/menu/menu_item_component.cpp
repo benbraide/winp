@@ -16,7 +16,7 @@ winp::menu::item_component::item_component(ui::tree &parent, bool)
 }
 
 winp::menu::item_component::~item_component(){
-	destruct_();
+	destruct();
 }
 
 std::size_t winp::menu::item_component::get_absolute_index(const std::function<void(std::size_t)> &callback) const{
@@ -159,6 +159,11 @@ bool winp::menu::item_component::is_owner_drawn(const std::function<void(bool)> 
 	}
 
 	return thread_.queue.add([this]{ return has_type_(MFT_OWNERDRAW); }, thread::queue::send_priority, id_).get();
+}
+
+void winp::menu::item_component::destruct_(){
+	destroy_();
+	surface::destruct_();
 }
 
 bool winp::menu::item_component::create_(){
@@ -404,12 +409,6 @@ bool winp::menu::item_component::update_types_(){
 		MIIM_FTYPE,												//Flags
 		(types_ | dynamic_cast<menu::tree *>(parent)->get_types_(get_index_()))
 	});
-}
-
-void winp::menu::item_component::destruct_(){
-	thread_.queue.add([=]{
-		destroy_();
-	}, thread::queue::send_priority, id_).get();
 }
 
 void winp::menu::item_component::generate_id_(std::size_t max_tries){

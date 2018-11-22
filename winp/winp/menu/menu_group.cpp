@@ -11,7 +11,7 @@ winp::menu::group::group(menu::object &parent)
 }
 
 winp::menu::group::~group(){
-	destruct_();
+	destruct();
 }
 
 std::size_t winp::menu::group::get_absolute_index(const std::function<void(std::size_t)> &callback) const{
@@ -60,6 +60,11 @@ winp::menu::item_component *winp::menu::group::get_component_at_absolute_index(s
 	}
 
 	return thread_.queue.add([=]{ return get_component_at_absolute_index_(index); }, thread::queue::send_priority, id_).get();
+}
+
+void winp::menu::group::destruct_(){
+	destroy_();
+	surface::destruct_();
 }
 
 bool winp::menu::group::create_(){
@@ -193,10 +198,4 @@ std::size_t winp::menu::group::get_count_() const{
 std::size_t winp::menu::group::get_absolute_index_() const{
 	auto parent = dynamic_cast<menu::tree *>(get_parent_());
 	return ((parent == nullptr) ? get_index_() : parent->get_absolute_index_of_(*this));
-}
-
-void winp::menu::group::destruct_(){
-	thread_.queue.add([=]{
-		destroy_();
-	}, thread::queue::send_priority, id_).get();
 }

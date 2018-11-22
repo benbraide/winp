@@ -54,6 +54,8 @@ namespace winp::menu{
 		template <class> friend class menu::generic_collection_base;
 		friend class thread::surface_manager;
 
+		virtual void destruct_() override;
+
 		virtual bool create_() override;
 
 		virtual bool destroy_() override;
@@ -109,8 +111,6 @@ namespace winp::menu{
 		virtual bool update_states_();
 
 		virtual bool update_types_();
-
-		virtual void destruct_();
 
 		virtual void generate_id_(std::size_t max_tries = 0xFFFFu);
 

@@ -15,7 +15,7 @@ winp::menu::wrapper::wrapper(thread::object &thread, HMENU value)
 }
 
 winp::menu::wrapper::~wrapper(){
-	destruct_();
+	destruct();
 }
 
 void winp::menu::wrapper::init(HMENU value){
