@@ -338,18 +338,13 @@ LRESULT winp::thread::surface_manager::key_(ui::io_surface &target, const MSG &i
 LRESULT winp::thread::surface_manager::command_(ui::surface &target, const MSG &info, bool prevent_default){
 	if (info.lParam == 0){//Accelerator | Menu
 		if (HIWORD(info.wParam) == 0){//Menu
-			menu::object *menu;
-			menu::item_component *item = nullptr;
-
-			for (auto &entry : map_){
-				if ((menu = dynamic_cast<menu::object *>(entry.second)) != nullptr && (item = menu->find_component_(LOWORD(info.wParam), nullptr)) != nullptr)
-					break;//Item found
-			}
+			auto active_menu = ((cache_.active_menu == nullptr) ? cache_.active_menu_2 : cache_.active_menu);
+			auto item = ((active_menu == nullptr) ? nullptr : active_menu->find_component_(static_cast<UINT>(info.wParam), nullptr));
 
 			if (item == nullptr)
 				return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
 
-			return menu_select_(target, MSG{ info.hwnd, info.message, static_cast<WPARAM>(item->get_absolute_index_()), reinterpret_cast<LPARAM>(static_cast<HMENU>(item->get_parent_()->get_handle_())) }, prevent_default);
+			return menu_select_(target, info, *item, prevent_default);
 		}
 	}
 
@@ -386,19 +381,39 @@ LRESULT winp::thread::surface_manager::system_command_(ui::surface &target, cons
 	if (frame_target == nullptr)
 		return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
 
-	auto item = frame_target->system_menu_.find_component_(static_cast<WORD>(info.wParam), nullptr);
+	auto item = frame_target->system_menu_.find_component_(static_cast<UINT>(info.wParam), nullptr);
 	if (item == nullptr)
 		return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
 
-	return menu_select_(target, MSG{ info.hwnd, info.message, static_cast<WPARAM>(item->get_absolute_index_()), reinterpret_cast<LPARAM>(static_cast<HMENU>(frame_target->system_menu_.get_handle_())) }, prevent_default);
+	return menu_select_(target, info, *item, true);
+}
+
+LRESULT winp::thread::surface_manager::menu_uninit_(ui::surface &target, const MSG &info, bool prevent_default){
+	auto menu = dynamic_cast<menu::object *>(find_object_(reinterpret_cast<HMENU>(info.wParam)));
+	if (menu == nullptr)
+		return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
+
+	if (menu == cache_.active_menu){
+		cache_.active_menu = nullptr;
+		cache_.active_menu_2 = nullptr;
+	}
+	else if (menu == cache_.active_menu_2)
+		cache_.active_menu_2 = nullptr;
+
+	return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
 }
 
 LRESULT winp::thread::surface_manager::menu_init_(ui::surface &target, const MSG &info, bool prevent_default){
-	if (find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default) != 0)
-		return 0;//Default prevented
+	auto menu = dynamic_cast<menu::object *>(find_object_(reinterpret_cast<HMENU>(info.wParam)));
+	if (menu == nullptr)
+		return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
 
-	auto menu = find_object_(reinterpret_cast<HMENU>(info.wParam));
-	return ((menu == nullptr) ? 0 : menu_init_items_(target, *menu));
+	if (cache_.active_menu == nullptr)
+		cache_.active_menu = menu;
+	else if (cache_.active_menu_2 == nullptr)
+		cache_.active_menu_2 = menu;
+
+	return ((find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default) == 0) ? menu_init_items_(target, *menu) : 0);
 }
 
 LRESULT winp::thread::surface_manager::menu_init_items_(ui::surface &target, ui::surface &tree){
@@ -421,6 +436,18 @@ void winp::thread::surface_manager::menu_init_item_(ui::surface &target, menu::i
 }
 
 LRESULT winp::thread::surface_manager::menu_select_(ui::surface &target, const MSG &info, bool prevent_default){
+	auto menu = dynamic_cast<menu::object *>(find_object_(reinterpret_cast<HMENU>(info.lParam)));
+	if (menu == nullptr)
+		return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
+
+	auto item = menu->get_component_at_absolute_index_(static_cast<std::size_t>(info.wParam));
+	if (item == nullptr)
+		return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
+
+	return menu_select_(target, info, *item, prevent_default);
+}
+
+LRESULT winp::thread::surface_manager::menu_select_(ui::surface &target, const MSG &info, menu::item_component &item, bool prevent_default){
 	//Check for menu check item
 	return find_dispatcher_(WINP_WM_MENU_SELECT)->dispatch_(target, info, !prevent_default);
 }
@@ -455,6 +482,8 @@ LRESULT CALLBACK winp::thread::surface_manager::entry_(HWND handle, UINT msg, WP
 		return manager.command_(*object, info, false);
 	case WM_SYSCOMMAND:
 		return manager.system_command_(*object, info, false);
+	case WM_UNINITMENUPOPUP:
+		return manager.menu_uninit_(*object, info, false);
 	case WM_INITMENUPOPUP:
 		return manager.menu_init_(*object, info, false);
 	case WM_MENUCOMMAND:

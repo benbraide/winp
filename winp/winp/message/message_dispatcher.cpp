@@ -48,8 +48,10 @@ void winp::message::dispatcher::do_default_(event::object &e, bool call_default)
 
 LRESULT winp::message::dispatcher::call_default_(event::object &e){
 	auto &info = *e.get_info();
-	auto object = find_object_(info.hwnd);
+	if (info.message >= WM_APP)
+		return 0;
 
+	auto object = find_object_(info.hwnd);
 	if (object == nullptr){
 		if ((IsWindowUnicode(info.hwnd) == FALSE))
 			return CallWindowProcW(DefWindowProcA, info.hwnd, info.message, info.wParam, info.lParam);

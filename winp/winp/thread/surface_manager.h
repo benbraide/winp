@@ -52,6 +52,7 @@ namespace winp::message{
 }
 
 namespace winp::menu{
+	class item_component;
 	class item;
 	class object;
 }
@@ -69,6 +70,8 @@ namespace winp::thread{
 			HANDLE handle;
 			ui::surface *object;
 			ui::surface *creating;
+			menu::object *active_menu;
+			menu::object *active_menu_2;
 		};
 
 		struct mouse_info{
@@ -152,6 +155,8 @@ namespace winp::thread{
 
 		LRESULT system_command_(ui::surface &target, const MSG &info, bool prevent_default);
 
+		LRESULT menu_uninit_(ui::surface &target, const MSG &info, bool prevent_default);
+
 		LRESULT menu_init_(ui::surface &target, const MSG &info, bool prevent_default);
 
 		LRESULT menu_init_items_(ui::surface &target, ui::surface &tree);
@@ -159,6 +164,8 @@ namespace winp::thread{
 		void menu_init_item_(ui::surface &target, menu::item &item);
 
 		LRESULT menu_select_(ui::surface &target, const MSG &info, bool prevent_default);
+
+		LRESULT menu_select_(ui::surface &target, const MSG &info, menu::item_component &item, bool prevent_default);
 
 		message::dispatcher *find_dispatcher_(UINT msg);
 
