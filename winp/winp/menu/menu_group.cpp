@@ -7,7 +7,7 @@ winp::menu::group::group(thread::object &thread)
 
 winp::menu::group::group(menu::object &parent)
 	: surface(parent.get_thread()){
-	set_parent_(&parent);
+	change_parent_(&parent);
 }
 
 winp::menu::group::~group(){

@@ -92,12 +92,12 @@ bool winp::event::object::result_set_() const{
 }
 
 winp::event::tree::tree(ui::object &target, const callback_type &default_handler, const info_type &info)
-	: object(target, default_handler, info_type{}), previous_parent_(nullptr), current_parent_(target.get_parent_()), previous_index_(static_cast<std::size_t>(-1)), current_index_(target.get_index_()){
+	: object(target, default_handler, info), previous_parent_(nullptr), current_parent_(target.get_parent_()), previous_index_(static_cast<std::size_t>(-1)), current_index_(target.get_index_()){
 	init_();
 }
 
 winp::event::tree::tree(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
-	: object(target, context, default_handler, info_type{}), previous_parent_(nullptr), current_parent_(target.get_parent_()), previous_index_(static_cast<std::size_t>(-1)), current_index_(target.get_index_()){
+	: object(target, context, default_handler, info), previous_parent_(nullptr), current_parent_(target.get_parent_()), previous_index_(static_cast<std::size_t>(-1)), current_index_(target.get_index_()){
 	init_();
 }
 

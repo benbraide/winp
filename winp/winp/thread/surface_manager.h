@@ -150,6 +150,8 @@ namespace winp::thread{
 
 		LRESULT command_(ui::surface &target, const MSG &info, bool prevent_default);
 
+		LRESULT system_command_(ui::surface &target, const MSG &info, bool prevent_default);
+
 		LRESULT menu_init_(ui::surface &target, const MSG &info, bool prevent_default);
 
 		LRESULT menu_init_items_(ui::surface &target, ui::surface &tree);

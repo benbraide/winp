@@ -33,9 +33,9 @@ namespace winp::menu{
 		template <typename item_type>
 		void add_(const std::function<bool(item_type &)> &callback){
 			auto item = std::make_shared<item_type>(*this);
-			if (callback(item)){
-				item->create_();
-				add_to_list_(*item);
+			if (callback(*item)){
+				item->create();
+				add_to_list_(item);
 			}
 			else//Rejected
 				base_type::erase_child_(*item);

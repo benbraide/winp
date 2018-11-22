@@ -7,7 +7,7 @@ winp::menu::separator::separator(thread::object &thread)
 
 winp::menu::separator::separator(ui::tree &parent)
 	: surface(parent.get_thread()){
-	set_parent_(&parent);
+	change_parent_(&parent);
 }
 
 winp::menu::separator::~separator(){

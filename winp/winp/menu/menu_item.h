@@ -10,7 +10,7 @@ namespace winp::menu{
 	class wrapper;
 
 	template <class base_type>
-	class generic_collection;
+	class generic_collection_base;
 
 	class item : public ui::surface, public component{
 	public:
@@ -82,7 +82,7 @@ namespace winp::menu{
 		friend class menu::wrapper;
 		friend class menu::group;
 
-		template <class> friend class generic_collection;
+		template <class> friend class menu::generic_collection_base;
 		friend class thread::surface_manager;
 
 		virtual bool create_() override;

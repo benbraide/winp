@@ -9,7 +9,7 @@ winp::menu::link::link(ui::tree &parent)
 	: item(parent){}
 
 winp::menu::link::link(ui::tree &parent, bool)
-	: item(parent){}
+	: item(parent, false){}
 
 winp::menu::link::~link(){
 	destruct_();

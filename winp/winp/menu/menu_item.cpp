@@ -12,12 +12,12 @@ winp::menu::item::item(thread::object &thread)
 winp::menu::item::item(ui::tree &parent)
 	: surface(parent.get_thread()){
 	local_id_ = thread_.menu_random_generator_(static_cast<WORD>(1), std::numeric_limits<WORD>::max());
-	set_parent_(&parent);
+	change_parent_(&parent);
 }
 
 winp::menu::item::item(ui::tree &parent, bool)
 	: surface(parent.get_thread()){
-	set_parent_(&parent);
+	change_parent_(&parent);
 }
 
 winp::menu::item::~item(){
@@ -246,7 +246,7 @@ bool winp::menu::item::create_(){
 		mask,
 		types,
 		states,
-		local_id_,
+		static_cast<UINT>(std::numeric_limits<WORD>::max()) + 9,
 		((popup == nullptr) ? nullptr : static_cast<HMENU>(popup->get_handle_())),
 		checked_bitmap_,
 		unchecked_bitmap_,

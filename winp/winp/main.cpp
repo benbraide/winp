@@ -10,6 +10,12 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_sh
 	ws.set_caption(L"Framed Window");
 	ws.create();
 	ws.show(cmd_show);
+	ws.get_system_menu([](winp::menu::wrapper_collection &wm){
+		wm.add<winp::menu::item>([](winp::menu::item &it){
+			it.set_label(L"Last Item");
+			return true;
+		});
+	});
 
 	return winp::app::object::run();
 }

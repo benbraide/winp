@@ -7,12 +7,12 @@ winp::menu::object::object(thread::object &thread)
 
 winp::menu::object::object(menu::item &parent)
 	: group(parent.get_thread()){
-	set_parent_(&parent);
+	change_parent_(&parent);
 }
 
 winp::menu::object::object(ui::window_surface &parent)
 	: group(parent.get_thread()){
-	set_parent_(&parent);
+	change_parent_(&parent);
 }
 
 winp::menu::object::~object(){

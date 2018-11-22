@@ -356,6 +356,43 @@ LRESULT winp::thread::surface_manager::command_(ui::surface &target, const MSG &
 	return 0;
 }
 
+LRESULT winp::thread::surface_manager::system_command_(ui::surface &target, const MSG &info, bool prevent_default){
+	switch (info.wParam & 0xFFF0){
+	case SC_CLOSE:
+	case SC_CONTEXTHELP:
+	case SC_DEFAULT:
+	case SC_HOTKEY:
+	case SC_HSCROLL:
+	case SCF_ISSECURE:
+	case SC_KEYMENU:
+	case SC_MAXIMIZE:
+	case SC_MINIMIZE:
+	case SC_MONITORPOWER:
+	case SC_MOUSEMENU:
+	case SC_MOVE:
+	case SC_NEXTWINDOW:
+	case SC_PREVWINDOW:
+	case SC_RESTORE:
+	case SC_SCREENSAVE:
+	case SC_SIZE:
+	case SC_TASKLIST:
+	case SC_VSCROLL:
+		return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
+	default:
+		break;
+	}
+
+	auto frame_target = dynamic_cast<window::frame *>(&target);
+	if (frame_target == nullptr)
+		return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
+
+	auto item = frame_target->system_menu_.find_component_(static_cast<WORD>(info.wParam));
+	if (item == nullptr)
+		return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
+
+	return menu_select_(target, MSG{ info.hwnd, info.message, static_cast<WPARAM>(item->get_absolute_index_()), reinterpret_cast<LPARAM>(static_cast<HMENU>(frame_target->system_menu_.get_handle_())) }, prevent_default);
+}
+
 LRESULT winp::thread::surface_manager::menu_init_(ui::surface &target, const MSG &info, bool prevent_default){
 	if (find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default) != 0)
 		return 0;//Default prevented
@@ -416,6 +453,8 @@ LRESULT CALLBACK winp::thread::surface_manager::entry_(HWND handle, UINT msg, WP
 		return manager.destroy_window_(*object, info);
 	case WM_COMMAND:
 		return manager.command_(*object, info, false);
+	case WM_SYSCOMMAND:
+		return manager.system_command_(*object, info, false);
 	case WM_INITMENUPOPUP:
 		return manager.menu_init_(*object, info, false);
 	case WM_MENUCOMMAND:

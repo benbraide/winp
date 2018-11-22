@@ -30,7 +30,8 @@ namespace winp::menu{
 		}
 
 	protected:
-		friend class wrapper;
+		template <class> friend class menu::generic_collection_base;
+		friend class menu::wrapper;
 
 		virtual void child_removed_(ui::object &child, std::size_t previous_index) override;
 

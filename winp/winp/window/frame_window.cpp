@@ -5,7 +5,7 @@ winp::window::frame::frame(){
 }
 
 winp::window::frame::frame(thread::object &thread)
-	: window_surface(thread){
+	: window_surface(thread), system_menu_(thread){
 	styles_ = WS_OVERLAPPEDWINDOW;
 }
 
