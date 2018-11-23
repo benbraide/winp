@@ -24,9 +24,13 @@ winp::thread::object &winp::thread::item::get_thread(){
 }
 
 void winp::thread::item::destruct(){
-	static bool called = false;
-	if (called)//Already called
-		return;
+	{//Scoped
+		std::lock_guard<std::mutex> lock(app::object::lock_);
+		if (!destructed_)
+			destructed_ = true;
+		else//Already called
+			return;
+	}
 
 	if (!thread_.is_thread_context()){
 		thread_.queue.add([=]{
@@ -35,8 +39,6 @@ void winp::thread::item::destruct(){
 	}
 	else//Inside thread context
 		destruct_();
-
-	called = true;
 }
 
 void winp::thread::item::use_context(const queue::callback_type &task, int priority){

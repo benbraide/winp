@@ -35,6 +35,7 @@ namespace winp::app{
 		static WNDPROC get_default_message_entry(const wchar_t *class_name);
 
 	protected:
+		friend class thread::item;
 		friend class thread::object;
 		friend class thread::surface_manager;
 

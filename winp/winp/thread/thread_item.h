@@ -42,5 +42,6 @@ namespace winp::thread{
 
 		object &thread_;
 		unsigned __int64 id_;
+		bool destructed_ = false;
 	};
 }

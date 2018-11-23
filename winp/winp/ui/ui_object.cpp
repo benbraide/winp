@@ -265,8 +265,8 @@ void winp::ui::object::init_(){
 }
 
 void winp::ui::object::destruct_(){
-	remove_parent_();
 	item::destruct_();
+	remove_parent_();
 }
 
 bool winp::ui::object::create_(){
@@ -349,6 +349,9 @@ bool winp::ui::object::remove_parent_(){
 
 	parent_changed_(previous_parent, previous_index);
 	index_changed_(previous_parent, previous_index);
+
+	if (previous_parent != nullptr)
+		previous_parent->child_removed_(*this, previous_index);
 
 	return true;
 }

@@ -46,10 +46,9 @@ bool winp::menu::wrapper::destroy_(){
 	update_surface_manager_(false);
 	set_handle_(nullptr);
 
-	if (!item_list_.empty())
-		item_list_.clear();
-
-	while (!children_.empty() && erase_child_at_(0u)){}
+	auto children_copy = children_;
+	for (auto child : children_copy)
+		child->destruct();
 
 	return true;
 }
@@ -59,9 +58,9 @@ bool winp::menu::wrapper::validate_parent_change_(ui::tree *value, std::size_t i
 }
 
 void winp::menu::wrapper::child_removed_(ui::object &child, std::size_t previous_index){
+	object::child_removed_(child, previous_index);
 	if (!item_list_.empty())
 		item_list_.erase(dynamic_cast<menu::component *>(&child));
-	object::child_removed_(child, previous_index);
 }
 
 bool winp::menu::wrapper::init_(HMENU value){
@@ -91,7 +90,7 @@ bool winp::menu::wrapper::wrap_(HMENU value){
 	};
 
 	item_ptr_type item;
-	menu::link *menu_item = nullptr;
+	menu::item *menu_item = nullptr;
 	std::wstring label;
 
 	auto count = GetMenuItemCount(value);
@@ -100,9 +99,8 @@ bool winp::menu::wrapper::wrap_(HMENU value){
 			continue;
 
 		if ((info.fType & MFT_SEPARATOR) == 0u){
-			menu_item = dynamic_cast<menu::link *>((item = std::make_shared<menu::link>(*this)).get());
-			if (info.wID == 0u){//Generate ID and update
-				menu_item->generate_id_();
+			menu_item = dynamic_cast<menu::item *>((item = ((info.hSubMenu == nullptr) ? std::make_shared<menu::item>(*this) : std::make_shared<menu::link>(*this))).get());
+			if (info.wID == 0u){//Update ID
 				temp_info.fMask = MIIM_ID;
 				temp_info.wID = menu_item->local_id_;
 				SetMenuItemInfoW(value, index, TRUE, &temp_info);
@@ -121,6 +119,7 @@ bool winp::menu::wrapper::wrap_(HMENU value){
 					menu_item->set_label_(label);
 			}
 
+			menu_item->is_created_ = true;
 			menu_item->states_ = info.fState;
 			menu_item->types_ = info.fType;
 
@@ -129,7 +128,7 @@ bool winp::menu::wrapper::wrap_(HMENU value){
 			menu_item->unchecked_bitmap_ = info.hbmpUnchecked;
 
 			if (info.hSubMenu != nullptr){//Create sub menu
-				menu_item->create_popup_<wrapper>([=](wrapper &target){
+				dynamic_cast<menu::link *>(menu_item)->create_popup_<wrapper>([=](wrapper &target){
 					return true;
 				}, info.hSubMenu);
 			}

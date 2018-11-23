@@ -4,6 +4,9 @@
 
 namespace winp::menu{
 	template <class base_type>
+	class generic_collection;
+
+	template <class base_type>
 	class generic_collection_base : public base_type{
 	public:
 		using m_base_type = base_type;
@@ -30,6 +33,60 @@ namespace winp::menu{
 			}, thread::queue::send_priority, base_type::id_);
 
 			return nullptr;
+		}
+
+		virtual menu::item *insert_item(const std::wstring &label, const std::function<bool(menu::item &)> &callback = nullptr, std::size_t index = static_cast<std::size_t>(-1)){
+			return insert<menu::item>([=](menu::item &item){
+				item.set_label(label);
+				return (callback == nullptr || callback(item));
+			}, index);
+		}
+
+		virtual menu::item *insert_item(const std::wstring &label, const std::function<void(event::object &)> &on_select, std::size_t index = static_cast<std::size_t>(-1)){
+			return insert<menu::item>([=](menu::item &item){
+				item.set_label(label);
+				if (on_select != nullptr)
+					item.select_event += on_select;
+				return true;
+			}, index);
+		}
+
+		virtual menu::link *insert_link(const std::wstring &label, const std::function<bool(menu::link &)> &callback = nullptr, std::size_t index = static_cast<std::size_t>(-1)){
+			return insert<menu::link>([=](menu::link &item){
+				item.set_label(label);
+				return (callback == nullptr || callback(item));
+			}, index);
+		}
+
+		virtual menu::link *insert_link(const std::wstring &label, const std::function<bool(menu::generic_collection<object> &)> &callback = nullptr, std::size_t index = static_cast<std::size_t>(-1)){
+			return insert<menu::link>([=](menu::link &item){
+				item.set_label(label);
+				return (item.create_popup<menu::generic_collection<object>>(callback) != nullptr);
+			}, index);
+		}
+
+		virtual menu::check_item *insert_check_item(const std::wstring &label, const std::function<bool(menu::check_item &)> &callback = nullptr, std::size_t index = static_cast<std::size_t>(-1)){
+			return insert<menu::check_item>([=](menu::check_item &item){
+				item.set_label(label);
+				return (callback == nullptr || callback(item));
+			}, index);
+		}
+
+		virtual menu::check_item *insert_check_item(const std::wstring &label, const std::function<void(event::object &)> &on_check, const std::function<void(event::object &)> &on_uncheck, std::size_t index = static_cast<std::size_t>(-1)){
+			return insert<menu::check_item>([=](menu::check_item &item){
+				item.set_label(label);
+				if (on_check != nullptr)
+					item.check_event += on_check;
+
+				if (on_uncheck != nullptr)
+					item.uncheck_event += on_uncheck;
+
+				return true;
+			}, index);
+		}
+
+		virtual menu::separator *insert_separator(const std::function<bool(menu::separator &)> &callback = nullptr, std::size_t index = static_cast<std::size_t>(-1)){
+			return insert<menu::separator>(callback);
 		}
 
 	protected:
@@ -66,9 +123,9 @@ namespace winp::menu{
 
 	protected:
 		virtual void child_removed_(ui::object &child, std::size_t previous_index) override{
+			m_generic_base_type::template child_removed_(child, previous_index);
 			if (!item_list_.empty())
 				item_list_.erase(dynamic_cast<menu::component *>(&child));
-			m_generic_base_type::template child_removed_(child, previous_index);
 		}
 
 		virtual void add_to_list_(item_ptr_type item) override{

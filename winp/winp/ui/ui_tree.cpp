@@ -178,9 +178,7 @@ bool winp::ui::tree::remove_child_at_(std::size_t index){
 
 	child->parent_changing_();
 	children_.erase(it);
-
 	child->set_parent_(nullptr);
-	child_removed_(*child, index);
 
 	return true;
 }
