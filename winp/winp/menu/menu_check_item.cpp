@@ -32,14 +32,14 @@ bool winp::menu::check_item::check(const std::function<void(item_component &, bo
 
 bool winp::menu::check_item::uncheck(const std::function<void(item_component &, bool)> &callback){
 	if (thread_.is_thread_context()){
-		auto result = uncheck_();
+		auto result = uncheck_(false);
 		if (callback != nullptr)
 			callback(*this, result);
 		return result;
 	}
 
 	thread_.queue.post([=]{
-		auto result = uncheck_();
+		auto result = uncheck_(false);
 		if (callback != nullptr)
 			callback(*this, result);
 	}, thread::queue::send_priority, id_);
@@ -157,7 +157,7 @@ bool winp::menu::check_item::check_(){
 	if (radio_group_parent != nullptr){
 		for (auto child : parent->children_){
 			if ((check_child = dynamic_cast<check_item *>(child)) != nullptr)
-				check_child->uncheck_();
+				check_child->uncheck_(true);
 		}
 	}
 
@@ -172,12 +172,11 @@ bool winp::menu::check_item::check_(){
 	return true;
 }
 
-bool winp::menu::check_item::uncheck_(){
+bool winp::menu::check_item::uncheck_(bool force){
 	if (!has_state_(MFS_CHECKED))
 		return true;
 
-	auto parent = get_parent_();
-	if (dynamic_cast<radio_group *>(parent) != nullptr)
+	if (!force && dynamic_cast<radio_group *>(get_parent_()) != nullptr)
 		return false;//Cannot remove check from a radio item
 
 	remove_state_(MFS_CHECKED);
@@ -192,7 +191,7 @@ bool winp::menu::check_item::uncheck_(){
 }
 
 bool winp::menu::check_item::toggle_check_(){
-	return (has_state_(MFS_CHECKED) ? uncheck_() : check_());
+	return (has_state_(MFS_CHECKED) ? uncheck_(false) : check_());
 }
 
 bool winp::menu::check_item::set_checked_bitmap_(HBITMAP value){

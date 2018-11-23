@@ -49,7 +49,7 @@ namespace winp::menu{
 
 		virtual bool check_();
 
-		virtual bool uncheck_();
+		virtual bool uncheck_(bool force);
 
 		virtual bool toggle_check_();
 

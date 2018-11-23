@@ -88,6 +88,10 @@ bool winp::menu::object::destroy_(){
 	return true;
 }
 
+HANDLE winp::menu::object::get_handle_() const{
+	return ui::object::get_handle_();
+}
+
 bool winp::menu::object::validate_parent_change_(ui::tree *value, std::size_t index) const{
 	return (surface::validate_parent_change_(value, index) && (value == nullptr || dynamic_cast<menu::item *>(value) != nullptr || dynamic_cast<ui::window_surface *>(value) != nullptr));
 }
@@ -98,7 +102,7 @@ void winp::menu::object::parent_changed_(ui::tree *previous_parent, std::size_t 
 		create_();
 	}
 
-	surface::parent_changed_(previous_parent, previous_index);
+	group::parent_changed_(previous_parent, previous_index);
 }
 
 LRESULT winp::menu::object::dispatch_message_(UINT msg, WPARAM wparam, LPARAM lparam, bool call_default){

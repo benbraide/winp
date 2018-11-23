@@ -43,6 +43,8 @@ namespace winp::menu{
 
 		virtual bool destroy_() override;
 
+		virtual HANDLE get_handle_() const override;
+
 		virtual bool validate_parent_change_(ui::tree *value, std::size_t index) const override;
 
 		virtual void parent_changed_(ui::tree *previous_parent, std::size_t previous_index) override;

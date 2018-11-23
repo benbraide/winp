@@ -8,8 +8,8 @@ namespace winp::menu{
 	public:
 		using m_base_type = base_type;
 
-		using item_ptr_type = std::shared_ptr<menu::item_component>;
-		using list_type = std::list<item_ptr_type>;
+		using item_ptr_type = std::shared_ptr<menu::component>;
+		using list_type = std::unordered_map<menu::component *, item_ptr_type>;
 
 		template <typename... args_types>
 		explicit generic_collection_base(args_types &&... args)
@@ -55,8 +55,8 @@ namespace winp::menu{
 	public:
 		using m_generic_base_type = generic_collection_base<base_type>;
 
-		using item_ptr_type = std::shared_ptr<menu::item_component>;
-		using list_type = std::list<item_ptr_type>;
+		using item_ptr_type = std::shared_ptr<menu::component>;
+		using list_type = std::unordered_map<menu::component *, item_ptr_type>;
 
 		template <typename... args_types>
 		explicit generic_collection(args_types &&... args)
@@ -66,18 +66,13 @@ namespace winp::menu{
 
 	protected:
 		virtual void child_removed_(ui::object &child, std::size_t previous_index) override{
-			for (auto it = item_list_.begin(); it != item_list_.end(); ++it){
-				if (dynamic_cast<ui::object *>(it->get()) == &child){
-					item_list_.erase(it);
-					break;
-				}
-			}
-
+			if (!item_list_.empty())
+				item_list_.erase(dynamic_cast<menu::component *>(&child));
 			m_generic_base_type::template child_removed_(child, previous_index);
 		}
 
 		virtual void add_to_list_(item_ptr_type item) override{
-			item_list_.push_back(item);
+			item_list_[item.get()] = item;
 		}
 
 		list_type item_list_;
@@ -88,8 +83,7 @@ namespace winp::menu{
 	public:
 		using m_generic_base_type = generic_collection_base<wrapper>;
 
-		using item_ptr_type = std::shared_ptr<menu::item_component>;
-		using list_type = std::list<item_ptr_type>;
+		using item_ptr_type = std::shared_ptr<menu::component>;
 
 		template <typename... args_types>
 		explicit generic_collection(args_types &&... args)
@@ -99,10 +93,13 @@ namespace winp::menu{
 
 	protected:
 		virtual void add_to_list_(item_ptr_type item) override{
-			item_list_.push_back(item);
+			item_list_[item.get()] = item;
 		}
 	};
 
 	using collection = generic_collection<object>;
 	using wrapper_collection = generic_collection<wrapper>;
+
+	using group_collection = generic_collection<group>;
+	using radio_group_collection = generic_collection<radio_group>;
 }

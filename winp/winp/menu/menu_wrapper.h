@@ -1,14 +1,14 @@
 #pragma once
 
-#include <list>
+#include <unordered_map>
 
 #include "menu_object.h"
 
 namespace winp::menu{
 	class wrapper : public object{
 	public:
-		using item_ptr_type = std::shared_ptr<menu::item_component>;
-		using list_type = std::list<item_ptr_type>;
+		using item_ptr_type = std::shared_ptr<menu::component>;
+		using list_type = std::unordered_map<menu::component *, item_ptr_type>;
 
 		wrapper();
 

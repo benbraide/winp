@@ -14,5 +14,10 @@ namespace winp::menu{
 			: group(parent){}
 
 		virtual ~radio_group() = default;
+
+	protected:
+		virtual UINT get_types_(std::size_t index) const override{
+			return (group::get_types_(index) | MFT_RADIOCHECK);
+		}
 	};
 }

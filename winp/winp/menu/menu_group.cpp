@@ -83,6 +83,11 @@ bool winp::menu::group::destroy_(){
 	return true;
 }
 
+HANDLE winp::menu::group::get_handle_() const{
+	auto parent = get_parent_();
+	return ((parent == nullptr) ? nullptr : parent->get_handle_());
+}
+
 bool winp::menu::group::validate_parent_change_(ui::tree *value, std::size_t index) const{
 	return (surface::validate_parent_change_(value, index) && (value == nullptr || dynamic_cast<menu::object *>(value) != nullptr));
 }
@@ -116,30 +121,33 @@ void winp::menu::group::index_changed_(ui::tree *previous_parent, std::size_t pr
 }
 
 UINT winp::menu::group::get_types_(std::size_t index) const{
-	return 0u;
+	auto parent = dynamic_cast<menu::tree *>(get_parent_());
+	return ((parent == nullptr) ? 0u : parent->get_types_(index));
 }
 
 UINT winp::menu::group::get_states_(std::size_t index) const{
-	return 0u;
+	auto parent = dynamic_cast<menu::tree *>(get_parent_());
+	return ((parent == nullptr) ? 0u : parent->get_states_(index));
 }
 
-std::size_t winp::menu::group::get_absolute_index_of_(const menu::component &child) const{
+std::size_t winp::menu::group::get_absolute_index_of_(const menu::component &child, bool skip_this) const{
 	menu::tree *tree_child;
-	std::size_t index = get_absolute_index_(), inner_index;
+	std::size_t index = (skip_this ? 0u : get_absolute_index_()), inner_index;
 	if (index == static_cast<std::size_t>(-1))
 		index = 0u;
 
 	for (auto pchild : children_){
+		if (dynamic_cast<menu::component *>(pchild) == &child)
+			return index;
+
 		if ((tree_child = dynamic_cast<menu::tree *>(pchild)) != nullptr){
-			if ((inner_index = tree_child->get_absolute_index_of_(child)) == static_cast<std::size_t>(-1))
+			if ((inner_index = tree_child->get_absolute_index_of_(child, true)) == static_cast<std::size_t>(-1))
 				index += tree_child->get_count_();
 			else
 				return (index + inner_index);
 		}
-		else if (dynamic_cast<menu::component *>(pchild) != &child)
-			++index;
 		else
-			return index;
+			++index;
 	}
 
 	return static_cast<std::size_t>(-1);
@@ -197,5 +205,5 @@ std::size_t winp::menu::group::get_count_() const{
 
 std::size_t winp::menu::group::get_absolute_index_() const{
 	auto parent = dynamic_cast<menu::tree *>(get_parent_());
-	return ((parent == nullptr) ? get_index_() : parent->get_absolute_index_of_(*this));
+	return ((parent == nullptr) ? get_index_() : parent->get_absolute_index_of_(*this, false));
 }

@@ -54,13 +54,8 @@ bool winp::menu::wrapper::validate_parent_change_(ui::tree *value, std::size_t i
 }
 
 void winp::menu::wrapper::child_removed_(ui::object &child, std::size_t previous_index){
-	for (auto it = item_list_.begin(); it != item_list_.end(); ++it){
-		if (dynamic_cast<ui::object *>(it->get()) == &child){
-			item_list_.erase(it);
-			break;
-		}
-	}
-
+	if (!item_list_.empty())
+		item_list_.erase(dynamic_cast<menu::component *>(&child));
 	object::child_removed_(child, previous_index);
 }
 
@@ -131,6 +126,6 @@ void winp::menu::wrapper::wrap_(HMENU value){
 		else//Separator
 			item = std::make_shared<menu::separator>(*this);
 
-		item_list_.push_back(item);
+		item_list_[item.get()] = item;
 	}
 }

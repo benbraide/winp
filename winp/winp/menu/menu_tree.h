@@ -9,6 +9,7 @@ namespace winp::menu{
 
 	class group;
 	class object;
+	class radio_group;
 
 	class tree : public component{
 	public:
@@ -25,12 +26,13 @@ namespace winp::menu{
 
 		friend class group;
 		friend class object;
+		friend class radio_group;
 
 		virtual UINT get_types_(std::size_t index) const = 0;
 
 		virtual UINT get_states_(std::size_t index) const = 0;
 
-		virtual std::size_t get_absolute_index_of_(const component &child) const = 0;
+		virtual std::size_t get_absolute_index_of_(const component &child, bool skip_this) const = 0;
 
 		virtual item_component *find_component_(UINT id, item_component *exclude) const = 0;
 

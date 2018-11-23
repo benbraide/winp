@@ -265,7 +265,9 @@ bool winp::menu::item_component::validate_parent_change_(ui::tree *value, std::s
 void winp::menu::item_component::parent_changing_(){
 	auto is_created = is_created_;
 	destroy_();
+
 	is_created_ = is_created;
+	surface::parent_changing_();
 }
 
 void winp::menu::item_component::parent_changed_(ui::tree *previous_parent, std::size_t previous_index){
@@ -301,7 +303,7 @@ UINT winp::menu::item_component::get_local_id_() const{
 
 std::size_t winp::menu::item_component::get_absolute_index_() const{
 	auto parent = dynamic_cast<menu::tree *>(get_parent_());
-	return ((parent == nullptr) ? get_index_() : parent->get_absolute_index_of_(*this));
+	return ((parent == nullptr) ? get_index_() : parent->get_absolute_index_of_(*this, false));
 }
 
 winp::ui::surface *winp::menu::item_component::get_popup_() const{

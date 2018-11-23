@@ -27,6 +27,8 @@ namespace winp::menu{
 
 		virtual bool destroy_() override;
 
+		virtual HANDLE get_handle_() const override;
+
 		virtual bool validate_parent_change_(ui::tree *value, std::size_t index) const override;
 
 		virtual void parent_changing_() override;
@@ -41,7 +43,7 @@ namespace winp::menu{
 
 		virtual UINT get_states_(std::size_t index) const override;
 
-		virtual std::size_t get_absolute_index_of_(const menu::component &child) const override;
+		virtual std::size_t get_absolute_index_of_(const menu::component &child, bool skip_this) const override;
 
 		virtual menu::item_component *find_component_(UINT id, item_component *exclude) const override;
 
