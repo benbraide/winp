@@ -18,15 +18,21 @@ winp::menu::wrapper::~wrapper(){
 	destruct();
 }
 
-void winp::menu::wrapper::init(HMENU value){
+bool winp::menu::wrapper::init(HMENU value, const std::function<void(wrapper &, bool)> &callback){
 	if (thread_.is_thread_context()){
-		init_(value);
-		return;
+		auto result = init_(value);
+		if (callback)
+			callback(*this, result);
+		return result;
 	}
 
 	thread_.queue.post([=]{
-		init_(value);
+		auto result = init_(value);
+		if (callback)
+			callback(*this, result);
 	}, thread::queue::send_priority, id_);
+
+	return true;
 }
 
 bool winp::menu::wrapper::create_(){
@@ -43,8 +49,7 @@ bool winp::menu::wrapper::destroy_(){
 	if (!item_list_.empty())
 		item_list_.clear();
 
-	if (!children_.empty())
-		children_.clear();
+	while (!children_.empty() && erase_child_at_(0u)){}
 
 	return true;
 }
@@ -59,16 +64,22 @@ void winp::menu::wrapper::child_removed_(ui::object &child, std::size_t previous
 	object::child_removed_(child, previous_index);
 }
 
-void winp::menu::wrapper::init_(HMENU value){
+bool winp::menu::wrapper::init_(HMENU value){
+	if (value != nullptr && handle_found_in_surface_manager_(value))
+		return false;//Cannot wrap a managed menu
+
 	destroy_();
-	wrap_(value);
+	auto result = wrap_(value);
+
 	set_handle_(value);
 	update_surface_manager_(true);
+
+	return result;
 }
 
-void winp::menu::wrapper::wrap_(HMENU value){
+bool winp::menu::wrapper::wrap_(HMENU value){
 	if (value == nullptr)
-		return;
+		return true;
 
 	MENUITEMINFOW info{
 		sizeof(MENUITEMINFOW),
@@ -89,7 +100,7 @@ void winp::menu::wrapper::wrap_(HMENU value){
 			continue;
 
 		if ((info.fType & MFT_SEPARATOR) == 0u){
-			menu_item = dynamic_cast<menu::link *>((item = std::make_shared<menu::link>(*this, false)).get());
+			menu_item = dynamic_cast<menu::link *>((item = std::make_shared<menu::link>(*this)).get());
 			if (info.wID == 0u){//Generate ID and update
 				menu_item->generate_id_();
 				temp_info.fMask = MIIM_ID;
@@ -128,4 +139,6 @@ void winp::menu::wrapper::wrap_(HMENU value){
 
 		item_list_[item.get()] = item;
 	}
+
+	return true;
 }

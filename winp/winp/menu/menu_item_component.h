@@ -20,8 +20,6 @@ namespace winp::menu{
 
 		explicit item_component(ui::tree &parent);
 
-		item_component(ui::tree &parent, bool);
-
 		virtual ~item_component();
 
 		virtual std::size_t get_absolute_index(const std::function<void(std::size_t)> &callback = nullptr) const override;

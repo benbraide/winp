@@ -56,17 +56,17 @@ bool winp::menu::object::create_(){
 	};
 	SetMenuInfo(static_cast<HMENU>(handle), &info);
 
-	auto parent_handle = ((window_parent == nullptr) ? nullptr : window_parent->get_handle_());
-	if (parent_handle != nullptr){
-		SetMenu(static_cast<HWND>(parent_handle), static_cast<HMENU>(handle));
-		DrawMenuBar(static_cast<HWND>(parent_handle));
-	}
-
 	thread_.surface_manager_.map_[handle] = this;
 	dispatch_message_(WM_NCCREATE, 0, 0);
 
 	for (auto child : children_)//Create children
 		child->create_();
+
+	auto parent_handle = ((window_parent == nullptr) ? nullptr : window_parent->get_handle_());
+	if (parent_handle != nullptr){
+		SetMenu(static_cast<HWND>(parent_handle), static_cast<HMENU>(handle));
+		DrawMenuBar(static_cast<HWND>(parent_handle));
+	}
 
 	return true;
 }
@@ -84,6 +84,11 @@ bool winp::menu::object::destroy_(){
 
 	if (!thread_.surface_manager_.map_.empty())
 		thread_.surface_manager_.map_.erase(handle);
+
+	auto parent = get_parent_();
+	auto parent_handle = ((parent == nullptr) ? nullptr : parent->get_handle_());
+	if (parent_handle != nullptr && IsWindow(static_cast<HWND>(parent_handle)) != FALSE)//Remove association
+		SetMenu(static_cast<HWND>(parent_handle), nullptr);
 
 	return true;
 }
@@ -115,6 +120,10 @@ std::size_t winp::menu::object::get_count_() const{
 
 std::size_t winp::menu::object::get_absolute_index_() const{
 	return 0u;
+}
+
+bool winp::menu::object::handle_found_in_surface_manager_(HANDLE value) const{
+	return (thread_.surface_manager_.map_.find(value) != thread_.surface_manager_.map_.end());
 }
 
 void winp::menu::object::update_surface_manager_(bool add){

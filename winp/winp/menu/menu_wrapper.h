@@ -20,7 +20,7 @@ namespace winp::menu{
 
 		virtual ~wrapper();
 
-		void init(HMENU value);
+		bool init(HMENU value, const std::function<void(wrapper &, bool)> &callback = nullptr);
 
 	protected:
 		friend class thread::surface_manager;
@@ -33,9 +33,9 @@ namespace winp::menu{
 
 		virtual void child_removed_(ui::object &child, std::size_t previous_index) override;
 
-		void init_(HMENU value);
+		bool init_(HMENU value);
 
-		void wrap_(HMENU value);
+		bool wrap_(HMENU value);
 
 		list_type item_list_;
 	};

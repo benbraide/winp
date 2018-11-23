@@ -8,9 +8,6 @@ winp::menu::link::link(thread::object &thread)
 winp::menu::link::link(ui::tree &parent)
 	: item(parent){}
 
-winp::menu::link::link(ui::tree &parent, bool)
-	: item(parent, false){}
-
 winp::menu::link::~link() = default;
 
 void winp::menu::link::child_removed_(ui::object &child, std::size_t previous_index){

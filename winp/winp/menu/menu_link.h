@@ -15,8 +15,6 @@ namespace winp::menu{
 
 		explicit link(ui::tree &parent);
 
-		link(ui::tree &parent, bool);
-
 		virtual ~link();
 
 		template <typename target_type, typename... args_types>

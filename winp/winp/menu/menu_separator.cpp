@@ -25,3 +25,5 @@ UINT winp::menu::separator::get_persistent_states_() const{
 UINT winp::menu::separator::get_types_() const{
 	return MFT_SEPARATOR;
 }
+
+void winp::menu::separator::generate_id_(std::size_t max_tries){}

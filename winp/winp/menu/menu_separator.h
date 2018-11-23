@@ -23,8 +23,10 @@ namespace winp::menu{
 
 		virtual bool validate_child_remove_(const ui::object &child) const override;
 
-		virtual UINT get_persistent_states_() const;
+		virtual UINT get_persistent_states_() const override;
 
 		virtual UINT get_types_() const override;
+
+		virtual void generate_id_(std::size_t max_tries = 0xFFFFu) override;
 	};
 }

@@ -13,8 +13,6 @@ namespace winp::menu{
 
 		explicit check_item(ui::tree &parent);
 
-		check_item(ui::tree &parent, bool);
-
 		virtual ~check_item();
 
 		virtual bool check(const std::function<void(item_component &, bool)> &callback = nullptr);

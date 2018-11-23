@@ -11,8 +11,6 @@ namespace winp::menu{
 
 		explicit item(ui::tree &parent);
 
-		item(ui::tree &parent, bool);
-
 		virtual ~item();
 
 		virtual ui::surface *get_popup(const std::function<void(ui::surface *)> &callback = nullptr) const;

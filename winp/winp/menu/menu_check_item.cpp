@@ -8,9 +8,6 @@ winp::menu::check_item::check_item(thread::object &thread)
 winp::menu::check_item::check_item(ui::tree &parent)
 	: item(parent){}
 
-winp::menu::check_item::check_item(ui::tree &parent, bool)
-	: item(parent){}
-
 winp::menu::check_item::~check_item() = default;
 
 bool winp::menu::check_item::check(const std::function<void(item_component &, bool)> &callback){

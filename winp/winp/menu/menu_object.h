@@ -55,6 +55,8 @@ namespace winp::menu{
 
 		virtual std::size_t get_absolute_index_() const;
 
+		virtual bool handle_found_in_surface_manager_(HANDLE value) const;
+
 		virtual void update_surface_manager_(bool add);
 
 		virtual void redraw_();

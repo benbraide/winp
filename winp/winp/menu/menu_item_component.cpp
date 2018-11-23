@@ -10,11 +10,6 @@ winp::menu::item_component::item_component(ui::tree &parent)
 	change_parent_(&parent);
 }
 
-winp::menu::item_component::item_component(ui::tree &parent, bool)
-	: surface(parent.get_thread()){
-	change_parent_(&parent);
-}
-
 winp::menu::item_component::~item_component(){
 	destruct();
 }
