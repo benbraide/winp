@@ -70,6 +70,8 @@ namespace winp::menu{
 
 		virtual bool select_();
 
+		virtual bool update_popup_();
+
 		virtual bool update_label_();
 
 		virtual bool update_check_marks_();

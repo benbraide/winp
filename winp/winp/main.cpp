@@ -21,6 +21,12 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_sh
 			rg.insert_check_item(L"Radio Item 3");
 			return true;
 		});
+		wm.insert_separator();
+		wm.insert_link(L"Link Item", [](winp::menu::collection &popup){
+			popup.insert_item(L"Popup Item");
+			popup.insert_check_item(L"Popup Check Item");
+			return true;
+		});
 	});
 
 	return winp::app::object::run();

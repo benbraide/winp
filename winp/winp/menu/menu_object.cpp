@@ -39,7 +39,10 @@ bool winp::menu::object::create_(){
 	if (get_handle_() != nullptr)
 		return true;
 
-	auto window_parent = dynamic_cast<ui::window_surface *>(get_parent_());
+	auto parent = get_parent_();
+	auto window_parent = dynamic_cast<ui::window_surface *>(parent);
+	auto item_parent = ((window_parent == nullptr) ? dynamic_cast<menu::item *>(parent) : nullptr);
+
 	if (window_parent == nullptr)
 		set_handle_(CreatePopupMenu());
 	else//Associated with a window object
@@ -67,6 +70,8 @@ bool winp::menu::object::create_(){
 		SetMenu(static_cast<HWND>(parent_handle), static_cast<HMENU>(handle));
 		DrawMenuBar(static_cast<HWND>(parent_handle));
 	}
+	else if (item_parent != nullptr)
+		item_parent->update_popup_();
 
 	return true;
 }
@@ -86,9 +91,14 @@ bool winp::menu::object::destroy_(){
 		thread_.surface_manager_.map_.erase(handle);
 
 	auto parent = get_parent_();
-	auto parent_handle = ((parent == nullptr) ? nullptr : parent->get_handle_());
-	if (parent_handle != nullptr && IsWindow(static_cast<HWND>(parent_handle)) != FALSE)//Remove association
+	auto window_parent = dynamic_cast<ui::window_surface *>(parent);
+	auto item_parent = ((window_parent == nullptr) ? dynamic_cast<menu::item *>(parent) : nullptr);
+
+	auto parent_handle = ((window_parent == nullptr) ? nullptr : window_parent->get_handle_());
+	if (parent_handle != nullptr)//Remove association
 		SetMenu(static_cast<HWND>(parent_handle), nullptr);
+	else if (item_parent != nullptr)
+		item_parent->update_popup_();
 
 	return true;
 }
@@ -102,12 +112,24 @@ bool winp::menu::object::validate_parent_change_(ui::tree *value, std::size_t in
 }
 
 void winp::menu::object::parent_changed_(ui::tree *previous_parent, std::size_t previous_index){
-	if (get_handle_() != nullptr && dynamic_cast<ui::window_surface *>(get_parent_()) != dynamic_cast<ui::window_surface *>(previous_parent)){
+	if (get_handle_() == nullptr)
+		return surface::parent_changed_(previous_parent, previous_index);
+
+	if (dynamic_cast<ui::window_surface *>(get_parent_()) != dynamic_cast<ui::window_surface *>(previous_parent)){
 		destroy_();
 		create_();
 	}
+	else{//Check for window parents
+		auto window_previous_parent = dynamic_cast<ui::window_surface *>(previous_parent);
+		if (window_previous_parent != nullptr)
+			SetMenu(static_cast<HWND>(window_previous_parent->get_handle_()), nullptr);
 
-	group::parent_changed_(previous_parent, previous_index);
+		auto window_parent = dynamic_cast<ui::window_surface *>(get_parent_());
+		if (window_parent != nullptr)
+			SetMenu(static_cast<HWND>(window_parent->get_handle_()), static_cast<HMENU>(get_handle_()));
+	}
+
+	surface::parent_changed_(previous_parent, previous_index);
 }
 
 LRESULT winp::menu::object::dispatch_message_(UINT msg, WPARAM wparam, LPARAM lparam, bool call_default){

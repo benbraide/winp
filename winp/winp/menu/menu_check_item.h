@@ -39,6 +39,10 @@ namespace winp::menu{
 		template <class> friend class menu::generic_collection_base;
 		friend class thread::surface_manager;
 
+		virtual bool validate_child_insert_(const ui::object &child, std::size_t index) const override;
+
+		virtual bool validate_child_remove_(const ui::object &child) const override;
+
 		virtual HBITMAP get_unchecked_bitmap_() const override;
 
 		virtual HBITMAP get_checked_bitmap_() const override;

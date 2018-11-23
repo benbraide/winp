@@ -158,7 +158,9 @@ void winp::menu::item::child_inserted_(ui::object &child, tree *previous_parent,
 	if (popup_ != nullptr)//Remove previous target
 		erase_child_(*popup_);
 
-	popup_ = dynamic_cast<ui::surface *>(&child);
+	if ((popup_ = dynamic_cast<ui::surface *>(&child))->get_handle_() != nullptr)
+		update_popup_();
+
 	item_component::child_inserted_(child, previous_parent, previous_index);
 }
 
@@ -168,6 +170,7 @@ bool winp::menu::item::validate_child_remove_(const ui::object &child) const{
 
 void winp::menu::item::child_removed_(ui::object &child, std::size_t previous_index){
 	popup_ = nullptr;
+	update_popup_();
 	item_component::child_removed_(child, previous_index);
 }
 
@@ -231,6 +234,18 @@ bool winp::menu::item::select_(){
 
 	dispatch_message_(WINP_WM_MENU_SELECT, reinterpret_cast<WPARAM>(static_cast<item_component *>(this)), 0);
 	return true;
+}
+
+bool winp::menu::item::update_popup_(){
+	auto handle = ((popup_ == nullptr) ? nullptr : popup_->get_handle_());
+	return update_(MENUITEMINFOW{
+		sizeof(MENUITEMINFOW),
+		MIIM_SUBMENU,											//Flags
+		0,														//Types
+		0,														//States
+		0,														//Id
+		static_cast<HMENU>(handle)
+	});
 }
 
 bool winp::menu::item::update_label_(){

@@ -131,6 +131,14 @@ HBITMAP winp::menu::check_item::get_unchecked_bitmap(const std::function<void(HB
 	return thread_.queue.add([this]{ return get_unchecked_bitmap_(); }, thread::queue::send_priority, id_).get();
 }
 
+bool winp::menu::check_item::validate_child_insert_(const ui::object &child, std::size_t index) const{
+	return false;
+}
+
+bool winp::menu::check_item::validate_child_remove_(const ui::object &child) const{
+	return false;
+}
+
 HBITMAP winp::menu::check_item::get_checked_bitmap_() const{
 	return checked_bitmap_;
 }

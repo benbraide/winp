@@ -44,6 +44,7 @@ namespace winp::menu{
 			if (callback != nullptr && !callback(*target))
 				return nullptr;
 
+			target->create();
 			add_child_(*target);
 			target_ptr_ = target;
 
