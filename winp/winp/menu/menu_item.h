@@ -33,13 +33,7 @@ namespace winp::menu{
 
 		virtual HBITMAP get_bitmap(const std::function<void(HBITMAP)> &callback = nullptr) const;
 
-		virtual bool set_checked_bitmap(HBITMAP value, const std::function<void(item_component &, bool)> &callback = nullptr);
-
-		virtual HBITMAP get_checked_bitmap(const std::function<void(HBITMAP)> &callback = nullptr) const;
-
-		virtual bool set_unchecked_bitmap(HBITMAP value, const std::function<void(item_component &, bool)> &callback = nullptr);
-
-		virtual HBITMAP get_unchecked_bitmap(const std::function<void(HBITMAP)> &callback = nullptr) const;
+		virtual bool select(const std::function<void(item_component &, bool)> &callback = nullptr);
 
 		event::manager<item, event::object> init_event{ *this };
 		event::manager<item, event::object> select_event{ *this };
@@ -70,19 +64,13 @@ namespace winp::menu{
 
 		virtual HBITMAP get_bitmap_() const override;
 
-		virtual HBITMAP get_checked_bitmap_() const override;
-
-		virtual HBITMAP get_unchecked_bitmap_() const override;
-
 		virtual bool set_label_(const std::wstring &value);
 
 		virtual bool set_shortcut_(const std::wstring &value);
 
 		virtual bool set_bitmap_(HBITMAP value);
 
-		virtual bool set_checked_bitmap_(HBITMAP value);
-
-		virtual bool set_unchecked_bitmap_(HBITMAP value);
+		virtual bool select_();
 
 		virtual bool update_label_();
 

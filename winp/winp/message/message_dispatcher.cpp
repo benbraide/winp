@@ -536,8 +536,8 @@ void winp::message::menu_dispatcher::fire_event_(event::object &e){
 }
 
 std::shared_ptr<winp::event::object> winp::message::menu_dispatcher::create_event_(ui::object &target, const MSG &info, bool call_default){
-	if (info.message == WINP_WM_MENU_INIT_ITEM)
-		return create_new_event_<event::object>(*reinterpret_cast<menu::item *>(info.wParam), info, call_default);
+	if (info.message == WINP_WM_MENU_INIT_ITEM || info.message == WINP_WM_MENU_SELECT || info.message == WINP_WM_MENU_CHECK || info.message == WINP_WM_MENU_UNCHECK)
+		return create_new_event_<event::object>(*reinterpret_cast<menu::item_component *>(info.wParam), info, call_default);
 
 	if (info.message == WINP_WM_CONTEXT_MENU_QUERY || info.message == WINP_WM_CONTEXT_MENU_REQUEST)
 		return create_new_event_<event::context_menu_prefix>(target, info, call_default);

@@ -20,13 +20,17 @@ namespace winp::menu{
 		virtual ~link();
 
 		template <typename target_type, typename... args_types>
-		void set_target(const std::function<bool(target_type &)> &callback, args_types... args){
+		void create_popup(const std::function<bool(target_type &)> &callback, args_types... args){
 			if (callback == nullptr)
 				return;//Callback required
 
-			thread_.queue.post([=]{
-				set_target_(callback, args...);
-			}, thread::queue::send_priority, id_);
+			if (!thread_.is_thread_context()){
+				thread_.queue.post([=]{
+					create_popup_(callback, args...);
+				}, thread::queue::send_priority, id_);
+			}
+			else//Inside thread context
+				create_popup_(callback, args...);
 		}
 
 	protected:
@@ -36,7 +40,7 @@ namespace winp::menu{
 		virtual void child_removed_(ui::object &child, std::size_t previous_index) override;
 
 		template <typename target_type, typename... args_types>
-		void set_target_(const std::function<bool(target_type &)> &callback, args_types... args){
+		void create_popup_(const std::function<bool(target_type &)> &callback, args_types... args){
 			auto target = std::make_shared<target_type>(thread_, args...);
 			if (callback(*target)){
 				add_child_(*target);

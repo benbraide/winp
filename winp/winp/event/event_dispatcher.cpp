@@ -221,13 +221,13 @@ void winp::event::menu_dispatcher::dispatch_(object &e){
 			break;
 		case WINP_WM_CONTEXT_MENU_QUERY:
 			if (handler->handle_context_menu_query_event_(dynamic_cast<context_menu_prefix &>(e)) && !default_prevented_of_(e))
-				set_result_of_(e, 1, true);
+				set_result_of_(e, 1, false);
 			break;
 		case WINP_WM_CONTEXT_MENU_REQUEST:
 		{
 			auto value = handler->handle_context_menu_request_event_(dynamic_cast<context_menu_prefix &>(e));
-			if (value != nullptr && get_result_of_(e) == 0 && !default_prevented_of_(e))
-				set_result_of_(e, reinterpret_cast<LRESULT>(value), true);
+			if (value != nullptr && !default_prevented_of_(e))
+				set_result_of_(e, reinterpret_cast<LRESULT>(value), false);
 			break;
 		}
 		case WM_CONTEXTMENU:

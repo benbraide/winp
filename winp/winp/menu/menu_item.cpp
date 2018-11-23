@@ -136,70 +136,21 @@ HBITMAP winp::menu::item::get_bitmap(const std::function<void(HBITMAP)> &callbac
 	return thread_.queue.add([this]{ return get_bitmap_(); }, thread::queue::send_priority, id_).get();
 }
 
-bool winp::menu::item::set_checked_bitmap(HBITMAP value, const std::function<void(item_component &, bool)> &callback){
+bool winp::menu::item::select(const std::function<void(item_component &, bool)> &callback){
 	if (thread_.is_thread_context()){
-		auto result = set_checked_bitmap_(value);
+		auto result = select_();
 		if (callback != nullptr)
 			callback(*this, result);
 		return result;
 	}
 
 	thread_.queue.post([=]{
-		auto result = set_checked_bitmap_(value);
+		auto result = select_();
 		if (callback != nullptr)
 			callback(*this, result);
 	}, thread::queue::send_priority, id_);
 
 	return true;
-}
-
-HBITMAP winp::menu::item::get_checked_bitmap(const std::function<void(HBITMAP)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = get_checked_bitmap_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(get_checked_bitmap_()); }, thread::queue::send_priority, id_);
-		return nullptr;
-	}
-
-	return thread_.queue.add([this]{ return get_checked_bitmap_(); }, thread::queue::send_priority, id_).get();
-}
-
-bool winp::menu::item::set_unchecked_bitmap(HBITMAP value, const std::function<void(item_component &, bool)> &callback){
-	if (thread_.is_thread_context()){
-		auto result = set_unchecked_bitmap_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		auto result = set_unchecked_bitmap_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
-}
-
-HBITMAP winp::menu::item::get_unchecked_bitmap(const std::function<void(HBITMAP)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = get_unchecked_bitmap_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(get_unchecked_bitmap_()); }, thread::queue::send_priority, id_);
-		return nullptr;
-	}
-
-	return thread_.queue.add([this]{ return get_unchecked_bitmap_(); }, thread::queue::send_priority, id_).get();
 }
 
 bool winp::menu::item::validate_child_insert_(const ui::object &child, std::size_t index) const{
@@ -277,22 +228,12 @@ HBITMAP winp::menu::item::get_bitmap_() const{
 	return bitmap_;
 }
 
-bool winp::menu::item::set_checked_bitmap_(HBITMAP value){
-	checked_bitmap_ = value;
-	return update_check_marks_();
-}
+bool winp::menu::item::select_(){
+	if (!is_created_)
+		return false;
 
-HBITMAP winp::menu::item::get_checked_bitmap_() const{
-	return checked_bitmap_;
-}
-
-bool winp::menu::item::set_unchecked_bitmap_(HBITMAP value){
-	unchecked_bitmap_ = value;
-	return update_check_marks_();
-}
-
-HBITMAP winp::menu::item::get_unchecked_bitmap_() const{
-	return unchecked_bitmap_;
+	dispatch_message_(WINP_WM_MENU_SELECT, reinterpret_cast<WPARAM>(static_cast<item_component *>(this)), 0);
+	return true;
 }
 
 bool winp::menu::item::update_label_(){

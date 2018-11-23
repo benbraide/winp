@@ -15,6 +15,10 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_sh
 			it.set_label(L"Last Item");
 			return true;
 		});
+		wm.add<winp::menu::check_item>([](winp::menu::check_item &it){
+			it.set_label(L"Check Item");
+			return true;
+		});
 	});
 
 	return winp::app::object::run();

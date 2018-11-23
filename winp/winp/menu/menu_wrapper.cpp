@@ -123,7 +123,7 @@ void winp::menu::wrapper::wrap_(HMENU value){
 			menu_item->unchecked_bitmap_ = info.hbmpUnchecked;
 
 			if (info.hSubMenu != nullptr){//Create sub menu
-				menu_item->set_target_<wrapper>([=](wrapper &target){
+				menu_item->create_popup_<wrapper>([=](wrapper &target){
 					return true;
 				}, info.hSubMenu);
 			}

@@ -4,6 +4,10 @@
 
 #include "ui_object.h"
 
+namespace winp::menu{
+	class check_item;
+}
+
 namespace winp::ui{
 	class tree : public object{
 	public:
@@ -40,6 +44,7 @@ namespace winp::ui{
 	protected:
 		friend class object;
 
+		friend class menu::check_item;
 		friend class message::dispatcher;
 		friend class thread::surface_manager;
 

@@ -84,7 +84,7 @@ bool winp::menu::group::destroy_(){
 }
 
 bool winp::menu::group::validate_parent_change_(ui::tree *value, std::size_t index) const{
-	return (surface::validate_parent_change_(value, index) && dynamic_cast<menu::item *>(value) != nullptr);
+	return (surface::validate_parent_change_(value, index) && (value == nullptr || dynamic_cast<menu::object *>(value) != nullptr));
 }
 
 void winp::menu::group::parent_changing_(){

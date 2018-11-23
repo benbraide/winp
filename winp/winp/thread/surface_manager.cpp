@@ -408,13 +408,13 @@ LRESULT winp::thread::surface_manager::menu_init_items_(ui::surface &target, ui:
 		if (dynamic_cast<menu::tree *>(child) != nullptr)
 			menu_init_items_(target, *dynamic_cast<ui::surface *>(child));
 		else if ((item = dynamic_cast<menu::item *>(child)) != nullptr)
-			menu_init_item_(target, *item);
+			menu_init_item_(target, *static_cast<menu::item_component *>(item));
 	}
 
 	return 0;
 }
 
-void winp::thread::surface_manager::menu_init_item_(ui::surface &target, menu::item &item){
+void winp::thread::surface_manager::menu_init_item_(ui::surface &target, menu::item_component &item){
 	if (find_dispatcher_(WINP_WM_MENU_INIT_ITEM)->dispatch_(target, MSG{ static_cast<HWND>(target.get_handle_()), WINP_WM_MENU_INIT_ITEM, reinterpret_cast<WPARAM>(&item) }, false) == 0)
 		item.remove_state_(MFS_DISABLED);
 	else//Disabled
@@ -436,8 +436,11 @@ LRESULT winp::thread::surface_manager::menu_select_(ui::surface &target, const M
 }
 
 LRESULT winp::thread::surface_manager::menu_select_(ui::surface &target, const MSG &info, menu::item_component &item, bool prevent_default){
-	//Check for menu check item
-	return find_dispatcher_(WINP_WM_MENU_SELECT)->dispatch_(target, info, !prevent_default);
+	auto selectable = dynamic_cast<menu::item *>(&item);
+	if (selectable != nullptr)
+		selectable->select_();
+
+	return 0;
 }
 
 LRESULT winp::thread::surface_manager::context_menu_(ui::io_surface &target, const MSG &info, bool prevent_default){

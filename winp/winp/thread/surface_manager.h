@@ -175,7 +175,7 @@ namespace winp::thread{
 
 		LRESULT menu_init_items_(ui::surface &target, ui::surface &tree);
 
-		void menu_init_item_(ui::surface &target, menu::item &item);
+		void menu_init_item_(ui::surface &target, menu::item_component &item);
 
 		LRESULT menu_select_(ui::surface &target, const MSG &info, bool prevent_default);
 

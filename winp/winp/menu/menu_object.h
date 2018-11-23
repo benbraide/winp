@@ -4,7 +4,8 @@
 
 #include "menu_link.h"
 #include "menu_separator.h"
-#include "menu_group.h"
+#include "menu_check_item.h"
+#include "menu_radio_group.h"
 
 namespace winp::menu{
 	class object : public group{

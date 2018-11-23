@@ -89,7 +89,7 @@ bool winp::menu::object::destroy_(){
 }
 
 bool winp::menu::object::validate_parent_change_(ui::tree *value, std::size_t index) const{
-	return (surface::validate_parent_change_ (value, index) && (dynamic_cast<menu::item *>(value) != nullptr || dynamic_cast<ui::window_surface *>(value) != nullptr));
+	return (surface::validate_parent_change_(value, index) && (value == nullptr || dynamic_cast<menu::item *>(value) != nullptr || dynamic_cast<ui::window_surface *>(value) != nullptr));
 }
 
 void winp::menu::object::parent_changed_(ui::tree *previous_parent, std::size_t previous_index){
