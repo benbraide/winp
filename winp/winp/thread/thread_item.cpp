@@ -46,6 +46,8 @@ void winp::thread::item::use_context(const queue::callback_type &task, int prior
 		thread_.queue.post(task, priority, id_);
 }
 
+void winp::thread::item::event_handlers_count_changed_(event::manager_base &e, std::size_t previous_count, std::size_t current_count){}
+
 void winp::thread::item::destruct_(){
 	thread_.add_to_black_list_(id_);
 }

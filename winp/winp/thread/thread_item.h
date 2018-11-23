@@ -38,6 +38,8 @@ namespace winp::thread{
 
 		virtual void destruct_();
 
+		virtual void event_handlers_count_changed_(event::manager_base &e, std::size_t previous_count, std::size_t current_count);
+
 		object &thread_;
 		unsigned __int64 id_;
 	};

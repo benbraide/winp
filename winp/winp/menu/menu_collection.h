@@ -18,32 +18,33 @@ namespace winp::menu{
 		virtual ~generic_collection_base() = default;
 
 		template <typename item_type>
-		void add(const std::function<bool(item_type &)> &callback){
+		item_type *insert(const std::function<bool(item_type &)> &callback, std::size_t index = static_cast<std::size_t>(-1)){
 			if (callback == nullptr)
-				return;//Callback required
+				return nullptr;//Callback required
 
-			if (base_type::thread_.is_thread_context()){
-				add_(callback);
-				return;
-			}
+			if (base_type::thread_.is_thread_context())
+				return insert_(callback, index);
 
 			base_type::thread_.queue.post([=]{
-				add_(callback);
+				insert_(callback, index);
 			}, thread::queue::send_priority, base_type::id_);
+
+			return nullptr;
 		}
 
 	protected:
 		friend class thread::surface_manager;
 
 		template <typename item_type>
-		void add_(const std::function<bool(item_type &)> &callback){
-			auto item = std::make_shared<item_type>(*this);
-			if (callback(*item)){
-				item->create();
-				add_to_list_(item);
-			}
-			else//Rejected
-				base_type::erase_child_(*item);
+		item_type *insert_(const std::function<bool(item_type &)> &callback, std::size_t index){
+			auto item = std::make_shared<item_type>();
+			if (item == nullptr || !callback(*item) || base_type::add_child_(*item, index) == static_cast<std::size_t>(-1))//Rejected
+				return nullptr;
+
+			item->create();
+			add_to_list_(item);
+
+			return item.get();
 		}
 
 		virtual void add_to_list_(item_ptr_type item) = 0;

@@ -22,6 +22,10 @@ namespace winp::event{
 
 		virtual void fire_generic_(object &e) const = 0;
 
+		virtual void count_changed_(std::size_t previous_count){
+			owner_.event_handlers_count_changed_(*this, previous_count, count_());
+		}
+
 		virtual thread::object &get_thread_(){
 			return owner_.thread_;
 		}
@@ -56,6 +60,13 @@ namespace winp::event{
 		}
 
 		unsigned __int64 bind(const m_callback_type &handler, const std::function<void(manager_base &, unsigned __int64)> &callback = nullptr){
+			if (manager_base::get_thread_().is_thread_context()){
+				auto result = bind_(handler);
+				if (callback != nullptr)
+					callback(*this, result);
+				return result;
+			}
+
 			if (callback != nullptr){
 				manager_base::get_thread_().queue.post([=]{ callback(*this, bind_(handler)); }, thread::queue::send_priority, manager_base::get_owner_id_());
 				return 0u;
@@ -71,6 +82,13 @@ namespace winp::event{
 		}
 
 		bool unbind(unsigned __int64 id, const std::function<void(manager_base &, bool)> &callback = nullptr){
+			if (manager_base::get_thread_().is_thread_context()){
+				auto result = unbind_(id);
+				if (callback != nullptr)
+					callback(*this, result);
+				return result;
+			}
+
 			if (callback != nullptr){
 				manager_base::get_thread_().queue.post([=]{ callback(*this, unbind_(id)); }, thread::queue::send_priority, manager_base::get_owner_id_());
 				return false;
@@ -83,15 +101,15 @@ namespace winp::event{
 		friend owner_type;
 		friend group_type;
 
-		explicit manager(owner_type &owner, const std::function<void(manager_base &, std::size_t)> &callback = nullptr)
-			: manager_base(owner), callback_(callback){}
+		explicit manager(owner_type &owner)
+			: manager_base(owner){}
 
 		virtual std::size_t count_() const override{
 			return handlers_.size();
 		}
 
 		virtual void fire_generic_(object &e) const override{
-			fire_(*dynamic_cast<m_object_type *>(&e));
+			fire_(dynamic_cast<m_object_type &>(e));
 		}
 
 		virtual void fire_(m_object_type &e) const{
@@ -104,10 +122,10 @@ namespace winp::event{
 
 		unsigned __int64 bind_(const m_callback_type &handler){
 			auto id = rand_(1ui64, std::numeric_limits<unsigned __int64>::max());
-			handlers_[id] = handler;
+			auto previous_count = handlers_.size();
 
-			if (callback_ != nullptr)
-				callback_(*this, handlers_.size());
+			handlers_[id] = handler;
+			count_changed_(previous_count);
 
 			return id;
 		}
@@ -120,15 +138,14 @@ namespace winp::event{
 			if (it == handlers_->end())
 				return false;
 
+			auto previous_count = handlers_.size();
 			handlers_->erase(it);
-			if (callback_ != nullptr)
-				callback_(*this, handlers_.size());
+			count_changed_(previous_count);
 
 			return true;
 		}
 
 		m_map_type handlers_;
-		std::function<void(manager_base &, std::size_t)> callback_;
 		utility::random_integral_number rand_;
 	};
 }
