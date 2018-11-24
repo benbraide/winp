@@ -342,10 +342,11 @@ LRESULT winp::thread::surface_manager::key_(ui::io_surface &target, const MSG &i
 LRESULT winp::thread::surface_manager::command_(ui::surface &target, const MSG &info, bool prevent_default){
 	if (info.lParam == 0){//Accelerator | Menu
 		if (HIWORD(info.wParam) != 1u){//Menu
-			auto item = ((cache_.active_menu == nullptr) ? nullptr : cache_.active_menu->find_component_(static_cast<UINT>(info.wParam), nullptr));
-			if (item == nullptr)
+			auto item = id_map_.find(static_cast<UINT>(info.wParam));
+			if (item == id_map_.end())
 				return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
-			return menu_select_(target, info, *item, prevent_default);
+
+			return menu_select_(target, info, *dynamic_cast<menu::item_component *>(item->second), true);
 		}
 	}
 
@@ -378,15 +379,11 @@ LRESULT winp::thread::surface_manager::system_command_(ui::surface &target, cons
 		break;
 	}
 
-	auto frame_target = dynamic_cast<window::frame *>(&target);
-	if (frame_target == nullptr)
+	auto item = id_map_.find(static_cast<UINT>(info.wParam));
+	if (item == id_map_.end())
 		return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
 
-	auto item = frame_target->system_menu_.find_component_(static_cast<UINT>(info.wParam), nullptr);
-	if (item == nullptr)
-		return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
-
-	return menu_select_(target, info, *item, true);
+	return menu_select_(target, info, *dynamic_cast<menu::item_component *>(item->second), true);
 }
 
 LRESULT winp::thread::surface_manager::menu_uninit_(ui::surface &target, const MSG &info, bool prevent_default){
@@ -398,7 +395,6 @@ LRESULT winp::thread::surface_manager::menu_init_(ui::surface &target, const MSG
 	if (menu == nullptr)
 		return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
 
-	cache_.active_menu = menu;
 	return ((find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default) == 0) ? menu_init_items_(target, *menu) : 0);
 }
 

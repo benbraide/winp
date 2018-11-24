@@ -72,14 +72,14 @@ namespace winp::thread{
 	public:
 		using m_point_type = POINT;
 		using m_size_type = SIZE;
+
 		using map_type = std::unordered_map<HANDLE, ui::surface *>;
+		using id_map_type = std::unordered_map<UINT, ui::surface *>;
 
 		struct cache_info{
 			HANDLE handle;
 			ui::surface *object;
 			ui::surface *creating;
-
-			menu::object *active_menu;
 			std::shared_ptr<menu::collection> context_menu;
 		};
 
@@ -117,6 +117,7 @@ namespace winp::thread{
 		friend class ui::window_surface;
 
 		friend class message::dispatcher;
+		friend class menu::item_component;
 		friend class menu::object;
 
 		void prepare_for_run_();
@@ -193,6 +194,7 @@ namespace winp::thread{
 
 		map_type map_;
 		map_type toplevel_map_;
+		id_map_type id_map_;
 
 		mutable cache_info cache_{};
 		HHOOK hook_handle_ = nullptr;

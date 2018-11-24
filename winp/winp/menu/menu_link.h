@@ -11,9 +11,15 @@ namespace winp::menu{
 
 		link();
 
+		explicit link(bool);
+
 		explicit link(thread::object &thread);
 
+		link(thread::object &thread, bool);
+
 		explicit link(ui::tree &parent);
+
+		link(ui::tree &parent, bool);
 
 		virtual ~link();
 

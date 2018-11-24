@@ -16,9 +16,15 @@ namespace winp::menu{
 	public:
 		item_component();
 
+		explicit item_component(bool);
+
 		explicit item_component(thread::object &thread);
 
+		item_component(thread::object &thread, bool);
+
 		explicit item_component(ui::tree &parent);
+
+		item_component(ui::tree &parent, bool);
 
 		virtual ~item_component();
 
@@ -111,6 +117,8 @@ namespace winp::menu{
 		virtual bool update_types_();
 
 		virtual void generate_id_(std::size_t max_tries = 0xFFFFu);
+
+		virtual bool id_is_unique_() const;
 
 		UINT local_id_ = 0u;
 		bool is_created_ = false;

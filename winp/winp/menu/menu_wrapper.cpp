@@ -99,14 +99,17 @@ bool winp::menu::wrapper::wrap_(HMENU value){
 			continue;
 
 		if ((info.fType & MFT_SEPARATOR) == 0u){
-			menu_item = dynamic_cast<menu::item *>((item = ((info.hSubMenu == nullptr) ? std::make_shared<menu::item>(*this) : std::make_shared<menu::link>(*this))).get());
-			if (info.wID == 0u){//Update ID
-				temp_info.fMask = MIIM_ID;
-				temp_info.wID = menu_item->local_id_;
-				SetMenuItemInfoW(value, index, TRUE, &temp_info);
+			menu_item = dynamic_cast<menu::item *>((item = ((info.hSubMenu == nullptr) ? std::make_shared<menu::item>(*this, false) : std::make_shared<menu::link>(*this))).get());
+			if (info.wID == 0u){//Generate and update ID
+				menu_item->generate_id_();
+				if (menu_item->local_id_ != 0u){
+					temp_info.fMask = MIIM_ID;
+					temp_info.wID = menu_item->local_id_;
+					SetMenuItemInfoW(value, index, TRUE, &temp_info);
+				}
 			}
 			else//Set ID
-				menu_item->local_id_ = static_cast<WORD>(info.wID);
+				menu_item->local_id_ = info.wID;
 
 			if (info.cch > 0u){//Cache text
 				label.resize(info.cch);

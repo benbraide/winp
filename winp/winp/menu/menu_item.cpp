@@ -2,11 +2,20 @@
 
 winp::menu::item::item() = default;
 
+winp::menu::item::item(bool)
+	: item_component(false){}
+
 winp::menu::item::item(thread::object &thread)
 	: item_component(thread){}
 
+winp::menu::item::item(thread::object &thread, bool)
+	: item_component(thread, false){}
+
 winp::menu::item::item(ui::tree &parent)
 	: item_component(parent){}
+
+winp::menu::item::item(ui::tree &parent, bool)
+	: item_component(parent, false){}
 
 winp::menu::item::~item() = default;
 

@@ -1,11 +1,26 @@
 #include "../app/app_object.h"
 
-winp::menu::item_component::item_component() = default;
+winp::menu::item_component::item_component(){
+	generate_id_();
+}
+
+winp::menu::item_component::item_component(bool){}
 
 winp::menu::item_component::item_component(thread::object &thread)
+	: surface(thread){
+	generate_id_();
+}
+
+winp::menu::item_component::item_component(thread::object &thread, bool)
 	: surface(thread){}
 
 winp::menu::item_component::item_component(ui::tree &parent)
+	: surface(parent.get_thread()){
+	generate_id_();
+	change_parent_(&parent);
+}
+
+winp::menu::item_component::item_component(ui::tree &parent, bool)
 	: surface(parent.get_thread()){
 	change_parent_(&parent);
 }
@@ -158,6 +173,10 @@ bool winp::menu::item_component::is_owner_drawn(const std::function<void(bool)> 
 
 void winp::menu::item_component::destruct_(){
 	destroy_();
+	if (local_id_ != 0u && !thread_.surface_manager_.id_map_.empty()){
+		thread_.surface_manager_.id_map_.erase(local_id_);
+		local_id_ = 0u;
+	}
 	surface::destruct_();
 }
 
@@ -266,7 +285,6 @@ void winp::menu::item_component::parent_changing_(){
 }
 
 void winp::menu::item_component::parent_changed_(ui::tree *previous_parent, std::size_t previous_index){
-	generate_id_();//Check if a new ID is necessary
 	if (is_created_){//Ignore if item wasn't previously created
 		is_created_ = false;
 		create_();
@@ -409,19 +427,21 @@ bool winp::menu::item_component::update_types_(){
 }
 
 void winp::menu::item_component::generate_id_(std::size_t max_tries){
-	auto parent = dynamic_cast<menu::tree *>(get_parent_());
-	if (parent == nullptr)
-		return;//Parent required
-
-	if (local_id_ != 0u && parent->find_component_(local_id_, this) == nullptr)
+	if (local_id_ != 0u)
 		return;//ID is unique
 
 	for (; max_tries > 0u; --max_tries){
 		local_id_ = thread_.menu_random_generator_(static_cast<UINT>(1), std::numeric_limits<UINT>::max());
-		if (local_id_ != (static_cast<UINT>(std::numeric_limits<WORD>::max()) + 1u) && parent->find_component_(local_id_, this) == nullptr)
+		if (id_is_unique_())
 			break;//ID is unique
 	}
 
+	if (max_tries == 0u){//Failed to generate a unique ID
+		local_id_ = 0u;
+		return;
+	}
+
+	thread_.surface_manager_.id_map_[local_id_] = this;
 	update_(MENUITEMINFOW{
 		sizeof(MENUITEMINFOW),
 		MIIM_ID,												//Flags
@@ -429,4 +449,39 @@ void winp::menu::item_component::generate_id_(std::size_t max_tries){
 		0,														//States
 		local_id_
 	});
+}
+
+bool winp::menu::item_component::id_is_unique_() const{
+	if (local_id_ == (static_cast<UINT>(std::numeric_limits<WORD>::max()) + 1u))
+		return false;//Reserved ID
+
+	if (!thread_.surface_manager_.id_map_.empty() && thread_.surface_manager_.id_map_.find(local_id_) != thread_.surface_manager_.id_map_.end())
+		return false;//Already in use
+
+	switch (local_id_ & 0xFFF0){
+	case SC_CLOSE:
+	case SC_CONTEXTHELP:
+	case SC_DEFAULT:
+	case SC_HOTKEY:
+	case SC_HSCROLL:
+	case SCF_ISSECURE:
+	case SC_KEYMENU:
+	case SC_MAXIMIZE:
+	case SC_MINIMIZE:
+	case SC_MONITORPOWER:
+	case SC_MOUSEMENU:
+	case SC_MOVE:
+	case SC_NEXTWINDOW:
+	case SC_PREVWINDOW:
+	case SC_RESTORE:
+	case SC_SCREENSAVE:
+	case SC_SIZE:
+	case SC_TASKLIST:
+	case SC_VSCROLL:
+		return false;//Reserved for system menu items
+	default:
+		break;
+	}
+
+	return true;//ID is unique
 }

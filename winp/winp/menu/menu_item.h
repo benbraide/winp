@@ -7,9 +7,15 @@ namespace winp::menu{
 	public:
 		item();
 
+		explicit item(bool);
+
 		explicit item(thread::object &thread);
 
+		item(thread::object &thread, bool);
+
 		explicit item(ui::tree &parent);
+
+		item(ui::tree &parent, bool);
 
 		virtual ~item();
 

@@ -1,13 +1,14 @@
 #include "../app/app_object.h"
 
 winp::thread::item::item()
-	: thread_(*app::object::get_or_create_thread()), id_(0u){
-	id_ = thread_.random_generator_(1ui64, std::numeric_limits<unsigned __int64>::max());
+	: thread_(*app::object::get_or_create_thread()){
+	id_ = reinterpret_cast<std::size_t>(this);
 	thread_.remove_from_black_list_(id_);//In case ID is reused
 }
 
 winp::thread::item::item(object &thread)
-	: thread_(thread), id_(thread.random_generator_(1ui64, std::numeric_limits<unsigned __int64>::max())){
+	: thread_(thread){
+	id_ = reinterpret_cast<std::size_t>(this);
 	thread_.remove_from_black_list_(id_);//In case ID is reused
 }
 

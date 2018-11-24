@@ -1,12 +1,13 @@
 #include "../app/app_object.h"
 
-winp::menu::separator::separator() = default;
+winp::menu::separator::separator()
+	: item_component(false){}
 
 winp::menu::separator::separator(thread::object &thread)
-	: item_component(thread){}
+	: item_component(thread, false){}
 
 winp::menu::separator::separator(ui::tree &parent)
-	: item_component(parent){}
+	: item_component(parent, false){}
 
 winp::menu::separator::~separator() = default;
 
