@@ -157,18 +157,34 @@ bool winp::menu::item_component::is_disabled(const std::function<void(bool)> &ca
 
 bool winp::menu::item_component::is_owner_drawn(const std::function<void(bool)> &callback) const{
 	if (thread_.is_thread_context()){
-		auto result = has_type_(MFT_OWNERDRAW);
+		auto result = is_owner_drawn_();
 		if (callback != nullptr)
 			callback(result);
 		return result;
 	}
 
 	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(has_type_(MFT_OWNERDRAW)); }, thread::queue::send_priority, id_);
+		thread_.queue.post([=]{ callback(is_owner_drawn_()); }, thread::queue::send_priority, id_);
 		return false;
 	}
 
-	return thread_.queue.add([this]{ return has_type_(MFT_OWNERDRAW); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.add([this]{ return is_owner_drawn_(); }, thread::queue::send_priority, id_).get();
+}
+
+bool winp::menu::item_component::is_popup_item(const std::function<void(bool)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = is_popup_item_();
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
+	if (callback != nullptr){
+		thread_.queue.post([=]{ callback(is_popup_item_()); }, thread::queue::send_priority, id_);
+		return false;
+	}
+
+	return thread_.queue.add([this]{ return is_popup_item_(); }, thread::queue::send_priority, id_).get();
 }
 
 void winp::menu::item_component::destruct_(){
@@ -364,11 +380,20 @@ bool winp::menu::item_component::has_states_(UINT value) const{
 }
 
 UINT winp::menu::item_component::get_types_() const{
-	return types_;
+	return (is_owner_drawn_() ? (states_ | MFT_OWNERDRAW) : types_);
 }
 
 bool winp::menu::item_component::has_type_(UINT value) const{
 	return ((get_types_() & value) == value);
+}
+
+bool winp::menu::item_component::is_owner_drawn_() const{
+	return (draw_item_event.count_() != 0u || dynamic_cast<const event::draw_item_handler *>(this) != nullptr);
+}
+
+bool winp::menu::item_component::is_popup_item_() const{
+	auto parent = get_parent_();
+	return (parent == nullptr || dynamic_cast<ui::window_surface *>(parent->get_parent_()) == nullptr);
 }
 
 HBITMAP winp::menu::item_component::get_bitmap_() const{
@@ -404,25 +429,25 @@ bool winp::menu::item_component::update_(const MENUITEMINFOW &info){
 bool winp::menu::item_component::update_states_(){
 	auto parent = get_parent_();
 	if (parent == nullptr)
-		return false;
+		return true;
 
 	return update_(MENUITEMINFOW{
 		sizeof(MENUITEMINFOW),
 		MIIM_STATE,												//Flags
 		0,														//Types
-		(states_ | dynamic_cast<menu::tree *>(parent)->get_states_(get_index_()))
+		(get_states_() | dynamic_cast<menu::tree *>(parent)->get_states_(get_index_()))
 	});
 }
 
 bool winp::menu::item_component::update_types_(){
 	auto parent = get_parent_();
 	if (parent == nullptr)
-		return false;
+		return true;
 
 	return update_(MENUITEMINFOW{
 		sizeof(MENUITEMINFOW),
 		MIIM_FTYPE,												//Flags
-		(types_ | dynamic_cast<menu::tree *>(parent)->get_types_(get_index_()))
+		(get_types_() | dynamic_cast<menu::tree *>(parent)->get_types_(get_index_()))
 	});
 }
 
@@ -452,7 +477,7 @@ void winp::menu::item_component::generate_id_(std::size_t max_tries){
 }
 
 bool winp::menu::item_component::id_is_unique_() const{
-	if (local_id_ == (static_cast<UINT>(std::numeric_limits<WORD>::max()) + 1u))
+	if (HIWORD(local_id_) == 1u)
 		return false;//Reserved ID
 
 	if (!thread_.surface_manager_.id_map_.empty() && thread_.surface_manager_.id_map_.find(local_id_) != thread_.surface_manager_.id_map_.end())

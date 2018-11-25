@@ -19,6 +19,9 @@ winp::thread::surface_manager::surface_manager(){
 	dispatchers_[WM_PAINT] = std::make_shared<message::draw_dispatcher>();
 	dispatchers_[WM_PRINTCLIENT] = std::make_shared<message::draw_dispatcher>();
 
+	dispatchers_[WM_DRAWITEM] = std::make_shared<message::draw_item_dispatcher>();
+	dispatchers_[WM_MEASUREITEM] = std::make_shared<message::draw_item_dispatcher>();
+
 	dispatchers_[WINP_WM_MOUSELEAVE] = std::make_shared<message::mouse_dispatcher>();
 	dispatchers_[WINP_WM_MOUSEENTER] = std::make_shared<message::mouse_dispatcher>();
 
@@ -88,6 +91,14 @@ winp::ui::surface *winp::thread::surface_manager::find_object_(HANDLE handle) co
 	}
 
 	return it->second;
+}
+
+winp::ui::surface *winp::thread::surface_manager::find_item_(UINT id) const{
+	if (id_map_.empty())
+		return nullptr;
+
+	auto it = id_map_.find(id);
+	return ((it == id_map_.end()) ? nullptr : it->second);
 }
 
 void winp::thread::surface_manager::create_window_(HWND handle, CBT_CREATEWNDW &info){
@@ -342,11 +353,11 @@ LRESULT winp::thread::surface_manager::key_(ui::io_surface &target, const MSG &i
 LRESULT winp::thread::surface_manager::command_(ui::surface &target, const MSG &info, bool prevent_default){
 	if (info.lParam == 0){//Accelerator | Menu
 		if (HIWORD(info.wParam) != 1u){//Menu
-			auto item = id_map_.find(static_cast<UINT>(info.wParam));
-			if (item == id_map_.end())
+			auto item = find_item_(static_cast<UINT>(info.wParam));
+			if (item == nullptr)
 				return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
 
-			return menu_select_(target, info, *dynamic_cast<menu::item_component *>(item->second), true);
+			return menu_select_(target, info, *dynamic_cast<menu::item_component *>(item), true);
 		}
 	}
 
@@ -379,11 +390,11 @@ LRESULT winp::thread::surface_manager::system_command_(ui::surface &target, cons
 		break;
 	}
 
-	auto item = id_map_.find(static_cast<UINT>(info.wParam));
-	if (item == id_map_.end())
+	auto item = find_item_(static_cast<UINT>(info.wParam));
+	if (item == nullptr)
 		return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
 
-	return menu_select_(target, info, *dynamic_cast<menu::item_component *>(item->second), true);
+	return menu_select_(target, info, *dynamic_cast<menu::item_component *>(item), true);
 }
 
 LRESULT winp::thread::surface_manager::menu_uninit_(ui::surface &target, const MSG &info, bool prevent_default){
@@ -484,6 +495,34 @@ LRESULT winp::thread::surface_manager::context_menu_(ui::io_surface &target, con
 	return 0;
 }
 
+LRESULT winp::thread::surface_manager::draw_item_(ui::surface &target, const MSG &info, bool prevent_default){
+	if (info.wParam == 0){//Menu target
+		auto item = find_item_(reinterpret_cast<DRAWITEMSTRUCT *>(info.lParam)->itemID);
+		if (item == nullptr)
+			return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
+
+		return find_dispatcher_(info.message)->dispatch_(*item, info, !prevent_default);
+	}
+
+	auto item = find_object_(reinterpret_cast<HWND>(info.wParam));
+	if (item == nullptr)
+		return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
+
+	return find_dispatcher_(info.message)->dispatch_(*item, info, !prevent_default);
+}
+
+LRESULT winp::thread::surface_manager::measure_item_(ui::surface &target, const MSG &info, bool prevent_default){
+	if (info.wParam == 0){//Menu target
+		auto item = find_item_(reinterpret_cast<DRAWITEMSTRUCT *>(info.lParam)->itemID);
+		if (item == nullptr)
+			return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
+
+		return find_dispatcher_(info.message)->dispatch_(*item, info, !prevent_default);
+	}
+
+	return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
+}
+
 winp::message::dispatcher *winp::thread::surface_manager::find_dispatcher_(UINT msg){
 	auto it = dispatchers_.find(msg);
 	return ((it == dispatchers_.end()) ? default_dispatcher_.get() : it->second.get());
@@ -520,6 +559,10 @@ LRESULT CALLBACK winp::thread::surface_manager::entry_(HWND handle, UINT msg, WP
 		return manager.menu_init_(*object, info, false);
 	case WM_MENUCOMMAND:
 		return manager.menu_select_(*object, info, false);
+	case WM_DRAWITEM:
+		return manager.draw_item_(*object, info, false);
+	case WM_MEASUREITEM:
+		return manager.measure_item_(*object, info, false);
 	default:
 		break;
 	}

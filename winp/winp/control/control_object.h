@@ -19,6 +19,8 @@ namespace winp::control{
 
 		virtual std::wstring get_text(const std::function<void(const std::wstring &)> &callback = nullptr) const;
 
+		static m_size_type compute_size(HWND handle, HDC device, HFONT font, const std::wstring &text);
+
 	protected:
 		friend class menu::object;
 

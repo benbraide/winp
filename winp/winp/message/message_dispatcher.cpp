@@ -223,6 +223,57 @@ std::shared_ptr<winp::event::object> winp::message::draw_dispatcher::create_even
 	return create_new_event_<event::draw>(target, info, call_default);
 }
 
+winp::message::draw_item_dispatcher::draw_item_dispatcher()
+	: dispatcher(false){
+	event_dispatcher_ = std::make_shared<event::draw_item_dispatcher>();
+}
+
+void winp::message::draw_item_dispatcher::post_dispatch_(event::object &e){
+	auto context = e.get_context();
+	if (!bubble_to_type_of_<menu::object, ui::window_surface>(e)){
+		set_context_of_(e, *context);
+		if (!bubble_to_type_of_<ui::window_surface>(e))
+			return;
+	}
+
+	auto saved_result = get_result_of_(e);
+	dispatch_(e, false);
+	set_result_of_(e, saved_result, true);//Restore result
+}
+
+void winp::message::draw_item_dispatcher::fire_event_(event::object &e){
+	auto menu_target = dynamic_cast<menu::object *>(e.get_context());
+	auto menu_item_target = ((menu_target == nullptr) ? dynamic_cast<menu::item_component *>(e.get_context()) : nullptr);
+	auto window_target = ((menu_target == nullptr && menu_item_target == nullptr) ? dynamic_cast<ui::window_surface *>(e.get_context()) : nullptr);
+
+	if (e.get_info()->message == WM_DRAWITEM){
+		if (menu_target != nullptr)
+			fire_event_of_(*menu_target, menu_target->init_item_event, e);
+		else if (menu_item_target != nullptr)
+			fire_event_of_(*menu_item_target, menu_item_target->draw_item_event, e);
+		else if (window_target != nullptr)
+			fire_event_of_(*window_target, window_target->menu_init_item_event, e);
+	}
+	else if (e.get_info()->message == WM_MEASUREITEM){
+		if (menu_target != nullptr)
+			fire_event_of_(*menu_target, menu_target->init_item_event, e);
+		else if (menu_item_target != nullptr)
+			fire_event_of_(*menu_item_target, menu_item_target->measure_item_event, e);
+		else if (window_target != nullptr)
+			fire_event_of_(*window_target, window_target->menu_init_item_event, e);
+	}
+}
+
+std::shared_ptr<winp::event::object> winp::message::draw_item_dispatcher::create_event_(ui::object &target, const MSG &info, bool call_default){
+	if (info.message == WM_DRAWITEM)
+		return create_new_event_<event::draw_item>(target, info, call_default);
+
+	if (info.message == WM_MEASUREITEM)
+		return create_new_event_<event::measure_item>(target, info, call_default);
+
+	return nullptr;
+}
+
 winp::message::cursor_dispatcher::cursor_dispatcher()
 	: dispatcher(false){
 	event_dispatcher_ = std::make_shared<event::cursor_dispatcher>();
@@ -459,7 +510,7 @@ void winp::message::menu_dispatcher::post_dispatch_(event::object &e){
 		return;//No bubbling
 
 	auto context = e.get_context();
-	if (!bubble_to_type_of_<menu::object>(e)){
+	if (!bubble_to_type_of_<menu::object, ui::window_surface>(e)){
 		if (propagation_stopped_of_(e) || dynamic_cast<ui::window_surface *>(context) != nullptr)
 			return;//Bubbling prevented
 

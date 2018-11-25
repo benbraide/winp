@@ -130,6 +130,8 @@ namespace winp::thread{
 
 		ui::surface *find_object_(HANDLE handle) const;
 
+		ui::surface *find_item_(UINT id) const;
+
 		void create_window_(HWND handle, CBT_CREATEWNDW &info);
 
 		LRESULT destroy_window_(ui::surface &target, const MSG &info);
@@ -183,6 +185,10 @@ namespace winp::thread{
 		LRESULT menu_select_(ui::surface &target, const MSG &info, menu::item_component &item, bool prevent_default);
 
 		LRESULT context_menu_(ui::io_surface &target, const MSG &info, bool prevent_default);
+
+		LRESULT draw_item_(ui::surface &target, const MSG &info, bool prevent_default);
+
+		LRESULT measure_item_(ui::surface &target, const MSG &info, bool prevent_default);
 
 		message::dispatcher *find_dispatcher_(UINT msg);
 

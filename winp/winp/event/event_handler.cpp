@@ -3,6 +3,10 @@
 void winp::event::unhandled_handler::handle_unhandled_event_(object &e){
 	if (e.get_info()->message == WM_ERASEBKGND)
 		draw_dispatcher::erase_background_(dynamic_cast<draw &>(e));
+	else if (e.get_info()->message == WM_DRAWITEM)
+		draw_item_dispatcher::draw_item_(dynamic_cast<draw_item &>(e));
+	else if (e.get_info()->message == WM_MEASUREITEM)
+		draw_item_dispatcher::measure_item_(dynamic_cast<measure_item &>(e));
 }
 
 void winp::event::tree_handler::handle_parent_change_event_(tree &e){}
@@ -24,6 +28,14 @@ void winp::event::draw_handler::handle_background_erase_event_(draw &e){
 }
 
 void winp::event::draw_handler::handle_paint_event_(draw &e){}
+
+void winp::event::draw_item_handler::handle_draw_item_event_(draw_item &e){
+	draw_item_dispatcher::draw_item_(e);
+}
+
+void winp::event::draw_item_handler::handle_measure_item_event_(measure_item &e){
+	draw_item_dispatcher::measure_item_(e);
+}
 
 void winp::event::cursor_handler::handle_set_cursor_event_(cursor &e){}
 

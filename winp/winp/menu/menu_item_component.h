@@ -4,6 +4,10 @@
 
 #include "menu_tree.h"
 
+namespace winp::event{
+	class draw_item_dispatcher;
+}
+
 namespace winp::menu{
 	class group;
 	class object;
@@ -50,7 +54,14 @@ namespace winp::menu{
 
 		virtual bool is_owner_drawn(const std::function<void(bool)> &callback = nullptr) const;
 
+		virtual bool is_popup_item(const std::function<void(bool)> &callback = nullptr) const;
+
+		event::manager<item_component, event::draw_item> draw_item_event{ *this };
+		event::manager<item_component, event::measure_item> measure_item_event{ *this };
+
 	protected:
+		friend class event::draw_item_dispatcher;
+
 		friend class menu::object;
 		friend class menu::wrapper;
 		friend class menu::group;
@@ -104,6 +115,10 @@ namespace winp::menu{
 
 		virtual bool has_type_(UINT value) const;
 
+		virtual bool is_owner_drawn_() const;
+
+		virtual bool is_popup_item_() const;
+
 		virtual HBITMAP get_bitmap_() const;
 
 		virtual HBITMAP get_checked_bitmap_() const;
@@ -125,5 +140,7 @@ namespace winp::menu{
 
 		UINT states_ = 0u;
 		UINT types_ = 0u;
+
+		HFONT font_ = nullptr;
 	};
 }

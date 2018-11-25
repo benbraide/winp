@@ -6,7 +6,6 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_sh
 	winp::window::frame ws;
 	ws.set_position(POINT{ 10, 10 });
 	ws.set_size(SIZE{ 600, 400 });
-	ws.set_styles(WS_OVERLAPPEDWINDOW, false);
 	ws.set_caption(L"Framed Window");
 	ws.create();
 	ws.show(cmd_show);
@@ -25,6 +24,18 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_sh
 		wm.insert_link(L"Link Item", [](winp::menu::collection &popup){
 			popup.insert_item(L"Popup Item");
 			popup.insert_check_item(L"Popup Check Item");
+			popup.insert_link(L"Pushed Link Item", [](winp::menu::collection &popup2){
+				popup2.insert_item(L"Popup2 Item");
+				popup2.insert_check_item(L"Popup2 Check Item");
+				popup2.insert_item(L"Owner Drawn Item", [](winp::menu::item &odi){
+					odi.draw_item_event += [](winp::event::draw_item &e){
+						auto i = 0;
+						++i;
+					};
+					return true;
+				});
+				return true;
+			}, 0);
 			return true;
 		});
 	});

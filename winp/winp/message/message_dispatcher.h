@@ -85,9 +85,9 @@ namespace winp::message{
 
 		static bool bubble_of_(event::object &e);
 
-		template <typename target_type>
+		template <typename target_type, typename before_type = void>
 		static bool bubble_to_type_of_(event::object &e){
-			return e.bubble_to_type_<target_type>();
+			return e.bubble_to_type_<target_type, before_type>();
 		}
 
 		static void set_flag_of_(event::object &e, unsigned int flag);
@@ -125,6 +125,18 @@ namespace winp::message{
 	class draw_dispatcher : public dispatcher{
 	public:
 		draw_dispatcher();
+
+	protected:
+		virtual void post_dispatch_(event::object &e) override;
+
+		virtual void fire_event_(event::object &e) override;
+
+		virtual std::shared_ptr<event::object> create_event_(ui::object &target, const MSG &info, bool call_default) override;
+	};
+
+	class draw_item_dispatcher : public dispatcher{
+	public:
+		draw_item_dispatcher();
 
 	protected:
 		virtual void post_dispatch_(event::object &e) override;

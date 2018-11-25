@@ -6,6 +6,10 @@ namespace winp::message{
 	class dispatcher;
 }
 
+namespace winp::menu{
+	class item_component;
+}
+
 namespace winp::event{
 	class unhandled_handler;
 	class draw_handler;
@@ -43,6 +47,22 @@ namespace winp::event{
 		virtual void dispatch_(object &e) override;
 
 		static void erase_background_(draw &e);
+	};
+
+	class draw_item_dispatcher : public dispatcher{
+	protected:
+		friend class unhandled_handler;
+		friend class draw_item_handler;
+
+		virtual void dispatch_(object &e) override;
+
+		static void draw_item_(draw_item &e);
+
+		static void measure_item_(measure_item &e);
+
+		static void draw_menu_item_(menu::item_component &item, draw_item &e);
+
+		static void measure_menu_item_(menu::item_component &item, measure_item &e);
 	};
 
 	class cursor_dispatcher : public dispatcher{

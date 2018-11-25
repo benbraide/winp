@@ -11,6 +11,7 @@ namespace winp::event{
 	class tree_dispatcher;
 	class create_destroy_dispatcher;
 	class draw_dispatcher;
+	class draw_item_dispatcher;
 	class cursor_dispatcher;
 	class mouse_dispatcher;
 	class focus_dispatcher;
@@ -68,6 +69,18 @@ namespace winp::event{
 		virtual void handle_background_erase_event_(draw &e);
 
 		virtual void handle_paint_event_(draw &e);
+	};
+
+	class draw_item_handler{
+	public:
+		virtual ~draw_item_handler() = default;
+
+	protected:
+		friend class draw_item_dispatcher;
+
+		virtual void handle_draw_item_event_(draw_item &e);
+
+		virtual void handle_measure_item_event_(measure_item &e);
 	};
 
 	class cursor_handler{

@@ -266,6 +266,87 @@ bool winp::event::draw::erase_background_(){
 	return (struct_.fErase != FALSE);
 }
 
+winp::event::draw_item::draw_item(ui::object &target, const callback_type &default_handler, const info_type &info)
+	: object(target, default_handler, info), struct_(*reinterpret_cast<DRAWITEMSTRUCT *>(info.lParam)){}
+
+winp::event::draw_item::draw_item(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
+	: object(target, context, default_handler, info), struct_(*reinterpret_cast<DRAWITEMSTRUCT *>(info.lParam)){}
+
+winp::event::draw_item::~draw_item() = default;
+
+UINT winp::event::draw_item::get_action() const{
+	return (thread_.is_thread_context() ? struct_.itemAction : 0u);
+}
+
+UINT winp::event::draw_item::get_state() const{
+	return (thread_.is_thread_context() ? struct_.itemState : 0u);
+}
+
+ID2D1RenderTarget *winp::event::draw_item::get_drawer() const{
+	return (thread_.is_thread_context() ? get_drawer_() : nullptr);
+}
+
+ID2D1SolidColorBrush *winp::event::draw_item::get_color_brush() const{
+	return (thread_.is_thread_context() ? get_color_brush_() : nullptr);
+}
+
+HDC winp::event::draw_item::get_device() const{
+	return (thread_.is_thread_context() ? get_device_() : nullptr);
+}
+
+winp::event::draw_item::m_rect_type winp::event::draw_item::get_region() const{
+	return (thread_.is_thread_context() ? get_region_() : m_rect_type{});
+}
+
+ID2D1RenderTarget *winp::event::draw_item::get_drawer_() const{
+	auto device = get_device_();
+	if (device != nullptr && drawer_ == nullptr && (drawer_ = thread_.get_device_drawer()) != nullptr){
+		drawer_->BindDC(device, &struct_.rcItem);
+		drawer_->SetTransform(D2D1::IdentityMatrix());
+		drawer_->BeginDraw();
+	}
+
+	return drawer_;
+}
+
+ID2D1SolidColorBrush *winp::event::draw_item::get_color_brush_() const{
+	auto render = get_drawer_();
+	if (render != nullptr && color_brush_ == nullptr && (color_brush_ = thread_.get_color_brush()) != nullptr)
+		color_brush_->SetColor(D2D1::ColorF(D2D1::ColorF::Black, 1.0f));
+
+	return color_brush_;
+}
+
+HDC winp::event::draw_item::get_device_() const{
+	return struct_.hDC;
+}
+
+winp::event::draw_item::m_rect_type winp::event::draw_item::get_region_() const{
+	return struct_.rcItem;
+}
+
+winp::event::measure_item::measure_item(ui::object &target, const callback_type &default_handler, const info_type &info)
+	: object(target, default_handler, info), struct_(*reinterpret_cast<MEASUREITEMSTRUCT *>(info.lParam)){}
+
+winp::event::measure_item::measure_item(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
+	: object(target, context, default_handler, info), struct_(*reinterpret_cast<MEASUREITEMSTRUCT *>(info.lParam)){}
+
+winp::event::measure_item::~measure_item() = default;
+
+bool winp::event::measure_item::set_size(const m_size_type &value){
+	if (!thread_.is_thread_context())
+		return false;
+
+	struct_.itemWidth = static_cast<UINT>(value.cx);
+	struct_.itemHeight = static_cast<UINT>(value.cy);
+
+	return true;
+}
+
+winp::event::measure_item::m_size_type winp::event::measure_item::get_size() const{
+	return (thread_.is_thread_context() ? m_size_type{ static_cast<int>(struct_.itemWidth), static_cast<int>(struct_.itemHeight) } : m_size_type{});
+}
+
 winp::event::cursor::cursor(ui::object &target, const callback_type &default_handler, const info_type &info)
 	: object(target, default_handler, info){}
 

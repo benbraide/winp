@@ -33,6 +33,8 @@ namespace winp::menu{
 
 namespace winp::event{
 	class draw_dispatcher;
+	class draw_item_dispatcher;
+
 	class unhandled_handler;
 	class draw_handler;
 
@@ -102,8 +104,26 @@ namespace winp::event{
 
 		virtual bool bubble_();
 
-		template <typename target_type>
+		template <typename target_type, typename before_type = void>
 		bool bubble_to_type_(){
+			return bubble_to_type_<target_type, before_type>(std::bool_constant<std::is_void_v<before_type>>());
+		}
+
+		template <typename target_type, typename before_type>
+		bool bubble_to_type_(std::false_type){
+			while (bubble_()){
+				if (dynamic_cast<target_type *>(context_) != nullptr)
+					return true;
+
+				if (dynamic_cast<before_type *>(context_) != nullptr)
+					break;
+			}
+
+			return false;
+		}
+
+		template <typename target_type, typename before_type>
+		bool bubble_to_type_(std::true_type){
 			while (bubble_()){
 				if (dynamic_cast<target_type *>(context_) != nullptr)
 					return true;
@@ -207,6 +227,62 @@ namespace winp::event{
 
 		int initial_device_state_id_ = -1;
 		std::function<void()> cleaner_;
+	};
+
+	class draw_item : public object{
+	public:
+		using m_rect_type = RECT;
+
+		draw_item(ui::object &target, const callback_type &default_handler, const info_type &info);
+
+		draw_item(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info);
+
+		virtual ~draw_item();
+
+		virtual UINT get_action() const;
+
+		virtual UINT get_state() const;
+
+		virtual ID2D1RenderTarget *get_drawer() const;
+
+		virtual ID2D1SolidColorBrush *get_color_brush() const;
+
+		virtual HDC get_device() const;
+
+		virtual m_rect_type get_region() const;
+
+	protected:
+		friend class draw_item_dispatcher;
+
+		virtual ID2D1RenderTarget *get_drawer_() const;
+
+		virtual ID2D1SolidColorBrush *get_color_brush_() const;
+
+		virtual HDC get_device_() const;
+
+		virtual m_rect_type get_region_() const;
+
+		DRAWITEMSTRUCT &struct_;
+		mutable ID2D1DCRenderTarget *drawer_ = nullptr;
+		mutable ID2D1SolidColorBrush *color_brush_ = nullptr;
+	};
+
+	class measure_item : public object{
+	public:
+		using m_size_type = SIZE;
+
+		measure_item(ui::object &target, const callback_type &default_handler, const info_type &info);
+
+		measure_item(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info);
+
+		virtual ~measure_item();
+
+		virtual bool set_size(const m_size_type &value);
+
+		virtual m_size_type get_size() const;
+
+	protected:
+		MEASUREITEMSTRUCT &struct_;
 	};
 
 	class cursor : public object{

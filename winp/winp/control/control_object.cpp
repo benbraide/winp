@@ -73,6 +73,27 @@ std::wstring winp::control::object::get_text(const std::function<void(const std:
 	return thread_.queue.add([this]{ return get_text_(); }, thread::queue::send_priority, id_).get();
 }
 
+winp::ui::surface::m_size_type winp::control::object::compute_size(HWND handle, HDC device, HFONT font, const std::wstring &text){
+	static const wchar_t *symbol_list = L"AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz";
+
+	m_size_type symbol_list_size{};
+	auto old_font = SelectObject(device, font);
+
+	if (GetTextExtentPoint32W(device, symbol_list, static_cast<int>(std::wcslen(symbol_list)), &symbol_list_size) == FALSE){
+		SelectObject(device, old_font);//Restore font
+		return m_size_type{};
+	}
+
+	m_size_type computed_size{};
+	if (GetTextExtentPoint32W(device, text.data(), static_cast<int>(text.size()), &computed_size) == FALSE){
+		SelectObject(device, old_font);//Restore font
+		return m_size_type{};
+	}
+
+	SelectObject(device, old_font);//Restore font
+	return m_size_type{ computed_size.cx, symbol_list_size.cy };
+}
+
 void winp::control::object::add_to_toplevel_(bool update){}
 
 void winp::control::object::post_create_(){
@@ -111,30 +132,18 @@ void winp::control::object::update_size_(){
 }
 
 winp::ui::surface::m_size_type winp::control::object::compute_size_() const{
-	static const wchar_t *symbol_list = L"AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz";
-
-	auto handle = get_handle_();
+	auto handle = static_cast<HWND>(get_handle_());
 	if (handle == nullptr)//Object not created
 		return m_size_type{};
 
-	auto device = GetDC(static_cast<HWND>(handle));
+	auto device = GetDC(handle);
 	if (device == nullptr)//Failed to retrieve device
 		return m_size_type{};
 
-	auto font = get_font_();
-	auto old_font = SelectObject(device, font);
+	auto size = compute_size(handle, device, get_font_(), get_text_());
+	ReleaseDC(handle, device);
 
-	m_size_type symbol_list_size{};
-	if (GetTextExtentPoint32W(device, symbol_list, static_cast<int>(std::wcslen(symbol_list)), &symbol_list_size) == FALSE)
-		return m_size_type{};
-
-	auto text = get_text_();
-	m_size_type computed_size{};
-
-	if (GetTextExtentPoint32W(device, text.data(), static_cast<int>(text.size()), &computed_size) == FALSE)
-		return m_size_type{};
-
-	return m_size_type{ computed_size.cx, symbol_list_size.cy };
+	return size;
 }
 
 winp::ui::surface::m_size_type winp::control::object::compute_additional_size_() const{
