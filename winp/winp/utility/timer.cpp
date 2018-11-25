@@ -2,7 +2,7 @@
 #include "timer.h"
 
 winp::utility::timer_object::timer_object()
-	: thread_(*app::object::get_or_create_thread()){}
+	: thread_(app::object::this_thread){}
 
 winp::utility::timer_object::timer_object(thread::object &thread)
 	: thread_(thread){}

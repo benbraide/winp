@@ -68,7 +68,7 @@ std::shared_ptr<winp::event::object> winp::message::dispatcher::create_event_(ui
 }
 
 winp::ui::object *winp::message::dispatcher::find_object_(HANDLE handle){
-	return app::object::get_current_thread()->surface_manager_.find_object_(handle);
+	return app::object::this_thread.surface_manager_.find_object_(handle);
 }
 
 std::size_t winp::message::dispatcher::event_handlers_count_of_(ui::object &target, event::manager_base &ev){

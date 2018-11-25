@@ -537,7 +537,7 @@ void winp::thread::surface_manager::track_mouse_leave_(HWND target, UINT flags){
 }
 
 LRESULT CALLBACK winp::thread::surface_manager::entry_(HWND handle, UINT msg, WPARAM wparam, LPARAM lparam){
-	auto &manager = app::object::get_current_thread()->surface_manager_;
+	auto &manager = app::object::this_thread.surface_manager_;
 
 	auto object = manager.find_object_(handle);
 	if (object == nullptr)//Forward message
@@ -638,7 +638,7 @@ LRESULT CALLBACK winp::thread::surface_manager::entry_(HWND handle, UINT msg, WP
 LRESULT CALLBACK winp::thread::surface_manager::hook_entry_(int code, WPARAM wparam, LPARAM lparam){
 	switch (code){
 	case HCBT_CREATEWND:
-		app::object::get_current_thread()->surface_manager_.create_window_(reinterpret_cast<HWND>(wparam), *reinterpret_cast<CBT_CREATEWNDW *>(lparam));
+		app::object::this_thread.surface_manager_.create_window_(reinterpret_cast<HWND>(wparam), *reinterpret_cast<CBT_CREATEWNDW *>(lparam));
 		break;
 	default:
 		break;

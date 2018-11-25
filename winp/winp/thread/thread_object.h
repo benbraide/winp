@@ -32,10 +32,6 @@ namespace winp::thread{
 		using m_callback_type = queue::callback_type;
 		using m_app_type = app::object;
 
-		object();
-
-		explicit object(const std::function<void(object &)> &entry, const std::function<void(object &)> &exit = nullptr);
-
 		virtual ~object();
 
 		virtual int run();
@@ -86,13 +82,19 @@ namespace winp::thread{
 
 		friend class surface_manager;
 
-		explicit object(bool);
+		explicit object();
 
-		void init_(bool is_main = false);
+		virtual ID2D1Factory *get_draw_factory_() const;
 
-		void add_to_black_list_(unsigned __int64 id);
+		virtual IDWriteFactory *get_write_factory_() const;
 
-		void remove_from_black_list_(unsigned __int64 id);
+		virtual ID2D1DCRenderTarget *get_device_drawer_() const;
+
+		virtual ID2D1SolidColorBrush *get_color_brush_() const;
+
+		virtual void add_to_black_list_(unsigned __int64 id);
+
+		virtual void remove_from_black_list_(unsigned __int64 id);
 
 		virtual bool run_task_();
 
@@ -104,22 +106,18 @@ namespace winp::thread{
 
 		virtual m_callback_type get_next_task_();
 
-		object *ref_ = nullptr;
-
 		std::thread::id id_;
 		DWORD local_id_ = 0;
-
-		bool is_main_ = false;
 		bool is_exiting_ = false;
 
 		HWND message_hwnd_ = nullptr;
 		surface_manager surface_manager_;
 
-		ID2D1Factory *draw_factory_ = nullptr;
-		IDWriteFactory *write_factory_ = nullptr;
+		mutable ID2D1Factory *draw_factory_ = nullptr;
+		mutable IDWriteFactory *write_factory_ = nullptr;
 
-		ID2D1DCRenderTarget *device_drawer_ = nullptr;
-		ID2D1SolidColorBrush *color_brush_ = nullptr;
+		mutable ID2D1DCRenderTarget *device_drawer_ = nullptr;
+		mutable ID2D1SolidColorBrush *color_brush_ = nullptr;
 
 		utility::random_integral_number random_generator_;
 		utility::random_integral_number menu_random_generator_;

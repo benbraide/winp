@@ -18,21 +18,17 @@ namespace winp::app{
 	public:
 		using m_thread_type = thread::object;
 
-		static void init();
-
 		static void shut_down();
 
 		static bool is_shut_down();
 
 		static int run(bool shut_down_after = true);
 
-		static m_thread_type *get_main_thread();
-
-		static m_thread_type *get_current_thread();
-
-		static m_thread_type *get_or_create_thread();
-
 		static WNDPROC get_default_message_entry(const wchar_t *class_name);
+
+		static m_thread_type &get_main_thread();
+
+		static thread_local m_thread_type this_thread;
 
 	protected:
 		friend class thread::item;
@@ -52,13 +48,11 @@ namespace winp::app{
 		static std::unordered_map<DWORD, m_thread_type *> threads_;
 		static std::unordered_map<DWORD, std::shared_ptr<m_thread_type>> created_threads_;
 
-		static bool is_initialized_;
 		static bool is_shut_down_;
+		static DWORD main_thread_id_;
 
 		static WNDCLASSEXW class_info_;
 		static std::unordered_map<std::size_t, WNDPROC> message_entry_list_;
 		static std::mutex lock_;
-
-		static DWORD main_thread_id_;
 	};
 }

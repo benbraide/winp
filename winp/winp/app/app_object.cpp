@@ -1,10 +1,5 @@
 #include "app_object.h"
 
-void winp::app::object::init(){
-	std::lock_guard<std::mutex> guard(lock_);
-	init_();
-}
-
 void winp::app::object::shut_down(){
 	std::lock_guard<std::mutex> guard(lock_);
 	if (!is_shut_down_){
@@ -22,7 +17,7 @@ bool winp::app::object::is_shut_down(){
 int winp::app::object::run(bool shut_down_after){
 	{//Scoped
 		std::lock_guard<std::mutex> guard(lock_);
-		if (is_shut_down_ || !is_initialized_ || GetCurrentThreadId() != main_thread_id_)
+		if (is_shut_down_ || GetCurrentThreadId() != main_thread_id_)
 			return -1;
 	}
 	
@@ -31,39 +26,6 @@ int winp::app::object::run(bool shut_down_after){
 		shut_down();
 
 	return result;
-}
-
-winp::app::object::m_thread_type *winp::app::object::get_main_thread(){
-	std::lock_guard<std::mutex> guard(lock_);
-	return find_thread_(main_thread_id_);
-}
-
-winp::app::object::m_thread_type *winp::app::object::get_current_thread(){
-	std::lock_guard<std::mutex> guard(lock_);
-	return find_thread_(GetCurrentThreadId());
-}
-
-winp::app::object::m_thread_type *winp::app::object::get_or_create_thread(){
-	std::lock_guard<std::mutex> guard(lock_);
-
-	auto current_id = GetCurrentThreadId();
-	auto thread = find_thread_(current_id);
-	if (thread != nullptr)
-		return thread;
-
-	if (current_id == main_thread_id_){//App has not been initialized
-		init_();
-		return find_thread_(main_thread_id_);
-	}
-
-	auto created_thread = std::make_shared<m_thread_type>();
-	if (created_thread == nullptr)
-		return nullptr;
-
-	threads_[current_id] = created_thread.get();
-	created_threads_[current_id] = created_thread;
-
-	return created_thread.get();
 }
 
 WNDPROC winp::app::object::get_default_message_entry(const wchar_t *class_name){
@@ -81,16 +43,12 @@ WNDPROC winp::app::object::get_default_message_entry(const wchar_t *class_name){
 	return (message_entry_list_[key] = class_info.lpfnWndProc);
 }
 
+winp::app::object::m_thread_type &winp::app::object::get_main_thread(){
+	std::lock_guard<std::mutex> guard(lock_);
+	return *find_thread_(main_thread_id_);
+}
+
 void winp::app::object::init_(){
-	if (is_initialized_)
-		return;//Already initialized
-
-	is_initialized_ = true;
-	std::shared_ptr<m_thread_type> main_thread;
-
-	main_thread.reset(new thread::object(true));
-	created_threads_[main_thread_id_] = main_thread;
-
 	class_info_.cbSize = sizeof(WNDCLASSEXW);
 	class_info_.hInstance = GetModuleHandleW(nullptr);
 	class_info_.lpfnWndProc = thread::surface_manager::entry_;
@@ -116,8 +74,11 @@ void winp::app::object::init_(){
 
 void winp::app::object::add_thread_(m_thread_type &thread){
 	std::lock_guard<std::mutex> guard(lock_);
-	if (!is_shut_down_)
+	if (!is_shut_down_){
 		threads_[thread.local_id_] = &thread;
+		if (thread.local_id_ == main_thread_id_ || threads_.size() == 1u)
+			init_();//Main thread
+	}
 }
 
 void winp::app::object::add_main_thread_(m_thread_type &thread){
@@ -143,18 +104,18 @@ winp::app::object::m_thread_type *winp::app::object::find_thread_(DWORD id){
 	return ((it == threads_.end()) ? nullptr : it->second);
 }
 
+thread_local winp::app::object::m_thread_type winp::app::object::this_thread;
+
 std::unordered_map<DWORD, winp::app::object::m_thread_type *> winp::app::object::threads_;
 
 std::unordered_map<DWORD, std::shared_ptr<winp::app::object::m_thread_type>> winp::app::object::created_threads_;
 
-bool winp::app::object::is_initialized_ = false;
-
 bool winp::app::object::is_shut_down_ = false;
+
+DWORD winp::app::object::main_thread_id_ = GetCurrentThreadId();
 
 WNDCLASSEXW winp::app::object::class_info_{};
 
 std::unordered_map<std::size_t, WNDPROC> winp::app::object::message_entry_list_;
 
 std::mutex winp::app::object::lock_;
-
-DWORD winp::app::object::main_thread_id_ = GetCurrentThreadId();

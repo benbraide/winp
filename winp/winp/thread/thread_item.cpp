@@ -1,7 +1,7 @@
 #include "../app/app_object.h"
 
 winp::thread::item::item()
-	: thread_(*app::object::get_or_create_thread()){
+	: thread_(app::object::this_thread){
 	id_ = reinterpret_cast<std::size_t>(this);
 	thread_.remove_from_black_list_(id_);//In case ID is reused
 }
