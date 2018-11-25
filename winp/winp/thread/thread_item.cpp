@@ -3,13 +3,11 @@
 winp::thread::item::item()
 	: thread_(app::object::this_thread){
 	id_ = reinterpret_cast<std::size_t>(this);
-	thread_.remove_from_black_list_(id_);//In case ID is reused
 }
 
 winp::thread::item::item(object &thread)
 	: thread_(thread){
 	id_ = reinterpret_cast<std::size_t>(this);
-	thread_.remove_from_black_list_(id_);//In case ID is reused
 }
 
 winp::thread::item::~item(){
@@ -34,9 +32,9 @@ void winp::thread::item::destruct(){
 	}
 
 	if (!thread_.is_thread_context()){
-		thread_.queue.add([=]{
+		thread_.queue.execute([=]{
 			destruct_();
-		}, thread::queue::send_priority, id_).get();
+		}, thread::queue::send_priority, id_);
 	}
 	else//Inside thread context
 		destruct_();

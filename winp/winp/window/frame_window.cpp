@@ -41,7 +41,7 @@ std::wstring winp::window::frame::get_caption(const std::function<void(const std
 		return L"";
 	}
 
-	return thread_.queue.add([=]{ return get_caption_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([=]{ return get_caption_(); }, thread::queue::send_priority, id_);
 }
 
 winp::menu::wrapper_collection *winp::window::frame::get_system_menu(const std::function<void(menu::wrapper_collection &)> &callback){
@@ -57,7 +57,7 @@ winp::menu::wrapper_collection *winp::window::frame::get_system_menu(const std::
 		return nullptr;
 	}
 
-	return thread_.queue.add([=]{ return get_system_menu_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([=]{ return get_system_menu_(); }, thread::queue::send_priority, id_);
 }
 
 DWORD winp::window::frame::get_persistent_styles_() const{

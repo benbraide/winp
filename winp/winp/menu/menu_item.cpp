@@ -32,7 +32,7 @@ winp::ui::surface *winp::menu::item::get_popup(const std::function<void(ui::surf
 		return nullptr;
 	}
 
-	return thread_.queue.add([this]{ return get_popup_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this]{ return get_popup_(); }, thread::queue::send_priority, id_);
 }
 
 bool winp::menu::item::set_label(const std::wstring &value, const std::function<void(item_component &, bool)> &callback){
@@ -65,7 +65,7 @@ const std::wstring *winp::menu::item::get_label(const std::function<void(const s
 		return nullptr;
 	}
 
-	return thread_.queue.add([this]{ return get_label_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this]{ return get_label_(); }, thread::queue::send_priority, id_);
 }
 
 bool winp::menu::item::set_shortcut(const std::wstring &value, const std::function<void(item_component &, bool)> &callback){
@@ -98,7 +98,7 @@ const std::wstring *winp::menu::item::get_shortcut(const std::function<void(cons
 		return nullptr;
 	}
 
-	return thread_.queue.add([this]{ return get_shortcut_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this]{ return get_shortcut_(); }, thread::queue::send_priority, id_);
 }
 
 bool winp::menu::item::make_default(const std::function<void(item_component &, bool)> &callback){
@@ -139,7 +139,7 @@ HBITMAP winp::menu::item::get_bitmap(const std::function<void(HBITMAP)> &callbac
 		return nullptr;
 	}
 
-	return thread_.queue.add([this]{ return get_bitmap_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this]{ return get_bitmap_(); }, thread::queue::send_priority, id_);
 }
 
 bool winp::menu::item::select(const std::function<void(item_component &, bool)> &callback){

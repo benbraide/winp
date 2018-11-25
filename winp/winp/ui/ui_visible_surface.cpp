@@ -53,7 +53,7 @@ bool winp::ui::visible_surface::is_visible(const std::function<void(bool)> &call
 		return false;
 	}
 
-	return thread_.queue.add([this]{ return is_visible_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this]{ return is_visible_(); }, thread::queue::send_priority, id_);
 }
 
 bool winp::ui::visible_surface::set_transparency(bool is_transparent, const std::function<void(object &, bool)> &callback){
@@ -86,7 +86,7 @@ bool winp::ui::visible_surface::is_transparent(const std::function<void(bool)> &
 		return false;
 	}
 
-	return thread_.queue.add([this]{ return is_transparent_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this]{ return is_transparent_(); }, thread::queue::send_priority, id_);
 }
 
 bool winp::ui::visible_surface::set_background_color(const D2D1::ColorF &value, const std::function<void(object &, bool)> &callback){
@@ -119,7 +119,7 @@ D2D1::ColorF winp::ui::visible_surface::get_background_color(const std::function
 		return D2D1::ColorF(0);
 	}
 
-	return *(thread_.queue.add([this]{ return &get_background_color_(); }, thread::queue::send_priority, id_).get());
+	return *(thread_.queue.execute([this]{ return &get_background_color_(); }, thread::queue::send_priority, id_));
 }
 
 winp::ui::visible_surface::m_colorf winp::ui::visible_surface::convert_from_d2d1_colorf(const D2D1::ColorF &value){

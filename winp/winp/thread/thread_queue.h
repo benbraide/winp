@@ -4,8 +4,8 @@
 #include <list>
 #include <mutex>
 #include <thread>
-#include <future>
 #include <memory>
+#include <future>
 #include <variant>
 #include <functional>
 #include <unordered_map>
@@ -17,121 +17,34 @@ namespace winp::thread{
 	public:
 		using callback_type = std::function<void()>;
 
-		struct list_item_info{
-			unsigned __int64 id;
-			callback_type callback;
-		};
-
-		using list_type = std::map<int, std::list<list_item_info>, std::greater<>>;
-
-		struct added_info_type{
-			std::list<list_item_info> *list = nullptr;
-			list_item_info *it;
-		};
-
-		template <class target_type>
-		class future{
-		public:
-			using m_target_type = target_type;
-			using m_callback_type = std::function<m_target_type()>;
-			using m_future_type = std::future<m_target_type>;
-			using m_promise_type = std::promise<target_type>;
-
-			struct m_immediate_info_type{
-				std::list<list_item_info> *list = nullptr;
-				list_item_info *it;
-				m_callback_type task;
-				queue *owner = nullptr;
-			};
-
-			using m_value_type = std::variant<m_future_type, m_immediate_info_type, char>;
-
-			explicit future(std::shared_ptr<m_promise_type> promise)
-				: value_(promise->get_future()), promise_(promise){}
-
-			future(std::list<list_item_info> &list, list_item_info &it, m_callback_type task, queue &owner)
-				: value_(m_immediate_info_type{ &list, &it, task, &owner }){}
-
-			template <typename unused_type = target_type>
-			std::enable_if_t<!std::is_void_v<unused_type>, m_target_type> get(){
-				if (std::holds_alternative<char>(value_))
-					return m_target_type();
-				return get_();
-			}
-
-			template <typename unused_type = target_type>
-			std::enable_if_t<std::is_void_v<unused_type>, m_target_type> get(){
-				if (!std::holds_alternative<char>(value_))
-					get_();
-			}
-
-		private:
-			friend class queue;
-
-			future()
-				: value_('\0'){}
-
-			m_target_type get_(){
-				if (std::holds_alternative<m_immediate_info_type>(value_)){
-					auto &info = std::get<m_immediate_info_type>(value_);
-					{//Scoped
-						std::lock_guard<std::mutex> guard(info.owner->lock_);
-						auto it = std::find_if(info.list->begin(), info.list->end(), [&info](const list_item_info &item_info){
-							return (&item_info == info.it);
-						});
-
-						if (it != info.list->end())
-							info.list->erase(it);
-					}
-					
-					return info.task();
-				}
-				
-				return std::get<m_future_type>(value_).get();
-			}
-
-			m_value_type value_;
-			std::shared_ptr<m_promise_type> promise_;
-		};
+		using list_type = std::list<callback_type>;
+		using map_type = std::map<int, list_type, std::greater<>>;
 
 		template <typename function_type>
-		auto add(const function_type &task, int priority = 0, unsigned __int64 id = 0u){
+		auto execute(const function_type &task, int priority = 0, unsigned __int64 id = 0u){
 			using return_type = decltype(task());
-			if (is_inside_thread_context_()){
-				auto info = add_([this, task, id]{
-					if (!is_black_listed_(id))
-						task();
-				}, priority, id);
+			if (is_inside_thread_context_())
+				return call_<return_type>(task, id, std::bool_constant<std::is_void_v<return_type>>());
 
-				if (info.list == nullptr || info.it == nullptr)
-					return future<return_type>();
-
-				return future<return_type>(*info.list, *info.it, task, *this);
-			}
-
-			auto promise = std::make_shared<std::promise<return_type>>();
-			auto info = add_([this, task, id, promise]{
+			auto promise = std::promise<return_type>();
+			add_([&]{
 				if (is_black_listed_(id))
-					set_null_promise_value_<return_type>(*promise, std::bool_constant<std::is_void_v<return_type>>());
+					set_null_promise_value_<return_type>(promise, std::bool_constant<std::is_void_v<return_type>>());
 				else
-					set_promise_value_(*promise, task, std::bool_constant<std::is_void_v<return_type>>());
-			}, priority, id);
+					set_promise_value_(promise, task, std::bool_constant<std::is_void_v<return_type>>());
+			}, priority);
 
-			if (info.list == nullptr || info.it == nullptr)
-				return future<return_type>();
-
-			return future<return_type>(promise);
+			return promise.get_future().get();
 		}
 
 		void post(const callback_type &task, int priority = 0, unsigned __int64 id = 0u);
 
-		object *get_thread() const;
+		object &get_thread();
 
 		static const int send_priority = 99999;
 
 	protected:
 		friend class object;
-		template <class> friend class future;
 
 		explicit queue(object &thread);
 
@@ -141,7 +54,7 @@ namespace winp::thread{
 
 		bool is_black_listed_(unsigned __int64 id) const;
 
-		added_info_type add_(const callback_type &task, int priority, unsigned __int64 id);
+		void add_(const callback_type &task, int priority);
 
 		void pop_all_send_priorities_(std::list<callback_type> &list);
 
@@ -150,6 +63,17 @@ namespace winp::thread{
 		callback_type pop_();
 
 		bool is_inside_thread_context_() const;
+
+		template <typename return_type, typename function_type>
+		return_type call_(const function_type &task, unsigned __int64 id, std::false_type){
+			return (is_black_listed_(id) ? return_type() : task());
+		}
+
+		template <typename return_type, typename function_type>
+		return_type call_(const function_type &task, unsigned __int64 id, std::true_type){
+			if (!is_black_listed_(id))
+				task();
+		}
 
 		template <typename return_type, typename promise_type>
 		void set_null_promise_value_(promise_type &promise, std::true_type){
@@ -175,7 +99,7 @@ namespace winp::thread{
 		object &thread_;
 		std::mutex lock_;
 
-		list_type list_;
+		map_type map_;
 		std::unordered_map<unsigned __int64, char> black_list_;
 	};
 }

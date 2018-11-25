@@ -72,7 +72,7 @@ namespace winp::event{
 				return 0u;
 			}
 
-			return manager_base::get_thread_().queue.add([=]{ return bind_(handler); }, thread::queue::send_priority, manager_base::get_owner_id_()).get();
+			return manager_base::get_thread_().queue.execute([=]{ return bind_(handler); }, thread::queue::send_priority, manager_base::get_owner_id_());
 		}
 
 		unsigned __int64 bind(const m_no_arg_callback_type &handler, const std::function<void(manager_base &, unsigned __int64)> &callback = nullptr){
@@ -94,7 +94,7 @@ namespace winp::event{
 				return false;
 			}
 
-			return manager_base::get_thread_().queue.add([=]{ return unbind_(id); }, thread::queue::send_priority, manager_base::get_owner_id_()).get();
+			return manager_base::get_thread_().queue.execute([=]{ return unbind_(id); }, thread::queue::send_priority, manager_base::get_owner_id_());
 		}
 
 	protected:

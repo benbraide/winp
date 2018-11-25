@@ -61,7 +61,7 @@ HANDLE winp::ui::object::get_handle(const std::function<void(HANDLE)> &callback)
 		return nullptr;
 	}
 
-	return thread_.queue.add([this]{ return get_handle_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this]{ return get_handle_(); }, thread::queue::send_priority, id_);
 }
 
 std::size_t winp::ui::object::set_parent(tree *value, const std::function<void(object &, bool, std::size_t)> &callback){
@@ -94,7 +94,7 @@ winp::ui::tree *winp::ui::object::get_parent(const std::function<void(tree *)> &
 		return nullptr;
 	}
 
-	return thread_.queue.add([this]{ return get_parent_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this]{ return get_parent_(); }, thread::queue::send_priority, id_);
 }
 
 std::size_t winp::ui::object::set_index(std::size_t value, const std::function<void(object &, bool, std::size_t)> &callback){
@@ -127,7 +127,7 @@ std::size_t winp::ui::object::get_index(const std::function<void(std::size_t)> &
 		return static_cast<std::size_t>(-1);
 	}
 
-	return thread_.queue.add([this]{ return get_index_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this]{ return get_index_(); }, thread::queue::send_priority, id_);
 }
 
 bool winp::ui::object::set_previous_sibling(object *target, const std::function<void(object &, bool)> &callback){
@@ -160,7 +160,7 @@ winp::ui::object *winp::ui::object::get_previous_sibling(const std::function<voi
 		return nullptr;
 	}
 
-	return thread_.queue.add([this]{ return get_previous_sibling_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this]{ return get_previous_sibling_(); }, thread::queue::send_priority, id_);
 }
 
 bool winp::ui::object::set_next_sibling(object *target, const std::function<void(object &, bool)> &callback){
@@ -193,7 +193,7 @@ winp::ui::object *winp::ui::object::get_next_sibling(const std::function<void(ob
 		return nullptr;
 	}
 
-	return thread_.queue.add([this]{ return get_next_sibling_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this]{ return get_next_sibling_(); }, thread::queue::send_priority, id_);
 }
 
 winp::utility::dynamic_list<winp::ui::tree, winp::ui::object> winp::ui::object::get_ancestors() const{
@@ -216,11 +216,11 @@ void winp::ui::object::init_(){
 	ancestor_list_.init_([this](){//begin
 		if (thread_.is_thread_context())
 			return get_parent_();
-		return thread_.queue.add([this]() -> tree *{ return get_parent_(); }, thread::queue::send_priority, id_).get();
+		return thread_.queue.execute([this]() -> tree *{ return get_parent_(); }, thread::queue::send_priority, id_);
 	}, [this](tree *current){//next
 		if (current->thread_.is_thread_context())
 			return current->get_parent_();
-		return thread_.queue.add([&]() -> tree *{ return current->get_parent_(); }, thread::queue::send_priority, id_).get();
+		return thread_.queue.execute([&]() -> tree *{ return current->get_parent_(); }, thread::queue::send_priority, id_);
 	});
 
 	sibling_list_.init_([this]() -> object *{//begin
@@ -232,13 +232,13 @@ void winp::ui::object::init_(){
 			return ((get_index_() == 0u) ? parent->get_child_at_(1) : parent->get_child_at_(0));
 		}
 
-		return thread_.queue.add([this]() -> object *{
+		return thread_.queue.execute([this]() -> object *{
 			auto parent = get_parent_();
 			if (parent == nullptr)
 				return nullptr;
 
 			return ((get_index_() == 0u) ? parent->get_child_at_(1) : parent->get_child_at_(0));
-		}, thread::queue::send_priority, id_).get();
+		}, thread::queue::send_priority, id_);
 	}, [this](object *current) -> object *{//next
 		if (current->thread_.is_thread_context()){
 			auto parent = get_parent_();
@@ -251,7 +251,7 @@ void winp::ui::object::init_(){
 			return ((value == this) ? parent_->get_child_at_(index + 2u) : value);
 		}
 
-		return thread_.queue.add([&]() -> object *{
+		return thread_.queue.execute([&]() -> object *{
 			auto parent = get_parent_();
 			if (parent == nullptr || current->get_parent_() != parent)
 				return nullptr;
@@ -260,7 +260,7 @@ void winp::ui::object::init_(){
 			auto value = parent_->get_child_at_(index + 1u);
 
 			return ((value == this) ? parent_->get_child_at_(index + 2u) : value);
-		}, thread::queue::send_priority, id_).get();
+		}, thread::queue::send_priority, id_);
 	});
 }
 
@@ -426,7 +426,7 @@ LRESULT winp::ui::object::do_send_message_(UINT msg, WPARAM wparam, LPARAM lpara
 		return 0;
 	}
 
-	return thread_.queue.add([=]{ return send_message_(msg, wparam, lparam); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([=]{ return send_message_(msg, wparam, lparam); }, thread::queue::send_priority, id_);
 }
 
 LRESULT winp::ui::object::send_message_(UINT msg, WPARAM wparam, LPARAM lparam){
@@ -443,7 +443,7 @@ bool winp::ui::object::do_post_message_(UINT msg, WPARAM wparam, LPARAM lparam, 
 		return false;
 	}
 
-	return thread_.queue.add([=]{ return post_message_(msg, wparam, lparam); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([=]{ return post_message_(msg, wparam, lparam); }, thread::queue::send_priority, id_);
 }
 
 bool winp::ui::object::post_message_(UINT msg, WPARAM wparam, LPARAM lparam){

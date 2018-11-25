@@ -32,7 +32,7 @@ bool winp::menu::object::is_popup(const std::function<void(bool)> &callback) con
 		return false;
 	}
 
-	return thread_.queue.add([this]{ return is_popup_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this]{ return is_popup_(); }, thread::queue::send_priority, id_);
 }
 
 bool winp::menu::object::create_(){

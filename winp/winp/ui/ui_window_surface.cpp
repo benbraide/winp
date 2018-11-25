@@ -94,7 +94,7 @@ bool winp::ui::window_surface::is_maximized(const std::function<void(bool)> &cal
 		return false;
 	}
 
-	return thread_.queue.add([this]{ return is_maximized_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this]{ return is_maximized_(); }, thread::queue::send_priority, id_);
 }
 
 bool winp::ui::window_surface::minimize(const std::function<void(object &, bool)> &callback){
@@ -161,7 +161,7 @@ bool winp::ui::window_surface::is_minimized(const std::function<void(bool)> &cal
 		return false;
 	}
 
-	return thread_.queue.add([this]{ return is_minimized_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this]{ return is_minimized_(); }, thread::queue::send_priority, id_);
 }
 
 bool winp::ui::window_surface::set_styles(DWORD value, bool is_extended, const std::function<void(object &, bool)> &callback){
@@ -228,7 +228,7 @@ DWORD winp::ui::window_surface::get_styles(bool is_extended, const std::function
 		return false;
 	}
 
-	return thread_.queue.add([=]{ return get_styles_(is_extended); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([=]{ return get_styles_(is_extended); }, thread::queue::send_priority, id_);
 }
 
 bool winp::ui::window_surface::has_styles(DWORD value, bool is_extended, bool has_all, const std::function<void(bool)> &callback) const{
@@ -244,7 +244,7 @@ bool winp::ui::window_surface::has_styles(DWORD value, bool is_extended, bool ha
 		return false;
 	}
 
-	return thread_.queue.add([=]{ return has_styles_(value, is_extended, has_all); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([=]{ return has_styles_(value, is_extended, has_all); }, thread::queue::send_priority, id_);
 }
 
 void winp::ui::window_surface::destruct_(){

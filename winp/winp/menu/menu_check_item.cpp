@@ -95,7 +95,7 @@ HBITMAP winp::menu::check_item::get_checked_bitmap(const std::function<void(HBIT
 		return nullptr;
 	}
 
-	return thread_.queue.add([this]{ return get_checked_bitmap_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this]{ return get_checked_bitmap_(); }, thread::queue::send_priority, id_);
 }
 
 bool winp::menu::check_item::set_unchecked_bitmap(HBITMAP value, const std::function<void(item_component &, bool)> &callback){
@@ -128,7 +128,7 @@ HBITMAP winp::menu::check_item::get_unchecked_bitmap(const std::function<void(HB
 		return nullptr;
 	}
 
-	return thread_.queue.add([this]{ return get_unchecked_bitmap_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this]{ return get_unchecked_bitmap_(); }, thread::queue::send_priority, id_);
 }
 
 bool winp::menu::check_item::validate_child_insert_(const ui::object &child, std::size_t index) const{

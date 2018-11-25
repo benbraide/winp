@@ -78,7 +78,7 @@ std::size_t winp::ui::tree::find_child(const object &child, const std::function<
 		return static_cast<std::size_t>(-1);
 	}
 
-	return thread_.queue.add([this, pchild]{ return find_child_(*pchild); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this, pchild]{ return find_child_(*pchild); }, thread::queue::send_priority, id_);
 }
 
 winp::ui::object *winp::ui::tree::get_child_at(std::size_t index, const std::function<void(object *)> &callback) const{
@@ -94,7 +94,7 @@ winp::ui::object *winp::ui::tree::get_child_at(std::size_t index, const std::fun
 		return nullptr;
 	}
 
-	return thread_.queue.add([=]{ return get_child_at_(index); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([=]{ return get_child_at_(index); }, thread::queue::send_priority, id_);
 }
 
 void winp::ui::tree::traverse_children(const std::function<void(object *)> &callback, bool post) const{
@@ -109,10 +109,10 @@ void winp::ui::tree::traverse_children(const std::function<void(object *)> &call
 		}, thread::queue::send_priority, id_);
 	}
 	else{//Wait for traversal
-		thread_.queue.add([=]{
+		thread_.queue.execute([=]{
 			for (auto child : children_)
 				callback(child);
-		}, thread::queue::send_priority, id_).get();
+		}, thread::queue::send_priority, id_);
 	}
 }
 

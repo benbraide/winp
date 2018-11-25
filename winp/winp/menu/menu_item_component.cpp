@@ -42,7 +42,7 @@ std::size_t winp::menu::item_component::get_absolute_index(const std::function<v
 		return false;
 	}
 
-	return thread_.queue.add([this]{ return get_absolute_index_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this]{ return get_absolute_index_(); }, thread::queue::send_priority, id_);
 }
 
 UINT winp::menu::item_component::get_local_id(const std::function<void(UINT)> &callback) const{
@@ -58,7 +58,7 @@ UINT winp::menu::item_component::get_local_id(const std::function<void(UINT)> &c
 		return 0u;
 	}
 
-	return thread_.queue.add([this]{ return get_local_id_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this]{ return get_local_id_(); }, thread::queue::send_priority, id_);
 }
 
 bool winp::menu::item_component::set_state(UINT value, const std::function<void(item_component &, bool)> &callback){
@@ -108,7 +108,7 @@ UINT winp::menu::item_component::get_states(const std::function<void(UINT)> &cal
 		return 0u;
 	}
 
-	return thread_.queue.add([this]{ return get_states_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this]{ return get_states_(); }, thread::queue::send_priority, id_);
 }
 
 bool winp::menu::item_component::has_state(UINT value, const std::function<void(bool)> &callback) const{
@@ -124,7 +124,7 @@ bool winp::menu::item_component::has_state(UINT value, const std::function<void(
 		return false;
 	}
 
-	return thread_.queue.add([=]{ return has_state_(value); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([=]{ return has_state_(value); }, thread::queue::send_priority, id_);
 }
 
 bool winp::menu::item_component::has_states(UINT value, const std::function<void(bool)> &callback) const{
@@ -140,7 +140,7 @@ bool winp::menu::item_component::has_states(UINT value, const std::function<void
 		return false;
 	}
 
-	return thread_.queue.add([=]{ return has_states_(value); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([=]{ return has_states_(value); }, thread::queue::send_priority, id_);
 }
 
 bool winp::menu::item_component::enable(const std::function<void(item_component &, bool)> &callback){
@@ -168,7 +168,7 @@ bool winp::menu::item_component::is_owner_drawn(const std::function<void(bool)> 
 		return false;
 	}
 
-	return thread_.queue.add([this]{ return is_owner_drawn_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this]{ return is_owner_drawn_(); }, thread::queue::send_priority, id_);
 }
 
 bool winp::menu::item_component::is_popup_item(const std::function<void(bool)> &callback) const{
@@ -184,7 +184,7 @@ bool winp::menu::item_component::is_popup_item(const std::function<void(bool)> &
 		return false;
 	}
 
-	return thread_.queue.add([this]{ return is_popup_item_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this]{ return is_popup_item_(); }, thread::queue::send_priority, id_);
 }
 
 void winp::menu::item_component::destruct_(){

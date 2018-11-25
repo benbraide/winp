@@ -37,7 +37,7 @@ HFONT winp::control::object::get_font(const std::function<void(HFONT)> &callback
 		return nullptr;
 	}
 
-	return thread_.queue.add([this]{ return get_font_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this]{ return get_font_(); }, thread::queue::send_priority, id_);
 }
 
 bool winp::control::object::set_text(const std::wstring &value, const std::function<void(object &, bool)> &callback){
@@ -70,7 +70,7 @@ std::wstring winp::control::object::get_text(const std::function<void(const std:
 		return L"";
 	}
 
-	return thread_.queue.add([this]{ return get_text_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this]{ return get_text_(); }, thread::queue::send_priority, id_);
 }
 
 winp::ui::surface::m_size_type winp::control::object::compute_size(HWND handle, HDC device, HFONT font, const std::wstring &text){

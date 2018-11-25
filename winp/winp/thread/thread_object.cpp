@@ -10,15 +10,6 @@ winp::thread::object::object()
 }
 
 winp::thread::object::~object(){
-	if (!is_thread_context()){//Stop thread if running
-		queue.add([=]{
-			is_exiting_ = true;
-			run_all_tasks_();
-		}, thread::queue::send_priority).get();
-	}
-	else
-		run_all_tasks_();
-
 	app::object::remove_thread_(local_id_);
 }
 

@@ -27,7 +27,7 @@ std::size_t winp::menu::group::get_absolute_index(const std::function<void(std::
 		return static_cast<std::size_t>(-1);
 	}
 
-	return thread_.queue.add([this]{ return get_absolute_index_(); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([this]{ return get_absolute_index_(); }, thread::queue::send_priority, id_);
 }
 
 winp::menu::item_component *winp::menu::group::find_component(UINT id, const std::function<void(menu::item_component *)> &callback) const{
@@ -43,7 +43,7 @@ winp::menu::item_component *winp::menu::group::find_component(UINT id, const std
 		return nullptr;
 	}
 
-	return thread_.queue.add([=]{ return find_component_(id, nullptr); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([=]{ return find_component_(id, nullptr); }, thread::queue::send_priority, id_);
 }
 
 winp::menu::item_component *winp::menu::group::get_component_at_absolute_index(std::size_t index, const std::function<void(menu::item_component *)> &callback) const{
@@ -59,7 +59,7 @@ winp::menu::item_component *winp::menu::group::get_component_at_absolute_index(s
 		return nullptr;
 	}
 
-	return thread_.queue.add([=]{ return get_component_at_absolute_index_(index); }, thread::queue::send_priority, id_).get();
+	return thread_.queue.execute([=]{ return get_component_at_absolute_index_(index); }, thread::queue::send_priority, id_);
 }
 
 void winp::menu::group::destruct_(){
