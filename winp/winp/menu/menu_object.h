@@ -33,6 +33,9 @@ namespace winp::menu{
 		event::manager<object, event::object> check_event{ *this };
 		event::manager<object, event::object> uncheck_event{ *this };
 
+		event::manager<object, event::draw_item> draw_item_event{ *this };
+		event::manager<object, event::measure_item> measure_item_event{ *this };
+
 	protected:
 		friend class menu::item_component;
 		friend class menu::item;

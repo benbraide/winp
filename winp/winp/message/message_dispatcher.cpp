@@ -229,6 +229,9 @@ winp::message::draw_item_dispatcher::draw_item_dispatcher()
 }
 
 void winp::message::draw_item_dispatcher::post_dispatch_(event::object &e){
+	if (propagation_stopped_of_(e))
+		return;
+
 	auto context = e.get_context();
 	if (!bubble_to_type_of_<menu::object, ui::window_surface>(e)){
 		set_context_of_(e, *context);
@@ -248,20 +251,23 @@ void winp::message::draw_item_dispatcher::fire_event_(event::object &e){
 
 	if (e.get_info()->message == WM_DRAWITEM){
 		if (menu_target != nullptr)
-			fire_event_of_(*menu_target, menu_target->init_item_event, e);
+			fire_event_of_(*menu_target, menu_target->draw_item_event, e);
 		else if (menu_item_target != nullptr)
 			fire_event_of_(*menu_item_target, menu_item_target->draw_item_event, e);
 		else if (window_target != nullptr)
-			fire_event_of_(*window_target, window_target->menu_init_item_event, e);
+			fire_event_of_(*window_target, window_target->draw_menu_item_event, e);
 	}
 	else if (e.get_info()->message == WM_MEASUREITEM){
 		if (menu_target != nullptr)
-			fire_event_of_(*menu_target, menu_target->init_item_event, e);
+			fire_event_of_(*menu_target, menu_target->measure_item_event, e);
 		else if (menu_item_target != nullptr)
 			fire_event_of_(*menu_item_target, menu_item_target->measure_item_event, e);
 		else if (window_target != nullptr)
-			fire_event_of_(*window_target, window_target->menu_init_item_event, e);
+			fire_event_of_(*window_target, window_target->measure_menu_item_event, e);
 	}
+
+	if (default_prevented_of_(e))
+		set_result_of_(e, 1, false);
 }
 
 std::shared_ptr<winp::event::object> winp::message::draw_item_dispatcher::create_event_(ui::object &target, const MSG &info, bool call_default){

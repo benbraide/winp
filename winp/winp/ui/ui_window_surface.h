@@ -64,6 +64,9 @@ namespace winp::ui{
 		event::manager<window_surface, event::object> menu_check_event{ *this };
 		event::manager<window_surface, event::object> menu_uncheck_event{ *this };
 
+		event::manager<window_surface, event::draw_item> draw_menu_item_event{ *this };
+		event::manager<window_surface, event::measure_item> measure_menu_item_event{ *this };
+
 	protected:
 		friend class message::dispatcher;
 		friend class thread::surface_manager;

@@ -10,6 +10,22 @@ winp::menu::check_item::check_item(ui::tree &parent)
 
 winp::menu::check_item::~check_item() = default;
 
+bool winp::menu::check_item::is_radio(const std::function<void(bool)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = is_radio_();
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
+	if (callback != nullptr){
+		thread_.queue.post([=]{ callback(is_radio_()); }, thread::queue::send_priority, id_);
+		return false;
+	}
+
+	return thread_.queue.execute([this]{ return is_radio_(); }, thread::queue::send_priority, id_);
+}
+
 bool winp::menu::check_item::check(const std::function<void(item_component &, bool)> &callback){
 	if (thread_.is_thread_context()){
 		auto result = check_();
@@ -151,15 +167,18 @@ bool winp::menu::check_item::select_(){
 	return toggle_check_();
 }
 
+bool winp::menu::check_item::is_radio_() const{
+	return (get_first_ancestor_of_<menu::radio_group, menu::object>() != nullptr);
+}
+
 bool winp::menu::check_item::check_(){
 	if (has_state_(MFS_CHECKED))
 		return true;
 
 	auto parent = get_parent_();
-	auto radio_group_parent = dynamic_cast<radio_group *>(parent);
-
 	check_item *check_child;
-	if (radio_group_parent != nullptr){
+
+	if (is_radio_()){
 		for (auto child : parent->children_){
 			if ((check_child = dynamic_cast<check_item *>(child)) != nullptr)
 				check_child->uncheck_(true);
@@ -181,7 +200,7 @@ bool winp::menu::check_item::uncheck_(bool force){
 	if (!has_state_(MFS_CHECKED))
 		return true;
 
-	if (!force && dynamic_cast<radio_group *>(get_parent_()) != nullptr)
+	if (!force && is_radio_())
 		return false;//Cannot remove check from a radio item
 
 	remove_state_(MFS_CHECKED);

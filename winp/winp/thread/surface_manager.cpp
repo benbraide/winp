@@ -497,11 +497,16 @@ LRESULT winp::thread::surface_manager::context_menu_(ui::io_surface &target, con
 
 LRESULT winp::thread::surface_manager::draw_item_(ui::surface &target, const MSG &info, bool prevent_default){
 	if (info.wParam == 0){//Menu target
-		auto item = find_item_(reinterpret_cast<DRAWITEMSTRUCT *>(info.lParam)->itemID);
+		auto pinfo = reinterpret_cast<DRAWITEMSTRUCT *>(info.lParam);
+		auto item = dynamic_cast<menu::item_component *>(find_item_(pinfo->itemID));
+
 		if (item == nullptr)
 			return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
 
-		return find_dispatcher_(info.message)->dispatch_(*item, info, !prevent_default);
+		if (find_dispatcher_(info.message)->dispatch_(*item, info, false) == 0)
+			event::draw_item_dispatcher::draw_menu_item_(*item, *pinfo, info.hwnd);
+
+		return 0;
 	}
 
 	auto item = find_object_(reinterpret_cast<HWND>(info.wParam));
@@ -513,11 +518,19 @@ LRESULT winp::thread::surface_manager::draw_item_(ui::surface &target, const MSG
 
 LRESULT winp::thread::surface_manager::measure_item_(ui::surface &target, const MSG &info, bool prevent_default){
 	if (info.wParam == 0){//Menu target
-		auto item = find_item_(reinterpret_cast<DRAWITEMSTRUCT *>(info.lParam)->itemID);
+		auto pinfo = reinterpret_cast<MEASUREITEMSTRUCT *>(info.lParam);
+		auto item = dynamic_cast<menu::item_component *>(find_item_(pinfo->itemID));
+
 		if (item == nullptr)
 			return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
 
-		return find_dispatcher_(info.message)->dispatch_(*item, info, !prevent_default);
+		if (find_dispatcher_(info.message)->dispatch_(*item, info, false) == 0){//Default measurement
+			auto size = event::draw_item_dispatcher::measure_menu_item_(*item, info.hwnd);
+			pinfo->itemWidth = size.cx;
+			pinfo->itemHeight = size.cy;
+		}
+
+		return 0;
 	}
 
 	return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);

@@ -178,8 +178,24 @@ namespace winp::ui{
 
 		virtual LRESULT dispatch_message_(UINT msg, WPARAM wparam, LPARAM lparam, bool call_default = false);
 
-		template <typename target_type>
+		template <typename target_type, typename before_type = void>
 		target_type *get_first_ancestor_of_() const{
+			return get_first_ancestor_of_<target_type, before_type>(std::bool_constant<std::is_void_v<before_type>>());
+		}
+
+		template <typename target_type, typename before_type>
+		target_type *get_first_ancestor_of_(std::false_type) const{
+			target_type *ancestor = nullptr;
+			for (auto parent = get_parent_(); parent != nullptr; get_parent_of_(*parent)){
+				if ((ancestor = dynamic_cast<target_type *>(parent)) != nullptr || dynamic_cast<before_type *>(parent) != nullptr)
+					break;
+			}
+
+			return ancestor;
+		}
+
+		template <typename target_type, typename before_type>
+		target_type *get_first_ancestor_of_(std::true_type) const{
 			target_type *ancestor = nullptr;
 			for (auto parent = get_parent_(); parent != nullptr; get_parent_of_(*parent)){
 				if ((ancestor = dynamic_cast<target_type *>(parent)) != nullptr)

@@ -15,6 +15,8 @@ namespace winp::menu{
 
 		virtual ~check_item();
 
+		virtual bool is_radio(const std::function<void(bool)> &callback = nullptr) const;
+
 		virtual bool check(const std::function<void(item_component &, bool)> &callback = nullptr);
 
 		virtual bool uncheck(const std::function<void(item_component &, bool)> &callback = nullptr);
@@ -39,6 +41,8 @@ namespace winp::menu{
 		template <class> friend class menu::generic_collection_base;
 		friend class thread::surface_manager;
 
+		friend class event::draw_item_dispatcher;
+
 		virtual bool validate_child_insert_(const ui::object &child, std::size_t index) const override;
 
 		virtual bool validate_child_remove_(const ui::object &child) const override;
@@ -49,6 +53,8 @@ namespace winp::menu{
 
 		virtual bool select_() override;
 
+		virtual bool is_radio_() const;
+
 		virtual bool check_();
 
 		virtual bool uncheck_(bool force);
@@ -58,6 +64,5 @@ namespace winp::menu{
 		virtual bool set_checked_bitmap_(HBITMAP value);
 
 		virtual bool set_unchecked_bitmap_(HBITMAP value);
-
 	};
 }

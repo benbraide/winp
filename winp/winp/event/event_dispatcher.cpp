@@ -105,10 +105,6 @@ void winp::event::draw_item_dispatcher::dispatch_(object &e){
 			break;
 		}
 	}
-	else if (e.get_info()->message == WM_DRAWITEM && dynamic_cast<unhandled_handler *>(e.get_context()) == nullptr)//Do default handler
-		draw_item_(dynamic_cast<draw_item &>(e));
-	else if (e.get_info()->message == WM_MEASUREITEM && dynamic_cast<unhandled_handler *>(e.get_context()) == nullptr)//Do default handler
-		measure_item_(dynamic_cast<measure_item &>(e));
 	else//Events are not subscribed to
 		dispatcher::dispatch_(e);
 }
@@ -116,100 +112,198 @@ void winp::event::draw_item_dispatcher::dispatch_(object &e){
 void winp::event::draw_item_dispatcher::draw_item_(draw_item &e){
 	auto menu_item = dynamic_cast<menu::item_component *>(e.get_context());
 	if (menu_item != nullptr)//Draw menu item
-		draw_menu_item_(*menu_item, e);
+		draw_menu_item_(*menu_item, e.struct_, e.get_info()->hwnd);
+
+	e.stop_propagation();
+	e.prevent_default();
 }
 
 void winp::event::draw_item_dispatcher::measure_item_(measure_item &e){
 	auto menu_item = dynamic_cast<menu::item_component *>(e.get_context());
 	if (menu_item != nullptr)//Measure menu item
-		measure_menu_item_(*menu_item, e);
+		e.set_size(measure_menu_item_(*menu_item, e.get_info()->hwnd));
+
+	e.stop_propagation();
+	e.prevent_default();
 }
 
-void winp::event::draw_item_dispatcher::draw_menu_item_(menu::item_component &item, draw_item &e){
-	if (dynamic_cast<menu::separator *>(&item) == nullptr){
-		DWORD text_color = 0u;
-		HBRUSH backgroud_brush = nullptr;
+void winp::event::draw_item_dispatcher::draw_menu_item_(menu::item_component &item, DRAWITEMSTRUCT &info, HWND handle){
+	auto theme = OpenThemeData(nullptr, L"MENU");
+	if (theme == nullptr){
+		if (dynamic_cast<menu::separator *>(&item) == nullptr){
+			DWORD text_color = 0u;
+			HBRUSH backgroud_brush = nullptr;
 
-		if (item.is_popup_item_()){
-			if ((e.struct_.itemState & ODS_DISABLED) == 0u){
-				if ((e.struct_.itemState & ODS_SELECTED) == 0u){
-					text_color = GetSysColor(COLOR_MENUTEXT);
+			if (item.is_popup_item_()){
+				if ((info.itemState & ODS_DISABLED) == 0u){
+					if ((info.itemState & ODS_SELECTED) == 0u){
+						text_color = GetSysColor(COLOR_MENUTEXT);
+						backgroud_brush = GetSysColorBrush(COLOR_MENU);
+					}
+					else{//Selected item
+						text_color = GetSysColor(COLOR_HIGHLIGHTTEXT);
+						backgroud_brush = GetSysColorBrush(COLOR_MENUHILIGHT);
+					}
+				}
+				else{//Disabled item
+					text_color = GetSysColor(COLOR_GRAYTEXT);
 					backgroud_brush = GetSysColorBrush(COLOR_MENU);
+				}
+			}
+			else if ((info.itemState & ODS_DISABLED) == 0u){//Enabled bar item
+				if ((info.itemState & ODS_SELECTED) == 0u){
+					text_color = GetSysColor(COLOR_MENUTEXT);
+					backgroud_brush = GetSysColorBrush(COLOR_MENUBAR);
 				}
 				else{//Selected item
 					text_color = GetSysColor(COLOR_HIGHLIGHTTEXT);
 					backgroud_brush = GetSysColorBrush(COLOR_MENUHILIGHT);
-				} 
+				}
 			}
-			else{//Disabled item
+			else{//Disabled bar item
 				text_color = GetSysColor(COLOR_GRAYTEXT);
-				backgroud_brush = GetSysColorBrush(COLOR_MENU);
-			}
-		}
-		else if ((e.struct_.itemState & ODS_DISABLED) == 0u){//Enabled bar item
-			if ((e.struct_.itemState & ODS_SELECTED) == 0u){
-				text_color = GetSysColor(COLOR_MENUTEXT);
 				backgroud_brush = GetSysColorBrush(COLOR_MENUBAR);
 			}
+
+			if (backgroud_brush != nullptr)
+				FillRect(info.hDC, &info.rcItem, backgroud_brush);
+
+			auto label = item.get_label_();
+			if (label != nullptr && !label->empty()){
+				HFONT bold_font = nullptr, font = item.font_;
+				auto non_separator_item = dynamic_cast<menu::item *>(&item);
+
+				if (non_separator_item != nullptr && non_separator_item->is_default()){
+					LOGFONTW font_info{};
+					GetObjectW(((font == nullptr) ? GetStockFont(SYSTEM_FONT) : font), static_cast<int>(sizeof(LOGFONTW)), &font_info);
+					if (font_info.lfWeight < FW_BOLD){//Create bold font
+						font_info.lfWeight = FW_BOLD;
+						bold_font = CreateFontIndirectW(&font_info);
+					}
+				}
+
+				auto old_font = SelectObject(info.hDC, ((bold_font == nullptr) ? font : bold_font));
+				auto old_text_color = SetTextColor(info.hDC, text_color);
+				auto old_background_mode = SetBkMode(info.hDC, TRANSPARENT);
+
+				OffsetRect(&info.rcItem, (GetSystemMetrics(SM_CXMENUCHECK) + GetSystemMetrics(SM_CXEDGE)), 0);
+				DrawTextW(info.hDC, label->data(), static_cast<int>(label->size()), &info.rcItem, (DT_VCENTER | DT_EXPANDTABS | DT_SINGLELINE));
+
+				SetBkMode(info.hDC, old_background_mode);//Restore background mode
+				SetTextColor(info.hDC, old_text_color);//Restore text color
+				SelectObject(info.hDC, old_font);//Restore font
+
+				if (bold_font != nullptr)//Destroy created font
+					DeleteObject(bold_font);
+			}
+		}
+	}
+	else if (dynamic_cast<menu::separator *>(&item) == nullptr){
+		auto label = item.get_label_();
+		auto result = control::object::compute_size(handle, info.hDC, item.font_, ((label == nullptr) ? L"" : *label));
+
+		if (item.is_popup_item_()){
+			SIZE check_size;
+			GetThemePartSize(theme, info.hDC, MENU_POPUPCHECK, MC_CHECKMARKNORMAL, nullptr, THEMESIZE::TS_DRAW, &check_size);
+
+			auto check_item = dynamic_cast<menu::check_item *>(&item);
+			auto popup = item.get_popup_();
+
+			DrawThemeBackground(theme, info.hDC, MENU_POPUPBACKGROUND, 0, &info.rcItem, nullptr);
+			if ((info.itemState & ODS_DISABLED) == 0u){//Enabled
+				if ((info.itemState & ODS_SELECTED) == 0u)//Not selected
+					DrawThemeBackground(theme, info.hDC, MENU_POPUPITEM, MPI_NORMAL, &info.rcItem, nullptr);
+				else//Selected item
+					DrawThemeBackground(theme, info.hDC, MENU_POPUPITEM, MPI_HOT, &info.rcItem, nullptr);
+
+				if (popup != nullptr && popup->get_handle() != nullptr)//Has sub menu
+					DrawThemeBackground(theme, info.hDC, MENU_POPUPSUBMENU, MSM_NORMAL, &info.rcItem, nullptr);
+
+				if (check_item != nullptr && (info.itemState & ODS_CHECKED) != 0u){
+					RECT check_rect{ info.rcItem.left, info.rcItem.top, (info.rcItem.left + check_size.cx + GetSystemMetrics(SM_CXEDGE) + 4), (info.rcItem.top + ((result.cy < check_size.cy) ? check_size.cy : result.cy) + 6) };
+					DrawThemeBackground(theme, info.hDC, MENU_POPUPCHECKBACKGROUND, MCB_NORMAL, &check_rect, nullptr);
+
+					if (check_item->is_radio_())
+						DrawThemeBackground(theme, info.hDC, MENU_POPUPCHECK, MC_BULLETNORMAL, &check_rect, nullptr);
+					else
+						DrawThemeBackground(theme, info.hDC, MENU_POPUPCHECK, MC_CHECKMARKNORMAL, &check_rect, nullptr);
+				}
+
+				if (label != nullptr && !label->empty()){
+					OffsetRect(&info.rcItem, (check_size.cx + GetSystemMetrics(SM_CXMENUCHECK)), 0);
+					if ((info.itemState & ODS_SELECTED) == 0u)//Not selected
+						DrawThemeText(theme, info.hDC, MENU_POPUPITEM, MPI_NORMAL, label->data(), static_cast<int>(label->size()), (DT_VCENTER | DT_EXPANDTABS | DT_SINGLELINE), 0u, &info.rcItem);
+					else//Selected item
+						DrawThemeText(theme, info.hDC, MENU_POPUPITEM, MPI_HOT, label->data(), static_cast<int>(label->size()), (DT_VCENTER | DT_EXPANDTABS | DT_SINGLELINE), 0u, &info.rcItem);
+				}
+			}
+			else{//Disabled item
+				if ((info.itemState & ODS_SELECTED) == 0u)//Not selected
+					DrawThemeBackground(theme, info.hDC, MENU_POPUPITEM, MPI_DISABLED, &info.rcItem, nullptr);
+				else//Selected item
+					DrawThemeBackground(theme, info.hDC, MENU_POPUPITEM, MPI_DISABLEDHOT, &info.rcItem, nullptr);
+
+				if (popup != nullptr && popup->get_handle() != nullptr)//Has sub menu
+					DrawThemeBackground(theme, info.hDC, MENU_POPUPSUBMENU, MSM_DISABLED, &info.rcItem, nullptr);
+
+				if (check_item != nullptr && (info.itemState & ODS_CHECKED) != 0u){
+					RECT check_rect{ info.rcItem.left, info.rcItem.top, (info.rcItem.left + check_size.cx + GetSystemMetrics(SM_CXEDGE) + 4), (info.rcItem.top + ((result.cy < check_size.cy) ? check_size.cy : result.cy) + 6) };
+					DrawThemeBackground(theme, info.hDC, MENU_POPUPCHECKBACKGROUND, MCB_DISABLED, &check_rect, nullptr);
+
+					if (check_item->is_radio_())
+						DrawThemeBackground(theme, info.hDC, MENU_POPUPCHECK, MC_BULLETDISABLED, &check_rect, nullptr);
+					else
+						DrawThemeBackground(theme, info.hDC, MENU_POPUPCHECK, MC_CHECKMARKDISABLED, &check_rect, nullptr);
+				}
+
+				if (label != nullptr && !label->empty()){
+					OffsetRect(&info.rcItem, (check_size.cx + GetSystemMetrics(SM_CXMENUCHECK)), 0);
+					if ((info.itemState & ODS_SELECTED) == 0u)//Not selected
+						DrawThemeText(theme, info.hDC, MENU_POPUPITEM, MPI_DISABLED, label->data(), static_cast<int>(label->size()), (DT_VCENTER | DT_EXPANDTABS | DT_SINGLELINE), 0u, &info.rcItem);
+					else//Selected item
+						DrawThemeText(theme, info.hDC, MENU_POPUPITEM, MPI_DISABLEDHOT, label->data(), static_cast<int>(label->size()), (DT_VCENTER | DT_EXPANDTABS | DT_SINGLELINE), 0u, &info.rcItem);
+				}
+			}
+		}
+		else if ((info.itemState & ODS_DISABLED) == 0u){//Enabled bar item
+			if ((info.itemState & ODS_SELECTED) == 0u){//Not selected
+				
+			}
 			else{//Selected item
-				text_color = GetSysColor(COLOR_HIGHLIGHTTEXT);
-				backgroud_brush = GetSysColorBrush(COLOR_MENUHILIGHT);
+				
 			}
 		}
 		else{//Disabled bar item
-			text_color = GetSysColor(COLOR_GRAYTEXT);
-			backgroud_brush = GetSysColorBrush(COLOR_MENUBAR);
+			
 		}
 
-		if (backgroud_brush != nullptr)
-			FillRect(e.struct_.hDC, &e.struct_.rcItem, backgroud_brush);
-
-		auto label = item.get_label_();
-		if (label != nullptr && !label->empty()){
-			HFONT bold_font = nullptr, font = item.font_;
-			auto non_separator_item = dynamic_cast<menu::item *>(&item);
-
-			if (non_separator_item != nullptr && non_separator_item->is_default()){
-				LOGFONTW font_info{};
-				GetObjectW(((font == nullptr) ? GetStockFont(SYSTEM_FONT) : font), static_cast<int>(sizeof(LOGFONTW)), &font_info);
-				if (font_info.lfWeight < FW_BOLD){//Create bold font
-					font_info.lfWeight = FW_BOLD;
-					bold_font = CreateFontIndirectW(&font_info);
-				}
-			}
-
-			auto old_font = SelectObject(e.struct_.hDC, ((bold_font == nullptr) ? font : bold_font));
-			auto old_text_color = SetTextColor(e.struct_.hDC, text_color);
-			auto old_background_mode = SetBkMode(e.struct_.hDC, TRANSPARENT);
-
-			TextOutW(e.struct_.hDC, (e.struct_.rcItem.left + GetSystemMetrics(SM_CXMENUCHECK) + GetSystemMetrics(SM_CXEDGE)), e.struct_.rcItem.top, label->data(), static_cast<int>(label->size()));
-			SetBkMode(e.struct_.hDC, old_background_mode);//Restore background mode
-			SetTextColor(e.struct_.hDC, old_text_color);//Restore text color
-			SelectObject(e.struct_.hDC, old_font);//Restore font
-
-			if (bold_font != nullptr)//Destroy created font
-				DeleteObject(bold_font);
-		}
-	}
-	else{//Separator
-		auto theme = OpenThemeData(e.get_info()->hwnd, L"MENU");
-		DrawThemeBackground(theme, e.struct_.hDC, MENU_POPUPSEPARATOR, 0, &e.struct_.rcItem, nullptr);
 		CloseThemeData(theme);
 	}
-
-	e.stop_propagation();
+	else{//Separator
+		DrawThemeBackground(theme, info.hDC, MENU_POPUPSEPARATOR, 0, &info.rcItem, nullptr);
+		CloseThemeData(theme);
+	}
 }
 
-void winp::event::draw_item_dispatcher::measure_menu_item_(menu::item_component &item, measure_item &e){
-	auto device = GetDC(GetDesktopWindow());
+SIZE winp::event::draw_item_dispatcher::measure_menu_item_(menu::item_component &item, HWND handle){
+	auto device = GetDC(handle);
 	if (device == nullptr)//Failed to retrieve device
-		return;
+		return SIZE{};
 
 	auto label = item.get_label_();
-	e.set_size(control::object::compute_size(GetDesktopWindow(), device, item.font_, ((label == nullptr) ? L"" : *label)));
+	auto result = control::object::compute_size(handle, device, item.font_, ((label == nullptr) ? L"" : *label));
 
-	ReleaseDC(GetDesktopWindow(), device);
-	e.stop_propagation();
+	auto theme = OpenThemeData(nullptr, L"MENU");
+	if (theme == nullptr)
+		return SIZE{ (result.cx + GetSystemMetrics(SM_CXMENUCHECK) + GetSystemMetrics(SM_CXEDGE)), result.cy };
+
+	SIZE check_size{};
+	GetThemePartSize(theme, device, MENU_POPUPCHECK, MC_CHECKMARKNORMAL, nullptr, THEMESIZE::TS_DRAW, &check_size);
+	
+	CloseThemeData(theme);
+	ReleaseDC(handle, device);
+
+	return SIZE{ (result.cx + check_size.cx + GetSystemMetrics(SM_CXMENUCHECK)), (((result.cy < check_size.cy) ? check_size.cy : result.cy) + 6) };
 }
 
 void winp::event::cursor_dispatcher::dispatch_(object &e){

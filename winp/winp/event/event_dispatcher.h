@@ -2,6 +2,10 @@
 
 #include "event_handler.h"
 
+namespace winp::thread{
+	class surface_manager;
+}
+
 namespace winp::message{
 	class dispatcher;
 }
@@ -51,6 +55,8 @@ namespace winp::event{
 
 	class draw_item_dispatcher : public dispatcher{
 	protected:
+		friend class thread::surface_manager;
+
 		friend class unhandled_handler;
 		friend class draw_item_handler;
 
@@ -60,9 +66,9 @@ namespace winp::event{
 
 		static void measure_item_(measure_item &e);
 
-		static void draw_menu_item_(menu::item_component &item, draw_item &e);
+		static void draw_menu_item_(menu::item_component &item, DRAWITEMSTRUCT &info, HWND handle);
 
-		static void measure_menu_item_(menu::item_component &item, measure_item &e);
+		static SIZE measure_menu_item_(menu::item_component &item, HWND handle);
 	};
 
 	class cursor_dispatcher : public dispatcher{
