@@ -187,6 +187,11 @@ bool winp::menu::item_component::is_popup_item(const std::function<void(bool)> &
 	return thread_.queue.execute([this]{ return is_popup_item_(); }, thread::queue::send_priority, id_);
 }
 
+void winp::menu::item_component::event_handlers_count_changed_(event::manager_base &e, std::size_t previous_count, std::size_t current_count){
+	if (&e == &draw_item_event && (previous_count == 0u || current_count == 0u))
+		update_types_();
+}
+
 void winp::menu::item_component::destruct_(){
 	destroy_();
 	if (local_id_ != 0u && !thread_.surface_manager_.id_map_.empty()){
@@ -218,11 +223,11 @@ bool winp::menu::item_component::create_(){
 	if (plabel != nullptr && !plabel->empty())//Label set
 		mask |= MIIM_STRING;
 
-	auto types = (get_types_() | dynamic_cast<menu::tree *>(parent)->get_types_(get_index_()));
+	auto types = get_types_();
 	if (types != 0u)//Type set
 		mask |= MIIM_FTYPE;
 
-	auto states = (get_states_() | dynamic_cast<menu::tree *>(parent)->get_states_(get_index_()));
+	auto states = get_states_();
 	if (states != 0u)//States set
 		mask |= MIIM_STATE;
 
@@ -360,7 +365,8 @@ bool winp::menu::item_component::remove_state_(UINT value){
 }
 
 UINT winp::menu::item_component::get_states_() const{
-	return (states_ | get_persistent_states_());
+	auto group_parent = dynamic_cast<group *>(get_parent_());
+	return ((group_parent == nullptr) ? (states_ | get_persistent_states_() | group_parent->get_states_(get_index_())) : (states_ | get_persistent_states_() | group_parent->get_states_(get_index_())));
 }
 
 UINT winp::menu::item_component::get_persistent_states_() const{
@@ -380,7 +386,10 @@ bool winp::menu::item_component::has_states_(UINT value) const{
 }
 
 UINT winp::menu::item_component::get_types_() const{
-	return (is_owner_drawn_() ? (states_ | MFT_OWNERDRAW) : types_);
+	auto group_parent = dynamic_cast<group *>(get_parent_());
+	if (group_parent == nullptr)
+		return (is_owner_drawn_() ? (types_ | MFT_OWNERDRAW) : types_);
+	return (is_owner_drawn_() ? (types_ | group_parent->get_types_(get_index_()) | MFT_OWNERDRAW) : (types_ | group_parent->get_types_(get_index_())));
 }
 
 bool winp::menu::item_component::has_type_(UINT value) const{
@@ -446,8 +455,8 @@ bool winp::menu::item_component::update_types_(){
 
 	return update_(MENUITEMINFOW{
 		sizeof(MENUITEMINFOW),
-		MIIM_FTYPE,												//Flags
-		(get_types_() | dynamic_cast<menu::tree *>(parent)->get_types_(get_index_()))
+		MIIM_FTYPE,
+		get_types_()
 	});
 }
 

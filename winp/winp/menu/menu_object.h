@@ -42,6 +42,8 @@ namespace winp::menu{
 		friend class menu::separator;
 		friend class thread::surface_manager;
 
+		virtual void event_handlers_count_changed_(event::manager_base &e, std::size_t previous_count, std::size_t current_count);
+
 		virtual bool create_() override;
 
 		virtual bool destroy_() override;
@@ -53,6 +55,8 @@ namespace winp::menu{
 		virtual void parent_changed_(ui::tree *previous_parent, std::size_t previous_index) override;
 
 		virtual LRESULT dispatch_message_(UINT msg, WPARAM wparam, LPARAM lparam, bool call_default = false) override;
+
+		virtual UINT get_types_(std::size_t index) const override;
 
 		virtual std::size_t get_count_() const override;
 

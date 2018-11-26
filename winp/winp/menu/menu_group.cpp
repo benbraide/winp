@@ -207,3 +207,15 @@ std::size_t winp::menu::group::get_absolute_index_() const{
 	auto parent = dynamic_cast<menu::tree *>(get_parent_());
 	return ((parent == nullptr) ? get_index_() : parent->get_absolute_index_of_(*this, false));
 }
+
+void winp::menu::group::update_children_types_(){
+	menu::group *group_child;
+	menu::item_component *item_child;
+
+	for (auto child : children_){
+		if ((item_child = dynamic_cast<menu::item_component *>(child)) != nullptr)
+			item_child->update_types_();
+		else if ((group_child = dynamic_cast<menu::group *>(child)) != nullptr)
+			group_child->update_children_types_();
+	}
+}

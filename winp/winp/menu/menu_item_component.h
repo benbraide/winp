@@ -69,6 +69,8 @@ namespace winp::menu{
 		template <class> friend class menu::generic_collection_base;
 		friend class thread::surface_manager;
 
+		virtual void event_handlers_count_changed_(event::manager_base &e, std::size_t previous_count, std::size_t current_count);
+
 		virtual void destruct_() override;
 
 		virtual bool create_() override;

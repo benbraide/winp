@@ -21,6 +21,8 @@ namespace winp::menu{
 		virtual menu::item_component *get_component_at_absolute_index(std::size_t index, const std::function<void(menu::item_component *)> &callback = nullptr) const override;
 
 	protected:
+		friend class menu::item_component;
+
 		virtual void destruct_() override;
 
 		virtual bool create_() override;
@@ -52,5 +54,7 @@ namespace winp::menu{
 		virtual std::size_t get_count_() const override;
 
 		virtual std::size_t get_absolute_index_() const;
+
+		virtual void update_children_types_();
 	};
 }

@@ -25,16 +25,14 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_sh
 			popup.insert_item(L"Popup Item");
 			popup.insert_check_item(L"Popup Check Item");
 			popup.insert_link(L"Pushed Link Item", [](winp::menu::collection &popup2){
+				popup2.draw_item_event += [](winp::event::draw_item &e){};
 				popup2.insert_item(L"Popup2 Item", [](winp::menu::item &odi){
-					odi.draw_item_event += [](winp::event::draw_item &e){};
 					return true;
 				});
 				popup2.insert_check_item(L"Popup2 Check Item", [](winp::menu::item &odi){
-					odi.draw_item_event += [](winp::event::draw_item &e){};
 					return true;
 				});
 				popup2.insert_item(L"Owner Drawn Item", [](winp::menu::item &odi){
-					odi.draw_item_event += [](winp::event::draw_item &e){};
 					return true;
 				});
 				return true;

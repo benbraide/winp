@@ -35,6 +35,11 @@ bool winp::menu::object::is_popup(const std::function<void(bool)> &callback) con
 	return thread_.queue.execute([this]{ return is_popup_(); }, thread::queue::send_priority, id_);
 }
 
+void winp::menu::object::event_handlers_count_changed_(event::manager_base &e, std::size_t previous_count, std::size_t current_count){
+	if (&e == &draw_item_event && !children_.empty() && (previous_count == 0u || current_count == 0u))
+		update_children_types_();
+}
+
 bool winp::menu::object::create_(){
 	if (get_handle_() != nullptr)
 		return true;
@@ -134,6 +139,10 @@ void winp::menu::object::parent_changed_(ui::tree *previous_parent, std::size_t 
 
 LRESULT winp::menu::object::dispatch_message_(UINT msg, WPARAM wparam, LPARAM lparam, bool call_default){
 	return find_dispatcher_(msg)->dispatch_(*this, MSG{ nullptr, msg, wparam, lparam }, call_default);
+}
+
+UINT winp::menu::object::get_types_(std::size_t index) const{
+	return ((draw_item_event.count_() == 0u && dynamic_cast<const event::draw_item_handler *>(this) == nullptr) ? 0u : MFT_OWNERDRAW);
 }
 
 std::size_t winp::menu::object::get_count_() const{
