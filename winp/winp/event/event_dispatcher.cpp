@@ -173,8 +173,10 @@ void winp::event::draw_item_dispatcher::draw_themed_menu_item_(menu::item_compon
 			}
 
 			DrawThemeBackground(theme, info.hDC, MENU_POPUPITEM, item_state_id, &info.rcItem, nullptr);
-			if (has_sub_menu)//Draw sub-menu caret
-				DrawThemeBackground(theme, info.hDC, MENU_POPUPSUBMENU, sub_state_id, &info.rcItem, nullptr);
+			if (has_sub_menu){//Draw sub-menu caret
+				RECT sub_rect{ (info.rcItem.right - get_menu_item_text_padding_(info.hDC, theme)), info.rcItem.top, info.rcItem.right, info.rcItem.bottom };
+				DrawThemeBackground(theme, info.hDC, MENU_POPUPSUBMENU, sub_state_id, &sub_rect, nullptr);
+			}
 
 			auto check_extent = get_menu_item_check_extent_(info.hDC, theme);
 			auto check_gutter = get_menu_item_check_gutter_(theme);
@@ -313,7 +315,7 @@ SIZE winp::event::draw_item_dispatcher::measure_item_(ui::object &item, HWND han
 		if (menu_item_target->is_popup_item_()){
 			auto check_extent = get_menu_item_check_extent_(device, theme);
 			auto check_gutter = get_menu_item_check_gutter_(theme);
-			auto text_padding = get_menu_item_text_padding_(theme);
+			auto text_padding = get_menu_item_text_padding_(device, theme);
 
 			result = SIZE{ (result.cx + check_extent.cx + check_gutter + text_padding), (((result.cy < check_extent.cy) ? check_extent.cy : result.cy) + 6) };
 		}
@@ -334,8 +336,14 @@ int winp::event::draw_item_dispatcher::get_menu_item_text_offset_(HDC device, HT
 	return (get_menu_item_check_extent_(device, theme).cx + get_menu_item_check_gutter_(theme));
 }
 
-int winp::event::draw_item_dispatcher::get_menu_item_text_padding_(HTHEME theme){
-	return ((theme == nullptr) ? 4 : 8);
+int winp::event::draw_item_dispatcher::get_menu_item_text_padding_(HDC device, HTHEME theme){
+	if (theme == nullptr)
+		return 4;
+
+	SIZE check_size{};
+	GetThemePartSize(theme, device, MENU_POPUPSUBMENU, MSM_NORMAL, nullptr, THEMESIZE::TS_DRAW, &check_size);
+
+	return (check_size.cx * 2);
 }
 
 SIZE winp::event::draw_item_dispatcher::get_menu_item_check_extent_(HDC device, HTHEME theme){

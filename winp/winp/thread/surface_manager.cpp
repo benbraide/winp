@@ -511,7 +511,7 @@ LRESULT winp::thread::surface_manager::draw_item_(ui::surface &target, const MSG
 	if (find_dispatcher_(info.message)->dispatch_(*target_item, info, false) == 0)
 		event::draw_item_dispatcher::draw_item_(*target_item, *pinfo, info.hwnd, nullptr);
 
-	return 0;
+	return TRUE;
 }
 
 LRESULT winp::thread::surface_manager::measure_item_(ui::surface &target, const MSG &info, bool prevent_default){
@@ -528,7 +528,7 @@ LRESULT winp::thread::surface_manager::measure_item_(ui::surface &target, const 
 		return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
 
 	if (find_dispatcher_(info.message)->dispatch_(*target_item, info, false) != 0)
-		return 0;
+		return TRUE;
 
 	auto size = event::draw_item_dispatcher::measure_item_(*target_item, info.hwnd, nullptr, nullptr);
 	{//Update size
@@ -536,7 +536,7 @@ LRESULT winp::thread::surface_manager::measure_item_(ui::surface &target, const 
 		pinfo->itemHeight = size.cy;
 	}
 
-	return 0;
+	return TRUE;
 }
 
 winp::message::dispatcher *winp::thread::surface_manager::find_dispatcher_(UINT msg){

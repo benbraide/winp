@@ -79,7 +79,7 @@ namespace winp::event{
 
 		static int get_menu_item_text_offset_(HDC device, HTHEME theme);
 
-		static int get_menu_item_text_padding_(HTHEME theme);
+		static int get_menu_item_text_padding_(HDC device, HTHEME theme);
 
 		static SIZE get_menu_item_check_extent_(HDC device, HTHEME theme);
 

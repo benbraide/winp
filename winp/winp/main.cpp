@@ -29,6 +29,12 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_sh
 				popup2.insert_item(L"Popup2 Item", [](winp::menu::item &odi){
 					return true;
 				});
+				popup2.insert_link(L"Link Item", [](winp::menu::collection &popup3){
+					popup3.insert_item(L"Popup3 Item", [](winp::menu::item &odi){
+						return true;
+					});
+					return true;
+				});
 				popup2.insert_check_item(L"Popup2 Check Item", [](winp::menu::item &odi){
 					return true;
 				});
