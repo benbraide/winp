@@ -57,6 +57,9 @@ namespace winp::event{
 	protected:
 		friend class thread::surface_manager;
 
+		friend class draw_item;
+		friend class measure_item;
+
 		friend class unhandled_handler;
 		friend class draw_item_handler;
 
@@ -66,9 +69,21 @@ namespace winp::event{
 
 		static void measure_item_(measure_item &e);
 
-		static void draw_menu_item_(menu::item_component &item, DRAWITEMSTRUCT &info, HWND handle);
+		static void draw_item_(ui::object &item, DRAWITEMSTRUCT &info, HWND handle, HTHEME theme);
 
-		static SIZE measure_menu_item_(menu::item_component &item, HWND handle);
+		static void draw_themed_menu_item_(menu::item_component &item, DRAWITEMSTRUCT &info, HWND handle, HTHEME theme);
+
+		static void draw_unthemed_menu_item_(menu::item_component &item, DRAWITEMSTRUCT &info, HWND handle);
+
+		static SIZE measure_item_(ui::object &item, HWND handle, HDC device, HTHEME theme);
+
+		static int get_menu_item_text_offset_(HDC device, HTHEME theme);
+
+		static int get_menu_item_text_padding_(HTHEME theme);
+
+		static SIZE get_menu_item_check_extent_(HDC device, HTHEME theme);
+
+		static int get_menu_item_check_gutter_(HTHEME theme);
 	};
 
 	class cursor_dispatcher : public dispatcher{

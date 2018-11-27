@@ -272,7 +272,25 @@ winp::event::draw_item::draw_item(ui::object &target, const callback_type &defau
 winp::event::draw_item::draw_item(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
 	: object(target, context, default_handler, info), struct_(*reinterpret_cast<DRAWITEMSTRUCT *>(info.lParam)){}
 
-winp::event::draw_item::~draw_item() = default;
+winp::event::draw_item::~draw_item(){
+	if (theme_ != nullptr){
+		CloseThemeData(theme_);
+		theme_ = nullptr;
+	}
+}
+
+void winp::event::draw_item::draw() const{
+	if (thread_.is_thread_context())
+		draw_item_dispatcher::draw_item_(*target_, struct_, info_.hwnd, get_theme_());
+}
+
+int winp::event::draw_item::get_menu_item_text_offset() const{
+	return (thread_.is_thread_context() ? draw_item_dispatcher::get_menu_item_text_offset_(struct_.hDC, get_theme_()) : 0u);
+}
+
+SIZE winp::event::draw_item::get_menu_item_check_extent() const{
+	return (thread_.is_thread_context() ? draw_item_dispatcher::get_menu_item_check_extent_(struct_.hDC, get_theme_()) : SIZE{});
+}
 
 UINT winp::event::draw_item::get_action() const{
 	return (thread_.is_thread_context() ? struct_.itemAction : 0u);
@@ -296,6 +314,10 @@ HDC winp::event::draw_item::get_device() const{
 
 winp::event::draw_item::m_rect_type winp::event::draw_item::get_region() const{
 	return (thread_.is_thread_context() ? get_region_() : m_rect_type{});
+}
+
+HTHEME winp::event::draw_item::get_theme() const{
+	return (thread_.is_thread_context() ? get_theme_() : nullptr);
 }
 
 ID2D1RenderTarget *winp::event::draw_item::get_drawer_() const{
@@ -325,13 +347,33 @@ winp::event::draw_item::m_rect_type winp::event::draw_item::get_region_() const{
 	return struct_.rcItem;
 }
 
+HTHEME winp::event::draw_item::get_theme_() const{
+	if (theme_ == nullptr){
+		auto theme_name = target_->get_theme_name();
+		if (theme_name != nullptr)
+			theme_ = OpenThemeData(nullptr, theme_name);
+	}
+
+	return theme_;
+}
+
 winp::event::measure_item::measure_item(ui::object &target, const callback_type &default_handler, const info_type &info)
 	: object(target, default_handler, info), struct_(*reinterpret_cast<MEASUREITEMSTRUCT *>(info.lParam)){}
 
 winp::event::measure_item::measure_item(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
 	: object(target, context, default_handler, info), struct_(*reinterpret_cast<MEASUREITEMSTRUCT *>(info.lParam)){}
 
-winp::event::measure_item::~measure_item() = default;
+winp::event::measure_item::~measure_item(){
+	if (device_ != nullptr){//Release device
+		ReleaseDC(info_.hwnd, device_);
+		device_ = nullptr;
+	}
+
+	if (theme_ != nullptr){
+		CloseThemeData(theme_);
+		theme_ = nullptr;
+	}
+}
 
 bool winp::event::measure_item::set_size(const m_size_type &value){
 	if (!thread_.is_thread_context())
@@ -345,6 +387,40 @@ bool winp::event::measure_item::set_size(const m_size_type &value){
 
 winp::event::measure_item::m_size_type winp::event::measure_item::get_size() const{
 	return (thread_.is_thread_context() ? m_size_type{ static_cast<int>(struct_.itemWidth), static_cast<int>(struct_.itemHeight) } : m_size_type{});
+}
+
+winp::event::measure_item::m_size_type winp::event::measure_item::get_measured_size() const{
+	return (thread_.is_thread_context() ? get_measured_size_() : m_size_type{});
+}
+
+HDC winp::event::measure_item::get_device() const{
+	return (thread_.is_thread_context() ? get_device_() : nullptr);
+}
+
+HTHEME winp::event::measure_item::get_theme() const{
+	return (thread_.is_thread_context() ? get_theme_() : nullptr);
+}
+
+const winp::event::measure_item::m_size_type &winp::event::measure_item::get_measured_size_() const{
+	if (measured_size_.cx == 0 && measured_size_.cy == 0)
+		measured_size_ = draw_item_dispatcher::measure_item_(*target_, info_.hwnd, get_device_(), get_theme_());
+	return measured_size_;
+}
+
+HDC winp::event::measure_item::get_device_() const{
+	if (device_ == nullptr)
+		device_ = GetDC(info_.hwnd);
+	return device_;
+}
+
+HTHEME winp::event::measure_item::get_theme_() const{
+	if (theme_ == nullptr){
+		auto theme_name = target_->get_theme_name();
+		if (theme_name != nullptr)
+			theme_ = OpenThemeData(nullptr, theme_name);
+	}
+
+	return theme_;
 }
 
 winp::event::cursor::cursor(ui::object &target, const callback_type &default_handler, const info_type &info)

@@ -60,6 +60,7 @@ namespace winp::menu{
 		event::manager<item_component, event::measure_item> measure_item_event{ *this };
 
 	protected:
+		friend class event::measure_item;
 		friend class event::draw_item_dispatcher;
 
 		friend class menu::object;
@@ -87,6 +88,8 @@ namespace winp::menu{
 
 		virtual void index_changed_(ui::tree *previous_parent, std::size_t previous_index) override;
 
+		virtual const wchar_t *get_theme_name_() const override;
+
 		virtual std::size_t get_count_() const override;
 
 		virtual UINT get_local_id_() const;
@@ -98,6 +101,8 @@ namespace winp::menu{
 		virtual const std::wstring *get_label_() const;
 
 		virtual const std::wstring *get_shortcut_() const;
+
+		virtual HFONT get_font_() const;
 
 		virtual bool set_state_(UINT value);
 

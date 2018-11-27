@@ -239,6 +239,12 @@ namespace winp::event{
 
 		virtual ~draw_item();
 
+		virtual void draw() const;
+
+		virtual int get_menu_item_text_offset() const;
+
+		virtual SIZE get_menu_item_check_extent() const;
+
 		virtual UINT get_action() const;
 
 		virtual UINT get_state() const;
@@ -251,6 +257,8 @@ namespace winp::event{
 
 		virtual m_rect_type get_region() const;
 
+		virtual HTHEME get_theme() const;
+
 	protected:
 		friend class draw_item_dispatcher;
 
@@ -262,9 +270,12 @@ namespace winp::event{
 
 		virtual m_rect_type get_region_() const;
 
+		virtual HTHEME get_theme_() const;
+
 		DRAWITEMSTRUCT &struct_;
 		mutable ID2D1DCRenderTarget *drawer_ = nullptr;
 		mutable ID2D1SolidColorBrush *color_brush_ = nullptr;
+		mutable HTHEME theme_ = nullptr;
 	};
 
 	class measure_item : public object{
@@ -281,8 +292,25 @@ namespace winp::event{
 
 		virtual m_size_type get_size() const;
 
+		virtual m_size_type get_measured_size() const;
+
+		virtual HDC get_device() const;
+
+		virtual HTHEME get_theme() const;
+
 	protected:
+		friend class draw_item_dispatcher;
+
+		virtual const m_size_type &get_measured_size_() const;
+
+		virtual HDC get_device_() const;
+
+		virtual HTHEME get_theme_() const;
+
 		MEASUREITEMSTRUCT &struct_;
+		mutable m_size_type measured_size_{};
+		mutable HDC device_ = nullptr;
+		mutable HTHEME theme_ = nullptr;
 	};
 
 	class cursor : public object{

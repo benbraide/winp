@@ -80,6 +80,8 @@ namespace winp::ui{
 
 		virtual void parent_changed_(tree *previous_parent, std::size_t previous_index) override;
 
+		virtual const wchar_t *get_theme_name_() const override;
+
 		virtual WNDPROC get_default_message_entry_() const override;
 
 		virtual void set_message_entry_(LONG_PTR value) override;

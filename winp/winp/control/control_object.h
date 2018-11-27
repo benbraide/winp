@@ -22,6 +22,7 @@ namespace winp::control{
 		static m_size_type compute_size(HWND handle, HDC device, HFONT font, const std::wstring &text);
 
 	protected:
+		friend class event::draw_item_dispatcher;
 		friend class menu::object;
 
 		virtual void add_to_toplevel_(bool update = false) override;

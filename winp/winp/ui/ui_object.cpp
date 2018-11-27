@@ -204,6 +204,22 @@ winp::utility::dynamic_list<winp::ui::object, winp::ui::object> winp::ui::object
 	return sibling_list_;
 }
 
+const wchar_t *winp::ui::object::get_theme_name(const std::function<void(const wchar_t *)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = get_theme_name_();
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
+	if (callback != nullptr){
+		thread_.queue.post([=]{ callback(get_theme_name_()); }, thread::queue::send_priority, id_);
+		return nullptr;
+	}
+
+	return thread_.queue.execute([this]{ return get_theme_name_(); }, thread::queue::send_priority, id_);
+}
+
 LRESULT winp::ui::object::send_message(UINT msg, const std::function<void(LRESULT)> &callback){
 	return do_send_message_(msg, 0, 0, callback);
 }
@@ -418,6 +434,10 @@ bool winp::ui::object::set_next_sibling_(object *target){
 
 winp::ui::object *winp::ui::object::get_next_sibling_() const{
 	return ((parent_ == nullptr) ? nullptr : parent_->get_child_at_(get_index_() + 1u));
+}
+
+const wchar_t *winp::ui::object::get_theme_name_() const{
+	return nullptr;
 }
 
 LRESULT winp::ui::object::do_send_message_(UINT msg, WPARAM wparam, LPARAM lparam, const std::function<void(LRESULT)> &callback){

@@ -496,44 +496,47 @@ LRESULT winp::thread::surface_manager::context_menu_(ui::io_surface &target, con
 }
 
 LRESULT winp::thread::surface_manager::draw_item_(ui::surface &target, const MSG &info, bool prevent_default){
-	if (info.wParam == 0){//Menu target
-		auto pinfo = reinterpret_cast<DRAWITEMSTRUCT *>(info.lParam);
-		auto item = dynamic_cast<menu::item_component *>(find_item_(pinfo->itemID));
+	ui::object *target_item = nullptr;
+	auto pinfo = reinterpret_cast<DRAWITEMSTRUCT *>(info.lParam);
 
-		if (item == nullptr)
-			return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
+	if (info.wParam != 0){
 
-		if (find_dispatcher_(info.message)->dispatch_(*item, info, false) == 0)
-			event::draw_item_dispatcher::draw_menu_item_(*item, *pinfo, info.hwnd);
-
-		return 0;
 	}
+	else//Menu target
+		target_item = find_item_(pinfo->itemID);
 
-	auto item = find_object_(reinterpret_cast<HWND>(info.wParam));
-	if (item == nullptr)
+	if (target_item == nullptr)
 		return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
 
-	return find_dispatcher_(info.message)->dispatch_(*item, info, !prevent_default);
+	if (find_dispatcher_(info.message)->dispatch_(*target_item, info, false) == 0)
+		event::draw_item_dispatcher::draw_item_(*target_item, *pinfo, info.hwnd, nullptr);
+
+	return 0;
 }
 
 LRESULT winp::thread::surface_manager::measure_item_(ui::surface &target, const MSG &info, bool prevent_default){
-	if (info.wParam == 0){//Menu target
-		auto pinfo = reinterpret_cast<MEASUREITEMSTRUCT *>(info.lParam);
-		auto item = dynamic_cast<menu::item_component *>(find_item_(pinfo->itemID));
+	ui::object *target_item = nullptr;
+	auto pinfo = reinterpret_cast<MEASUREITEMSTRUCT *>(info.lParam);
 
-		if (item == nullptr)
-			return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
+	if (info.wParam != 0){
 
-		if (find_dispatcher_(info.message)->dispatch_(*item, info, false) == 0){//Default measurement
-			auto size = event::draw_item_dispatcher::measure_menu_item_(*item, info.hwnd);
-			pinfo->itemWidth = size.cx;
-			pinfo->itemHeight = size.cy;
-		}
+	}
+	else//Menu target
+		target_item = find_item_(pinfo->itemID);
 
+	if (target_item == nullptr)
+		return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
+
+	if (find_dispatcher_(info.message)->dispatch_(*target_item, info, false) != 0)
 		return 0;
+
+	auto size = event::draw_item_dispatcher::measure_item_(*target_item, info.hwnd, nullptr, nullptr);
+	{//Update size
+		pinfo->itemWidth = size.cx;
+		pinfo->itemHeight = size.cy;
 	}
 
-	return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
+	return 0;
 }
 
 winp::message::dispatcher *winp::thread::surface_manager::find_dispatcher_(UINT msg){

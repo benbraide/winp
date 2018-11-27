@@ -66,6 +66,8 @@ namespace winp::ui{
 
 		virtual utility::dynamic_list<object, object> get_siblings() const;
 
+		virtual const wchar_t *get_theme_name(const std::function<void(const wchar_t *)> &callback = nullptr) const;
+
 		LRESULT send_message(UINT msg, const std::function<void(LRESULT)> &callback = nullptr);
 
 		template <typename wparam_type = WPARAM>
@@ -104,6 +106,7 @@ namespace winp::ui{
 		friend class event::tree;
 		friend class event::draw;
 		friend class event::dispatcher;
+		friend class event::draw_item_dispatcher;
 
 		friend class message::dispatcher;
 		friend class message::mouse_dispatcher;
@@ -161,6 +164,8 @@ namespace winp::ui{
 		virtual bool set_next_sibling_(object *target);
 
 		virtual object *get_next_sibling_() const;
+
+		virtual const wchar_t *get_theme_name_() const;
 
 		virtual LRESULT do_send_message_(UINT msg, WPARAM wparam, LPARAM lparam, const std::function<void(LRESULT)> &callback);
 

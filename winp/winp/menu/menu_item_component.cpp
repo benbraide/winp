@@ -327,6 +327,10 @@ void winp::menu::item_component::index_changed_(ui::tree *previous_parent, std::
 	surface::index_changed_(previous_parent, previous_index);
 }
 
+const wchar_t *winp::menu::item_component::get_theme_name_() const{
+	return L"MENU";
+}
+
 std::size_t winp::menu::item_component::get_count_() const{
 	return 1u;
 }
@@ -350,6 +354,10 @@ const std::wstring *winp::menu::item_component::get_label_() const{
 
 const std::wstring *winp::menu::item_component::get_shortcut_() const{
 	return nullptr;
+}
+
+HFONT winp::menu::item_component::get_font_() const{
+	return font_;
 }
 
 bool winp::menu::item_component::set_state_(UINT value){

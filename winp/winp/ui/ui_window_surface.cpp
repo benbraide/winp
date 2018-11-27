@@ -323,6 +323,10 @@ void winp::ui::window_surface::parent_changed_(tree *previous_parent, std::size_
 	}
 }
 
+const wchar_t *winp::ui::window_surface::get_theme_name_() const{
+	return L"WINDOW";
+}
+
 WNDPROC winp::ui::window_surface::get_default_message_entry_() const{
 	return app::object::get_default_message_entry(get_class_name_());
 }
