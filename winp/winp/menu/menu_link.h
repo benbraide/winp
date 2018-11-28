@@ -24,7 +24,7 @@ namespace winp::menu{
 		virtual ~link();
 
 		template <typename target_type, typename... args_types>
-		target_type *create_popup(const std::function<bool(target_type &)> &callback, args_types... args){
+		target_type *create_popup(const std::function<void(target_type &)> &callback, args_types... args){
 			if (thread_.is_thread_context())//Inside thread context
 				return create_popup_(callback, args...);
 
@@ -45,13 +45,15 @@ namespace winp::menu{
 		virtual void handle_child_inserted_event_(event::tree &e) override;
 
 		template <typename target_type, typename... args_types>
-		target_type *create_popup_(const std::function<bool(target_type &)> &callback, args_types... args){
+		target_type *create_popup_(const std::function<void(target_type &)> &callback, args_types... args){
 			auto target = std::make_shared<target_type>(thread_, args...);
-			if (callback != nullptr && !callback(*target))
-				return nullptr;
+			if (target == nullptr || add_child_(*target) == static_cast<std::size_t>(-1))
+				return nullptr;//Rejected
+
+			if (callback != nullptr)
+				callback(*target);
 
 			target->create();
-			add_child_(*target);
 			target_ptr_ = target;
 
 			return target.get();

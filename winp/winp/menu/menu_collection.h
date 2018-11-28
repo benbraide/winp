@@ -22,7 +22,7 @@ namespace winp::menu{
 		virtual ~generic_collection_base() = default;
 
 		template <typename item_type>
-		item_type *insert(const std::function<bool(item_type &)> &callback, std::size_t index = static_cast<std::size_t>(-1)){
+		item_type *insert(const std::function<void(item_type &)> &callback, std::size_t index = static_cast<std::size_t>(-1)){
 			if (base_type::thread_.is_thread_context())
 				return insert_(callback, index);
 
@@ -36,10 +36,11 @@ namespace winp::menu{
 			return nullptr;
 		}
 
-		virtual menu::item *insert_item(const std::wstring &label, const std::function<bool(menu::item &)> &callback = nullptr, std::size_t index = static_cast<std::size_t>(-1)){
+		virtual menu::item *insert_item(const std::wstring &label, const std::function<void(menu::item &)> &callback = nullptr, std::size_t index = static_cast<std::size_t>(-1)){
 			return insert<menu::item>([=](menu::item &item){
 				item.set_label(label);
-				return (callback == nullptr || callback(item));
+				if (callback != nullptr)
+					callback(item);
 			}, index);
 		}
 
@@ -48,28 +49,19 @@ namespace winp::menu{
 				item.set_label(label);
 				if (on_select != nullptr)
 					item.select_event += on_select;
-				return true;
 			}, index);
 		}
 
-		virtual menu::link *insert_link(const std::wstring &label, const std::function<bool(menu::link &)> &callback = nullptr, std::size_t index = static_cast<std::size_t>(-1)){
+		virtual menu::link *insert_link(const std::wstring &label, const std::function<void(menu::generic_collection<object> &)> &callback = nullptr, std::size_t index = static_cast<std::size_t>(-1)){
 			return insert<menu::link>([=](menu::link &item){
 				item.set_label(label);
-				return (callback == nullptr || callback(item));
+				item.create_popup<menu::generic_collection<object>>(callback);
 			}, index);
 		}
 
-		virtual menu::link *insert_link(const std::wstring &label, const std::function<bool(menu::generic_collection<object> &)> &callback = nullptr, std::size_t index = static_cast<std::size_t>(-1)){
-			return insert<menu::link>([=](menu::link &item){
-				item.set_label(label);
-				return (item.create_popup<menu::generic_collection<object>>(callback) != nullptr);
-			}, index);
-		}
-
-		virtual menu::check_item *insert_check_item(const std::wstring &label, const std::function<bool(menu::check_item &)> &callback = nullptr, std::size_t index = static_cast<std::size_t>(-1)){
+		virtual menu::check_item *insert_check_item(const std::wstring &label, const std::function<void(menu::check_item &)> &callback = nullptr, std::size_t index = static_cast<std::size_t>(-1)){
 			return insert<menu::check_item>([=](menu::check_item &item){
 				item.set_label(label);
-				return (callback == nullptr || callback(item));
 			}, index);
 		}
 
@@ -81,23 +73,24 @@ namespace winp::menu{
 
 				if (on_uncheck != nullptr)
 					item.uncheck_event += on_uncheck;
-
-				return true;
 			}, index);
 		}
 
-		virtual menu::separator *insert_separator(const std::function<bool(menu::separator &)> &callback = nullptr, std::size_t index = static_cast<std::size_t>(-1)){
-			return insert<menu::separator>(callback);
+		virtual menu::separator *insert_separator(const std::function<void(menu::separator &)> &callback = nullptr, std::size_t index = static_cast<std::size_t>(-1)){
+			return insert<menu::separator>(callback, index);
 		}
 
 	protected:
 		friend class thread::surface_manager;
 
 		template <typename item_type>
-		item_type *insert_(const std::function<bool(item_type &)> &callback, std::size_t index){
+		item_type *insert_(const std::function<void(item_type &)> &callback, std::size_t index){
 			auto item = std::make_shared<item_type>(base_type::thread_);
-			if (item == nullptr || (callback != nullptr && !callback(*item)) || base_type::add_child_(*item, index) == static_cast<std::size_t>(-1))
+			if (item == nullptr || base_type::add_child_(*item, index) == static_cast<std::size_t>(-1))
 				return nullptr;//Rejected
+
+			if (callback != nullptr)
+				callback(*item);
 
 			item->create();
 			add_to_list_(item);

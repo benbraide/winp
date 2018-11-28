@@ -54,7 +54,8 @@ bool winp::menu::wrapper::destroy_(){
 }
 
 bool winp::menu::wrapper::handle_parent_change_event_(event::tree &e){
-	return false;
+	auto prent = e.get_attached_parent();
+	return (prent == nullptr || dynamic_cast<menu::item *>(prent) != nullptr);
 }
 
 void winp::menu::wrapper::handle_child_inserted_event_(event::tree &e){

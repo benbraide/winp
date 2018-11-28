@@ -22,7 +22,6 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_sh
 			rg.insert_check_item(L"Radio Item 1");
 			rg.insert_check_item(L"Radio Item 2");
 			rg.insert_check_item(L"Radio Item 3");
-			return true;
 		});
 		wm.insert_separator();
 		wm.insert_link(L"Link Item", [](winp::menu::collection &popup){
@@ -30,24 +29,13 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_sh
 			popup.insert_check_item(L"Popup Check Item");
 			popup.insert_link(L"Pushed Link Item", [](winp::menu::collection &popup2){
 				popup2.draw_item_event += [](winp::event::draw_item &e){};
-				popup2.insert_item(L"Popup2 Item", [](winp::menu::item &odi){
-					return true;
-				});
+				popup2.insert_item(L"Popup2 Item");
 				popup2.insert_link(L"Link Item", [](winp::menu::collection &popup3){
-					popup3.insert_item(L"Popup3 Item", [](winp::menu::item &odi){
-						return true;
-					});
-					return true;
+					popup3.insert_item(L"Popup3 Item");
 				});
-				popup2.insert_check_item(L"Popup2 Check Item", [](winp::menu::item &odi){
-					return true;
-				});
-				popup2.insert_item(L"Owner Drawn Item", [](winp::menu::item &odi){
-					return true;
-				});
-				return true;
+				popup2.insert_check_item(L"Popup2 Check Item");
+				popup2.insert_item(L"Owner Drawn Item");
 			}, 0);
-			return true;
 		});
 	});
 
