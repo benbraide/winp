@@ -190,6 +190,12 @@ namespace winp::thread{
 
 		LRESULT measure_item_(ui::surface &target, const MSG &info, bool prevent_default);
 
+		LRESULT close_frame_(ui::surface &target, const MSG &info, bool prevent_default);
+
+		LRESULT size_frame_(ui::surface &target, const MSG &info, bool prevent_default);
+
+		LRESULT move_frame_(ui::surface &target, const MSG &info, bool prevent_default);
+
 		message::dispatcher *find_dispatcher_(UINT msg);
 
 		void track_mouse_leave_(HWND target, UINT flags);

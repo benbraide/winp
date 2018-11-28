@@ -17,6 +17,7 @@ namespace winp::event{
 	class focus_dispatcher;
 	class key_dispatcher;
 	class menu_dispatcher;
+	class frame_dispatcher;
 
 	class unhandled_handler{
 	public:
@@ -171,5 +172,27 @@ namespace winp::event{
 		virtual menu::object *handle_context_menu_request_event_(context_menu_prefix &e);
 
 		virtual void handle_context_menu_event_(context_menu &e);
+	};
+
+	class frame_handler{
+	public:
+		virtual ~frame_handler() = default;
+
+	protected:
+		friend class frame_dispatcher;
+
+		virtual bool handle_close_event_(object &e);
+
+		virtual bool handle_position_change_event_(position &e);
+
+		virtual bool handle_size_change_event_(size &e);
+
+		virtual void handle_maximized_event_(object &e);
+
+		virtual void handle_minimized_event_(object &e);
+
+		virtual void handle_position_changed_event_(object &e);
+
+		virtual void handle_size_changed_event_(object &e);
 	};
 }

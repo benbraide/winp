@@ -51,6 +51,12 @@ winp::thread::surface_manager::surface_manager(){
 	dispatchers_[WINP_WM_CONTEXT_MENU_QUERY] = std::make_shared<message::menu_dispatcher>();
 	dispatchers_[WINP_WM_CONTEXT_MENU_REQUEST] = std::make_shared<message::menu_dispatcher>();
 	dispatchers_[WM_CONTEXTMENU] = std::make_shared<message::menu_dispatcher>();
+
+	dispatchers_[WM_CLOSE] = std::make_shared<message::frame_dispatcher>();
+	dispatchers_[WM_SIZING] = std::make_shared<message::frame_dispatcher>();
+	dispatchers_[WM_MOVING] = std::make_shared<message::frame_dispatcher>();
+	dispatchers_[WM_SIZE] = std::make_shared<message::frame_dispatcher>();
+	dispatchers_[WM_MOVE] = std::make_shared<message::frame_dispatcher>();
 }
 
 void winp::thread::surface_manager::prepare_for_run_(){
@@ -539,6 +545,28 @@ LRESULT winp::thread::surface_manager::measure_item_(ui::surface &target, const 
 	return TRUE;
 }
 
+LRESULT winp::thread::surface_manager::close_frame_(ui::surface &target, const MSG &info, bool prevent_default){
+	if (find_dispatcher_(info.message)->dispatch_(target, info, false) != 0)
+		return 0;//Close prevented
+	return ((IsWindowUnicode(info.hwnd) == FALSE) ? CallWindowProcA(DefWindowProcA, info.hwnd, info.message, info.wParam, info.lParam) : CallWindowProcW(DefWindowProcW, info.hwnd, info.message, info.wParam, info.lParam));
+}
+
+LRESULT winp::thread::surface_manager::size_frame_(ui::surface &target, const MSG &info, bool prevent_default){
+	if (find_dispatcher_(info.message)->dispatch_(target, info, false) != 0){//Size prevented
+		auto drag_rect = reinterpret_cast<RECT *>(info.lParam);
+		drag_rect->right = drag_rect->left;
+		drag_rect->bottom = drag_rect->top;
+	}
+
+	return ((IsWindowUnicode(info.hwnd) == FALSE) ? CallWindowProcA(DefWindowProcA, info.hwnd, info.message, info.wParam, info.lParam) : CallWindowProcW(DefWindowProcW, info.hwnd, info.message, info.wParam, info.lParam));
+}
+
+LRESULT winp::thread::surface_manager::move_frame_(ui::surface &target, const MSG &info, bool prevent_default){
+	if (find_dispatcher_(info.message)->dispatch_(target, info, false) != 0)//Move prevented
+		*reinterpret_cast<RECT *>(info.lParam) = target.get_absolute_dimension_();
+	return ((IsWindowUnicode(info.hwnd) == FALSE) ? CallWindowProcA(DefWindowProcA, info.hwnd, info.message, info.wParam, info.lParam) : CallWindowProcW(DefWindowProcW, info.hwnd, info.message, info.wParam, info.lParam));
+}
+
 winp::message::dispatcher *winp::thread::surface_manager::find_dispatcher_(UINT msg){
 	auto it = dispatchers_.find(msg);
 	return ((it == dispatchers_.end()) ? default_dispatcher_.get() : it->second.get());
@@ -579,6 +607,12 @@ LRESULT CALLBACK winp::thread::surface_manager::entry_(HWND handle, UINT msg, WP
 		return manager.draw_item_(*object, info, false);
 	case WM_MEASUREITEM:
 		return manager.measure_item_(*object, info, false);
+	case WM_CLOSE:
+		return manager.close_frame_(*object, info, false);
+	case WM_SIZING:
+		return manager.size_frame_(*object, info, false);
+	case WM_MOVING:
+		return manager.move_frame_(*object, info, false);
 	default:
 		break;
 	}

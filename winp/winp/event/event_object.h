@@ -460,4 +460,28 @@ namespace winp::event{
 
 		virtual menu_type &get_menu();
 	};
+
+	class size : public object{
+	public:
+		size(ui::object &target, const callback_type &default_handler, const info_type &info);
+
+		size(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info);
+
+		virtual ~size();
+
+		virtual int get_edge() const;
+
+		virtual SIZE get_offset() const;
+	};
+
+	class position : public object{
+	public:
+		position(ui::object &target, const callback_type &default_handler, const info_type &info);
+
+		position(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info);
+
+		virtual ~position();
+
+		virtual SIZE get_offset() const;
+	};
 }

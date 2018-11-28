@@ -1,4 +1,5 @@
 #include "../app/app_object.h"
+#include "../window/frame_window.h"
 #include "message_dispatcher.h"
 
 winp::message::dispatcher::dispatcher()
@@ -233,6 +234,9 @@ void winp::message::draw_item_dispatcher::post_dispatch_(event::object &e){
 		return;
 
 	auto context = e.get_context();
+	if (dynamic_cast<ui::window_surface *>(context) != nullptr)
+		return;//No bubbling
+
 	if (!bubble_to_type_of_<menu::object, ui::window_surface>(e)){
 		set_context_of_(e, *context);
 		if (!bubble_to_type_of_<ui::window_surface>(e))
@@ -611,4 +615,69 @@ std::shared_ptr<winp::event::object> winp::message::menu_dispatcher::create_even
 		return create_new_event_<event::object>(target, info, call_default);
 
 	return create_new_event_<event::object>(*menu_target, info, call_default);
+}
+
+winp::message::frame_dispatcher::frame_dispatcher()
+	: dispatcher(false){
+	event_dispatcher_ = std::make_shared<event::frame_dispatcher>();
+}
+
+void winp::message::frame_dispatcher::post_dispatch_(event::object &e){
+	if (default_prevented_of_(e))
+		set_result_of_(e, 1, true);
+}
+
+void winp::message::frame_dispatcher::fire_event_(event::object &e){
+	auto surface_target = dynamic_cast<ui::surface *>(e.get_context());
+	if (surface_target == nullptr)
+		return;
+
+	auto frame_window_target = dynamic_cast<window::frame *>(e.get_context());
+	switch (e.get_info()->message){
+	case WM_CLOSE:
+		if (frame_window_target != nullptr)
+			fire_event_of_(*frame_window_target, frame_window_target->close_event, e);
+		break;
+	case WM_SIZING:
+		fire_event_of_(*surface_target, surface_target->size_change_event, e);
+		break;
+	case WM_MOVING:
+		fire_event_of_(*surface_target, surface_target->position_change_event, e);
+		break;
+	case WM_SIZE:
+		switch (e.get_info()->wParam){
+		case SIZE_MAXIMIZED:
+			if (frame_window_target != nullptr)
+				fire_event_of_(*frame_window_target, frame_window_target->maximized_event, e);
+			break;
+		case SIZE_MINIMIZED:
+			if (frame_window_target != nullptr)
+				fire_event_of_(*frame_window_target, frame_window_target->minimized_event, e);
+			break;
+		case SIZE_RESTORED:
+			break;
+		default:
+			return;
+		}
+		fire_event_of_(*surface_target, surface_target->size_changed_event, e);
+		break;
+	case WM_MOVE:
+		fire_event_of_(*surface_target, surface_target->position_changed_event, e);
+		break;
+	default:
+		break;
+	}
+}
+
+std::shared_ptr<winp::event::object> winp::message::frame_dispatcher::create_event_(ui::object &target, const MSG &info, bool call_default){
+	switch (info.message){
+	case WM_SIZING:
+		return create_new_event_<event::size>(target, info, call_default);
+	case WM_MOVING:
+		return create_new_event_<event::position>(target, info, call_default);
+	default:
+		break;
+	}
+
+	return create_new_event_<event::object>(target, info, call_default);
 }

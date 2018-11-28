@@ -4,6 +4,10 @@
 
 int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_show){
 	winp::window::frame ws;
+	ws.close_event += [](winp::event::object &e){
+		//e.prevent_default();
+	};
+
 	ws.set_position(POINT{ 10, 10 });
 	ws.set_size(SIZE{ 600, 400 });
 	ws.set_caption(L"Framed Window");

@@ -88,3 +88,23 @@ winp::menu::object *winp::event::menu_handler::handle_context_menu_request_event
 }
 
 void winp::event::menu_handler::handle_context_menu_event_(context_menu &e){}
+
+bool winp::event::frame_handler::handle_close_event_(object &e){
+	return true;
+}
+
+bool winp::event::frame_handler::handle_position_change_event_(position &e){
+	return true;
+}
+
+bool winp::event::frame_handler::handle_size_change_event_(size &e){
+	return true;
+}
+
+void winp::event::frame_handler::handle_maximized_event_(object &e){}
+
+void winp::event::frame_handler::handle_minimized_event_(object &e){}
+
+void winp::event::frame_handler::handle_position_changed_event_(object &e){}
+
+void winp::event::frame_handler::handle_size_changed_event_(object &e){}

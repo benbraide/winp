@@ -120,11 +120,16 @@ std::size_t winp::event::tree::get_current_index() const{
 }
 
 void winp::event::tree::init_(){
-	if (info_.message != WINP_WM_PARENT_CHANGED && info_.message != WINP_WM_INDEX_CHANGED){
+	if (info_.message == WINP_WM_CHILD_INSERTED && info_.message == WINP_WM_CHILD_INDEX_CHANGED){
 		auto info = reinterpret_cast<ui::tree::child_change_info *>(info_.wParam);
 		target_ = info->child;
 		previous_parent_ = info->previous_parent_;
 		previous_index_ = info->previous_index_;
+	}
+	else if (info_.message == WINP_WM_CHILD_REMOVED){
+		target_ = reinterpret_cast<ui::tree *>(info_.wParam);
+		previous_parent_ = dynamic_cast<ui::tree *>(context_);
+		previous_index_ = static_cast<std::size_t>(info_.lParam);
 	}
 	else{
 		previous_parent_ = reinterpret_cast<ui::tree *>(info_.wParam);
@@ -620,4 +625,34 @@ winp::event::context_menu::~context_menu() = default;
 
 winp::event::context_menu::menu_type &winp::event::context_menu::get_menu(){
 	return *reinterpret_cast<menu_type *>(info_.wParam);
+}
+
+winp::event::size::size(ui::object &target, const callback_type &default_handler, const info_type &info)
+	: object(target, default_handler, info){}
+
+winp::event::size::size(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
+	: object(target, context, default_handler, info){}
+
+winp::event::size::~size() = default;
+
+int winp::event::size::get_edge() const{
+	return static_cast<int>(info_.wParam);
+}
+
+SIZE winp::event::size::get_offset() const{
+	auto drag_rect = reinterpret_cast<RECT *>(info_.lParam);
+	return SIZE{ (drag_rect->right - drag_rect->left), (drag_rect->bottom - drag_rect->top) };
+}
+
+winp::event::position::position(ui::object &target, const callback_type &default_handler, const info_type &info)
+	: object(target, default_handler, info){}
+
+winp::event::position::position(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
+	: object(target, context, default_handler, info){}
+
+winp::event::position::~position() = default;
+
+SIZE winp::event::position::get_offset() const{
+	auto previous_dimension = dynamic_cast<ui::surface *>(context_)->get_absolute_dimension(), *current_dimension = reinterpret_cast<RECT *>(info_.lParam);;
+	return SIZE{ (current_dimension->left - previous_dimension.left), (current_dimension->top - previous_dimension.top) };
 }

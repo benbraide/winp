@@ -17,6 +17,10 @@ namespace winp::window{
 
 		virtual menu::wrapper_collection *get_system_menu(const std::function<void(menu::wrapper_collection &)> &callback = nullptr);
 
+		event::manager<frame, event::object> close_event{ *this };
+		event::manager<frame, event::object> maximized_event{ *this };
+		event::manager<frame, event::object> minimized_event{ *this };
+
 	protected:
 		friend class thread::surface_manager;
 

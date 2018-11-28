@@ -141,6 +141,15 @@ std::size_t winp::ui::tree::insert_child_(object &child, std::size_t index){
 	child_inserted_(child, previous_parent, previous_index);
 	child_index_changed_(child, previous_parent, previous_index);
 
+	child_change_info info{
+		&child,
+		previous_parent,
+		previous_index
+	};
+
+	dispatch_message_(WINP_WM_CHILD_INSERTED, reinterpret_cast<WPARAM>(&info), 0, false);
+	dispatch_message_(WINP_WM_CHILD_INDEX_CHANGED, reinterpret_cast<WPARAM>(&info), 0, false);
+
 	return index;
 }
 

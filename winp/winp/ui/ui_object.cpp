@@ -348,6 +348,9 @@ std::size_t winp::ui::object::change_parent_(tree *value, std::size_t index){
 	parent_changed_(previous_parent, previous_index);
 	index_changed_(previous_parent, previous_index);
 
+	dispatch_message_(WINP_WM_PARENT_CHANGED, reinterpret_cast<WPARAM>(previous_parent), static_cast<LPARAM>(previous_index), false);
+	dispatch_message_(WINP_WM_INDEX_CHANGED, reinterpret_cast<WPARAM>(previous_parent), static_cast<LPARAM>(previous_index), false);
+
 	return index;
 }
 
@@ -366,8 +369,13 @@ bool winp::ui::object::remove_parent_(){
 	parent_changed_(previous_parent, previous_index);
 	index_changed_(previous_parent, previous_index);
 
-	if (previous_parent != nullptr)
+	dispatch_message_(WINP_WM_PARENT_CHANGED, reinterpret_cast<WPARAM>(previous_parent), static_cast<LPARAM>(previous_index), false);
+	dispatch_message_(WINP_WM_INDEX_CHANGED, reinterpret_cast<WPARAM>(previous_parent), static_cast<LPARAM>(previous_index), false);
+
+	if (previous_parent != nullptr){
 		previous_parent->child_removed_(*this, previous_index);
+		previous_parent->dispatch_message_(WINP_WM_CHILD_REMOVED, reinterpret_cast<WPARAM>(this), previous_index, false);
+	}
 
 	return true;
 }
@@ -393,8 +401,10 @@ std::size_t winp::ui::object::change_index_(std::size_t value){
 
 	if (parent_ != nullptr){
 		value = parent_->change_child_index_(*this, value);
-		if (value != static_cast<std::size_t>(-1) && value != previous_index)
+		if (value != static_cast<std::size_t>(-1) && value != previous_index){
 			index_changed_(get_parent_(), previous_index);
+			dispatch_message_(WINP_WM_INDEX_CHANGED, reinterpret_cast<WPARAM>(parent_), static_cast<LPARAM>(previous_index), false);
+		}
 	}
 	else
 		index_ = value;

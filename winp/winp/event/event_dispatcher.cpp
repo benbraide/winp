@@ -512,3 +512,44 @@ void winp::event::menu_dispatcher::dispatch_(object &e){
 	else//Events are not subscribed to
 		dispatcher::dispatch_(e);
 }
+
+void winp::event::frame_dispatcher::dispatch_(object &e){
+	auto handler = dynamic_cast<frame_handler *>(e.get_context());
+	if (handler == nullptr)
+		return dispatcher::dispatch_(e);
+
+	switch (e.get_info()->message){
+	case WM_CLOSE:
+		if (!handler->handle_close_event_(e))
+			e.prevent_default();
+		break;
+	case WM_SIZING:
+		if (!handler->handle_size_change_event_(dynamic_cast<event::size &>(e)))
+			e.prevent_default();
+		break;
+	case WM_MOVING:
+		if (!handler->handle_position_change_event_(dynamic_cast<event::position &>(e)))
+			e.prevent_default();
+		break;
+	case WM_SIZE:
+		switch (e.get_info()->wParam){
+		case SIZE_MAXIMIZED:
+			handler->handle_maximized_event_(e);
+			break;
+		case SIZE_MINIMIZED:
+			handler->handle_minimized_event_(e);
+			break;
+		case SIZE_RESTORED:
+			break;
+		default:
+			return;
+		}
+		handler->handle_size_changed_event_(e);
+		break;
+	case WM_MOVE:
+		handler->handle_position_changed_event_(e);
+		break;
+	default:
+		break;
+	}
+}
