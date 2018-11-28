@@ -38,12 +38,9 @@ void winp::message::dispatcher::do_default_(event::object &e, bool call_default)
 		event_dispatcher_->dispatch_(e);
 	}
 
-	if (!is_doing_default_ || !call_default || e.default_prevented_()){//Prevent system handling
-		is_doing_default_ = false;
-		return;
-	}
+	if (is_doing_default_ && call_default && !e.default_prevented_() && !e.soft_default_prevented_())
+		e.set_result_(call_default_(e), false);
 
-	e.set_result_(call_default_(e), false);
 	is_doing_default_ = false;
 }
 

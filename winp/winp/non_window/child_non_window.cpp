@@ -2,7 +2,7 @@
 
 winp::non_window::child::child(ui::io_surface &parent)
 	: io_surface(parent.get_thread()){
-	set_parent(&parent);
+	change_parent_(&parent);
 }
 
 winp::non_window::child::~child() = default;

@@ -8,6 +8,11 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_sh
 		//e.prevent_default();
 	};
 
+	winp::non_window::child nwc(ws);
+	nwc.set_position(POINT{ 10, 10 });
+	nwc.set_size(SIZE{ 300, 200 });
+	nwc.set_background_color(D2D1::ColorF(D2D1::ColorF::Red));
+
 	ws.set_position(POINT{ 10, 10 });
 	ws.set_size(SIZE{ 600, 400 });
 	ws.set_caption(L"Framed Window");

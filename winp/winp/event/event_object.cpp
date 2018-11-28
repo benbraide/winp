@@ -83,6 +83,10 @@ bool winp::event::object::default_prevented_() const{
 	return ((state_ & state_type::default_prevented) != 0u);
 }
 
+bool winp::event::object::soft_default_prevented_() const{
+	return ((state_ & state_type::soft_default_prevented) != 0u);
+}
+
 bool winp::event::object::propagation_stopped_() const{
 	return ((state_ & state_type::propagation_stopped) != 0u);
 }
@@ -165,8 +169,8 @@ void winp::event::draw::set_context_(ui::object &value){
 		current_offset_.y += parent_offset.y;
 	}
 
+	context_changed_ = true;
 	context_ = &value;
-	drawer_ = nullptr;
 
 	if (struct_.hdc != nullptr){//Reset device
 		RestoreDC(struct_.hdc, initial_device_state_id_);
@@ -200,21 +204,42 @@ void winp::event::draw::begin_(){
 	}
 
 	if (struct_.hdc != nullptr){//Initialize
-		state_ |= state_type::default_prevented;
+		state_ |= state_type::soft_default_prevented;
 		initial_device_state_id_ = SaveDC(struct_.hdc);
 	}
 }
 
 ID2D1RenderTarget *winp::event::draw::get_drawer_(){
+	auto surface_target = dynamic_cast<ui::visible_surface *>(context_);
+	if (surface_target == nullptr)//Visible surface required
+		return nullptr;
+
 	auto device = get_device_();
-	if (device != nullptr && drawer_ == nullptr && (drawer_ = thread_.get_device_drawer()) != nullptr){
-		auto target_rect = dynamic_cast<ui::surface *>(target_)->get_client_dimension_();
+	if (device == nullptr)//Failed to retrieve device
+		return nullptr;
 
-		OffsetRect(&target_rect, current_offset_.x, current_offset_.y);
-		OffsetClipRgn(struct_.hdc, current_offset_.x, current_offset_.y);
-		IntersectClipRect(struct_.hdc, current_offset_.x, current_offset_.y, (target_rect.right + current_offset_.x), (target_rect.bottom + current_offset_.y));
+	if (context_changed_){//Update viewport
+		if (drawer_ != nullptr){
+			auto target_rect = surface_target->get_client_dimension_();
 
-		drawer_->BindDC(device, &target_rect);
+			OffsetRect(&target_rect, current_offset_.x, current_offset_.y);
+			IntersectRect(&target_rect, &target_rect, &struct_.rcPaint);
+
+			drawer_->EndDraw();
+			drawer_->BindDC(device, &target_rect);
+			drawer_->BeginDraw();
+		}
+
+		POINT previous_viewport{};
+		SetViewportOrgEx(device, current_offset_.x, current_offset_.y, &previous_viewport);
+		context_changed_ = false;
+	}
+
+	if (drawer_ != nullptr)
+		return drawer_;
+
+	if ((drawer_ = thread_.get_device_drawer()) != nullptr){
+		drawer_->BindDC(device, &struct_.rcPaint);
 		drawer_->SetTransform(D2D1::IdentityMatrix());
 		drawer_->BeginDraw();
 	}

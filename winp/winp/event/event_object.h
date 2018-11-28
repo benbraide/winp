@@ -38,12 +38,6 @@ namespace winp::event{
 	class unhandled_handler;
 	class draw_handler;
 
-	enum class event_result_type{
-		nil,
-		result_set,
-		prevent_default,
-	};
-
 	template <class owner_type, class object_type, class group_type = void>
 	class manager;
 
@@ -55,8 +49,9 @@ namespace winp::event{
 		struct state_type{
 			static constexpr unsigned int nil						= (0 << 0x0000);
 			static constexpr unsigned int default_prevented			= (1 << 0x0000);
-			static constexpr unsigned int propagation_stopped		= (1 << 0x0001);
-			static constexpr unsigned int result_set				= (1 << 0x0002);
+			static constexpr unsigned int soft_default_prevented	= (1 << 0x0001);
+			static constexpr unsigned int propagation_stopped		= (1 << 0x0002);
+			static constexpr unsigned int result_set				= (1 << 0x0003);
 		};
 
 		object(thread::object &thread, const callback_type &default_handler, const info_type &info);
@@ -135,6 +130,8 @@ namespace winp::event{
 		virtual void do_default_();
 
 		virtual bool default_prevented_() const;
+
+		virtual bool soft_default_prevented_() const;
 
 		virtual bool propagation_stopped_() const;
 
@@ -215,6 +212,7 @@ namespace winp::event{
 
 		virtual bool erase_background_();
 
+		bool context_changed_ = false;
 		ID2D1DCRenderTarget *drawer_ = nullptr;
 		ID2D1SolidColorBrush *color_brush_ = nullptr;
 
