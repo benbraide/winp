@@ -34,6 +34,8 @@ namespace winp::ui{
 
 	class object : public thread::item{
 	public:
+		using tree_change_info = event::tree::tree_change_info;
+
 		object();
 
 		explicit object(thread::object &thread);
@@ -95,6 +97,9 @@ namespace winp::ui{
 		event::manager<object, event::tree> parent_change_event{ *this };
 		event::manager<object, event::tree> index_change_event{ *this };
 
+		event::manager<object, event::tree> parent_changed_event{ *this };
+		event::manager<object, event::tree> index_changed_event{ *this };
+
 	protected:
 		friend class tree;
 		friend class window_surface;
@@ -127,6 +132,8 @@ namespace winp::ui{
 
 		virtual bool destroy_();
 
+		virtual void add_to_toplevel_(bool update = false);
+
 		virtual void set_handle_(HANDLE value);
 
 		virtual HANDLE get_handle_() const;
@@ -137,23 +144,11 @@ namespace winp::ui{
 
 		virtual tree *get_parent_() const;
 
-		virtual bool validate_parent_change_(tree *value, std::size_t index) const;
-
 		virtual std::size_t change_parent_(tree *value, std::size_t index = static_cast<std::size_t>(-1));
 
 		virtual bool remove_parent_();
 
-		virtual void parent_changing_();
-
-		virtual void parent_changed_(tree *previous_parent, std::size_t previous_index);
-
-		virtual bool validate_index_change_(std::size_t value) const;
-
 		virtual std::size_t change_index_(std::size_t value);
-
-		virtual void index_changing_();
-
-		virtual void index_changed_(tree *previous_parent, std::size_t previous_index);
 
 		virtual std::size_t get_index_() const;
 

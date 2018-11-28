@@ -1,9 +1,10 @@
 #pragma once
 
 #include "../ui/ui_window_surface.h"
+#include "../event/event_handler.h"
 
 namespace winp::non_window{
-	class child : public ui::io_surface{
+	class child : public ui::io_surface, public event::tree_handler{
 	public:
 		explicit child(ui::io_surface &parent);
 
@@ -14,10 +15,6 @@ namespace winp::non_window{
 		static const unsigned int state_transparent			= (1 << 0x0001);
 
 	protected:
-		virtual bool validate_parent_change_(tree *value, std::size_t index) const override;
-
-		virtual void parent_changed_(tree *previous_parent, std::size_t previous_index) override;
-
 		virtual void redraw_(const m_rect_type &region) override;
 
 		virtual bool set_visibility_(bool is_visible) override;
@@ -27,6 +24,10 @@ namespace winp::non_window{
 		virtual bool set_transparency_(bool is_transparent) override;
 
 		virtual bool is_transparent_() const override;
+
+		virtual bool handle_parent_change_event_(event::tree &e) override;
+
+		virtual void handle_parent_changed_event_(event::tree &e) override;
 
 		unsigned int state_ = state_nil;
 	};

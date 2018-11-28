@@ -293,46 +293,38 @@ bool winp::menu::item_component::destroy_(){
 	return (result != FALSE);
 }
 
-bool winp::menu::item_component::validate_parent_change_(ui::tree *value, std::size_t index) const{
-	return (surface::validate_parent_change_(value, index) && (value == nullptr || dynamic_cast<menu::tree *>(value) != nullptr));
-}
-
-void winp::menu::item_component::parent_changing_(){
-	auto is_created = is_created_;
-	destroy_();
-
-	is_created_ = is_created;
-	surface::parent_changing_();
-}
-
-void winp::menu::item_component::parent_changed_(ui::tree *previous_parent, std::size_t previous_index){
-	if (is_created_){//Ignore if item wasn't previously created
-		is_created_ = false;
-		create_();
-	}
-	surface::parent_changed_(previous_parent, previous_index);
-}
-
-void winp::menu::item_component::index_changing_(){
-	auto is_created = is_created_;
-	destroy_();
-	is_created_ = is_created;
-}
-
-void winp::menu::item_component::index_changed_(ui::tree *previous_parent, std::size_t previous_index){
-	if (is_created_ && previous_parent == get_parent_()){
-		is_created_ = false;
-		create_();
-	}
-	surface::index_changed_(previous_parent, previous_index);
-}
-
 const wchar_t *winp::menu::item_component::get_theme_name_() const{
 	return L"MENU";
 }
 
 std::size_t winp::menu::item_component::get_count_() const{
 	return 1u;
+}
+
+bool winp::menu::item_component::handle_parent_change_event_(event::tree &e){
+	if (e.get_attached_parent() != nullptr && dynamic_cast<menu::tree *>(e.get_attached_parent()) == nullptr)
+		return false;
+
+	if (auto is_created = is_created_; is_created){
+		destroy_();
+		is_created_ = is_created;
+	}
+
+	return true;
+}
+
+void winp::menu::item_component::handle_parent_changed_event_(event::tree &e){
+	if (is_created_){//Ignore if item wasn't previously created
+		is_created_ = false;
+		create_();
+	}
+}
+
+void winp::menu::item_component::handle_index_changed_event_(event::tree &e){
+	if (is_created_ && e.get_attached_parent() == get_parent_()){
+		destroy_();
+		create_();
+	}
 }
 
 UINT winp::menu::item_component::get_local_id_() const{

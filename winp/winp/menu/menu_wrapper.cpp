@@ -53,14 +53,22 @@ bool winp::menu::wrapper::destroy_(){
 	return true;
 }
 
-bool winp::menu::wrapper::validate_parent_change_(ui::tree *value, std::size_t index) const{
+bool winp::menu::wrapper::handle_parent_change_event_(event::tree &e){
 	return false;
 }
 
-void winp::menu::wrapper::child_removed_(ui::object &child, std::size_t previous_index){
-	object::child_removed_(child, previous_index);
-	if (!item_list_.empty())
-		item_list_.erase(dynamic_cast<menu::component *>(&child));
+void winp::menu::wrapper::handle_child_inserted_event_(event::tree &e){
+	if (!marked_items_.empty())
+		marked_items_.clear();
+}
+
+void winp::menu::wrapper::handle_child_removed_event_(event::tree &e){
+	if (!item_map_.empty()){
+		if (auto it = item_map_.find(dynamic_cast<menu::component *>(e.get_target())); it != item_map_.end()){
+			marked_items_.push_back(it->second);
+			item_map_.erase(it);
+		}
+	}
 }
 
 bool winp::menu::wrapper::init_(HMENU value){
@@ -139,7 +147,7 @@ bool winp::menu::wrapper::wrap_(HMENU value){
 		else//Separator
 			item = std::make_shared<menu::separator>(*this);
 
-		item_list_[item.get()] = item;
+		item_map_[item.get()] = item;
 	}
 
 	return true;

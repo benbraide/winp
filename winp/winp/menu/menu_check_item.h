@@ -43,9 +43,9 @@ namespace winp::menu{
 
 		friend class event::draw_item_dispatcher;
 
-		virtual bool validate_child_insert_(const ui::object &child, std::size_t index) const override;
+		virtual bool handle_child_insert_event_(event::tree &e) override;
 
-		virtual bool validate_child_remove_(const ui::object &child) const override;
+		virtual bool handle_child_remove_event_(event::tree &e) override;
 
 		virtual HBITMAP get_unchecked_bitmap_() const override;
 

@@ -50,15 +50,17 @@ namespace winp::menu{
 
 		virtual HANDLE get_handle_() const override;
 
-		virtual bool validate_parent_change_(ui::tree *value, std::size_t index) const override;
-
-		virtual void parent_changed_(ui::tree *previous_parent, std::size_t previous_index) override;
-
 		virtual LRESULT dispatch_message_(UINT msg, WPARAM wparam, LPARAM lparam, bool call_default = false) override;
 
 		virtual UINT get_types_(std::size_t index) const override;
 
 		virtual std::size_t get_count_() const override;
+
+		virtual bool handle_parent_change_event_(event::tree &e) override;
+
+		virtual void handle_parent_changed_event_(event::tree &e) override;
+
+		virtual void handle_index_changed_event_(event::tree &e) override;
 
 		virtual std::size_t get_absolute_index_() const;
 

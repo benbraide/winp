@@ -159,28 +159,25 @@ bool winp::menu::item::select(const std::function<void(item_component &, bool)> 
 	return true;
 }
 
-bool winp::menu::item::validate_child_insert_(const ui::object &child, std::size_t index) const{
-	return (item_component::validate_child_insert_(child, index) && dynamic_cast<const menu::object *>(&child) != nullptr);
+bool winp::menu::item::handle_child_insert_event_(event::tree &e){
+	return (dynamic_cast<menu::object *>(e.get_target()) != nullptr);
 }
 
-void winp::menu::item::child_inserted_(ui::object &child, tree *previous_parent, std::size_t previous_index){
+bool winp::menu::item::handle_child_remove_event_(event::tree &e){
+	return (dynamic_cast<const menu::object *>(e.get_target()) != nullptr);
+}
+
+void winp::menu::item::handle_child_inserted_event_(event::tree &e){
 	if (popup_ != nullptr)//Remove previous target
 		erase_child_(*popup_);
 
-	if ((popup_ = dynamic_cast<ui::surface *>(&child))->get_handle_() != nullptr)
+	if ((popup_ = dynamic_cast<ui::surface *>(e.get_target()))->get_handle_() != nullptr)
 		update_popup_();
-
-	item_component::child_inserted_(child, previous_parent, previous_index);
 }
 
-bool winp::menu::item::validate_child_remove_(const ui::object &child) const{
-	return (item_component::validate_child_remove_(child) && dynamic_cast<const ui::surface *>(&child) == popup_);
-}
-
-void winp::menu::item::child_removed_(ui::object &child, std::size_t previous_index){
+void winp::menu::item::handle_child_removed_event_(event::tree &e){
 	popup_ = nullptr;
 	update_popup_();
-	item_component::child_removed_(child, previous_index);
 }
 
 winp::ui::surface *winp::menu::item::get_popup_() const{

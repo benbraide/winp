@@ -19,7 +19,8 @@ winp::menu::link::link(ui::tree &parent, bool)
 
 winp::menu::link::~link() = default;
 
-void winp::menu::link::child_removed_(ui::object &child, std::size_t previous_index){
-	target_ptr_ = nullptr;
-	item::child_removed_(child, previous_index);
+void winp::menu::link::handle_child_inserted_event_(event::tree &e){
+	if (e.get_target() != target_ptr_.get())
+		target_ptr_ = nullptr;
+	item::handle_child_inserted_event_(e);
 }

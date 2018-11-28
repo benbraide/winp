@@ -307,22 +307,6 @@ bool winp::ui::window_surface::destroy_(){
 	return (DestroyWindow(static_cast<HWND>(handle)) != FALSE);
 }
 
-void winp::ui::window_surface::parent_changed_(tree *previous_parent, std::size_t previous_index){
-	io_surface::parent_changed_(previous_parent, previous_index);
-	if (get_handle_() == nullptr)
-		return;//Not created
-
-	auto parent = get_parent_();
-	if (parent == nullptr){
-		SetParent(static_cast<HWND>(get_handle_()), nullptr);
-		set_styles_((get_styles_(false) & ~WS_CHILD), false);
-	}
-	else{
-		set_styles_(((get_styles_(false) | WS_CHILD) & ~WS_POPUP), false);
-		SetParent(static_cast<HWND>(get_handle_()), static_cast<HWND>(parent->get_handle_()));
-	}
-}
-
 const wchar_t *winp::ui::window_surface::get_theme_name_() const{
 	return L"WINDOW";
 }
@@ -728,7 +712,7 @@ DWORD winp::ui::window_surface::get_styles_(bool is_extended) const{
 }
 
 DWORD winp::ui::window_surface::get_persistent_styles_() const{
-	return ((get_parent_() == nullptr) ? 0u : WS_CHILD);
+	return ((get_parent_() == nullptr) ? WS_POPUP : WS_CHILD);
 }
 
 DWORD winp::ui::window_surface::get_persistent_extended_styles_() const{

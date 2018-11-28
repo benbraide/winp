@@ -112,31 +112,6 @@ HANDLE winp::menu::object::get_handle_() const{
 	return ui::object::get_handle_();
 }
 
-bool winp::menu::object::validate_parent_change_(ui::tree *value, std::size_t index) const{
-	return (surface::validate_parent_change_(value, index) && (value == nullptr || dynamic_cast<menu::item *>(value) != nullptr || dynamic_cast<ui::window_surface *>(value) != nullptr));
-}
-
-void winp::menu::object::parent_changed_(ui::tree *previous_parent, std::size_t previous_index){
-	if (get_handle_() == nullptr)
-		return surface::parent_changed_(previous_parent, previous_index);
-
-	if (dynamic_cast<ui::window_surface *>(get_parent_()) != dynamic_cast<ui::window_surface *>(previous_parent)){
-		destroy_();
-		create_();
-	}
-	else{//Check for window parents
-		auto window_previous_parent = dynamic_cast<ui::window_surface *>(previous_parent);
-		if (window_previous_parent != nullptr)
-			SetMenu(static_cast<HWND>(window_previous_parent->get_handle_()), nullptr);
-
-		auto window_parent = dynamic_cast<ui::window_surface *>(get_parent_());
-		if (window_parent != nullptr)
-			SetMenu(static_cast<HWND>(window_parent->get_handle_()), static_cast<HMENU>(get_handle_()));
-	}
-
-	surface::parent_changed_(previous_parent, previous_index);
-}
-
 LRESULT winp::menu::object::dispatch_message_(UINT msg, WPARAM wparam, LPARAM lparam, bool call_default){
 	return find_dispatcher_(msg)->dispatch_(*this, MSG{ nullptr, msg, wparam, lparam }, call_default);
 }
@@ -148,6 +123,30 @@ UINT winp::menu::object::get_types_(std::size_t index) const{
 std::size_t winp::menu::object::get_count_() const{
 	return 0u;
 }
+
+bool winp::menu::object::handle_parent_change_event_(event::tree &e){
+	auto prent = e.get_attached_parent();
+	return (prent == nullptr || dynamic_cast<menu::item *>(prent) != nullptr || dynamic_cast<ui::window_surface *>(prent) != nullptr);
+}
+
+void winp::menu::object::handle_parent_changed_event_(event::tree &e){
+	auto previous_parent = e.get_attached_parent();
+	if (dynamic_cast<ui::window_surface *>(get_parent_()) == dynamic_cast<ui::window_surface *>(previous_parent)){
+		auto window_previous_parent = dynamic_cast<ui::window_surface *>(previous_parent);
+		if (window_previous_parent != nullptr)
+			SetMenu(static_cast<HWND>(window_previous_parent->get_handle_()), nullptr);
+
+		auto window_parent = dynamic_cast<ui::window_surface *>(get_parent_());
+		if (window_parent != nullptr)
+			SetMenu(static_cast<HWND>(window_parent->get_handle_()), static_cast<HMENU>(get_handle_()));
+	}
+	else{//Recreate
+		destroy_();
+		create_();
+	}
+}
+
+void winp::menu::object::handle_index_changed_event_(event::tree &e){}
 
 std::size_t winp::menu::object::get_absolute_index_() const{
 	return 0u;

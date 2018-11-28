@@ -72,15 +72,13 @@ namespace winp::ui{
 		friend class message::dispatcher;
 		friend class thread::surface_manager;
 
-		virtual void parent_changed_(tree *previous_parent, std::size_t previous_index) override;
+		virtual void add_to_toplevel_(bool update = false) override;
 
 		virtual surface *get_surface_parent_() const;
 
 		virtual surface *get_root_surface_() const;
 
 		virtual void set_message_entry_(LONG_PTR value);
-
-		virtual void add_to_toplevel_(bool update = false);
 
 		virtual bool set_size_(const m_size_type &value);
 

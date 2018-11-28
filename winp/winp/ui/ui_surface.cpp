@@ -300,14 +300,11 @@ winp::utility::hit_target winp::ui::surface::hit_test(const m_point_type &pt, co
 	return thread_.queue.execute([=]{ return hit_test_(pt, pos, size); }, thread::queue::send_priority, id_);
 }
 
-void winp::ui::surface::parent_changed_(tree *previous_parent, std::size_t previous_index){
-	tree::parent_changed_(previous_parent, previous_index);
-	if (get_handle_() == nullptr)
-		return;//Not created
-
-	auto parent = get_parent_();
-	if ((parent == nullptr) != (previous_parent == nullptr))
-		add_to_toplevel_(true);
+void winp::ui::surface::add_to_toplevel_(bool update){
+	if (get_parent_() == nullptr)
+		thread_.surface_manager_.toplevel_map_[static_cast<HWND>(get_handle_())] = this;
+	else if (update)//Remove from top level list
+		thread_.surface_manager_.toplevel_map_.erase(static_cast<HWND>(get_handle_()));
 }
 
 winp::ui::surface *winp::ui::surface::get_surface_parent_() const{
@@ -320,13 +317,6 @@ winp::ui::surface *winp::ui::surface::get_root_surface_() const{
 }
 
 void winp::ui::surface::set_message_entry_(LONG_PTR value){}
-
-void winp::ui::surface::add_to_toplevel_(bool update){
-	if (get_parent_() == nullptr)
-		thread_.surface_manager_.toplevel_map_[static_cast<HWND>(get_handle_())] = this;
-	else if (update)//Remove from top level list
-		thread_.surface_manager_.toplevel_map_.erase(static_cast<HWND>(get_handle_()));
-}
 
 bool winp::ui::surface::set_size_(const m_size_type &value){
 	size_ = value;

@@ -109,6 +109,8 @@ namespace winp::message{
 		tree_dispatcher();
 
 	protected:
+		virtual void post_dispatch_(event::object &e) override;
+
 		virtual void fire_event_(event::object &e) override;
 
 		virtual std::shared_ptr<event::object> create_event_(ui::object &target, const MSG &info, bool call_default) override;

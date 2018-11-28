@@ -4,7 +4,7 @@
 #include "menu_separator.h"
 
 namespace winp::menu{
-	class group : public ui::surface, public tree{
+	class group : public ui::surface, public tree, public event::tree_handler{
 	public:
 		group();
 
@@ -31,16 +31,6 @@ namespace winp::menu{
 
 		virtual HANDLE get_handle_() const override;
 
-		virtual bool validate_parent_change_(ui::tree *value, std::size_t index) const override;
-
-		virtual void parent_changing_() override;
-
-		virtual void parent_changed_(ui::tree *previous_parent, std::size_t previous_index) override;
-
-		virtual void index_changing_() override;
-
-		virtual void index_changed_(ui::tree *previous_parent, std::size_t previous_index) override;
-
 		virtual UINT get_types_(std::size_t index) const override;
 
 		virtual UINT get_states_(std::size_t index) const override;
@@ -52,6 +42,14 @@ namespace winp::menu{
 		virtual menu::item_component *get_component_at_absolute_index_(std::size_t index) const override;
 
 		virtual std::size_t get_count_() const override;
+
+		virtual bool handle_parent_change_event_(event::tree &e) override;
+
+		virtual bool handle_child_insert_event_(event::tree &e) override;
+
+		virtual void handle_parent_changed_event_(event::tree &e) override;
+
+		virtual void handle_index_changed_event_(event::tree &e) override;
 
 		virtual std::size_t get_absolute_index_() const;
 

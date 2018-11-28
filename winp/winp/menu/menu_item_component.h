@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../ui/ui_surface.h"
+#include "../event/event_handler.h"
 
 #include "menu_tree.h"
 
@@ -16,7 +17,7 @@ namespace winp::menu{
 	template <class base_type>
 	class generic_collection_base;
 
-	class item_component : public ui::surface, public component{
+	class item_component : public ui::surface, public component, public event::tree_handler{
 	public:
 		item_component();
 
@@ -78,19 +79,15 @@ namespace winp::menu{
 
 		virtual bool destroy_() override;
 
-		virtual bool validate_parent_change_(ui::tree *value, std::size_t index) const override;
-
-		virtual void parent_changing_() override;
-
-		virtual void parent_changed_(ui::tree *previous_parent, std::size_t previous_index) override;
-
-		virtual void index_changing_() override;
-
-		virtual void index_changed_(ui::tree *previous_parent, std::size_t previous_index) override;
-
 		virtual const wchar_t *get_theme_name_() const override;
 
 		virtual std::size_t get_count_() const override;
+
+		virtual bool handle_parent_change_event_(event::tree &e) override;
+
+		virtual void handle_parent_changed_event_(event::tree &e) override;
+
+		virtual void handle_index_changed_event_(event::tree &e) override;
 
 		virtual UINT get_local_id_() const;
 

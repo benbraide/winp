@@ -523,12 +523,19 @@ void winp::thread::surface_manager::track_mouse_leave_(HWND target, UINT flags){
 bool winp::thread::surface_manager::initialize_dispatchers_(){
 	default_dispatcher_ = std::make_shared<message::dispatcher>();
 
-	dispatchers_[WINP_WM_PARENT_CHANGED] = std::make_shared<message::tree_dispatcher>();
-	dispatchers_[WINP_WM_INDEX_CHANGED] = dispatchers_[WINP_WM_PARENT_CHANGED];
-	dispatchers_[WINP_WM_CHILD_INDEX_CHANGED] = dispatchers_[WINP_WM_PARENT_CHANGED];
+	dispatchers_[WINP_WM_PARENT_CHANGING] = std::make_shared<message::tree_dispatcher>();
+	dispatchers_[WINP_WM_INDEX_CHANGING] = dispatchers_[WINP_WM_PARENT_CHANGING];
+	dispatchers_[WINP_WM_CHILD_INDEX_CHANGING] = dispatchers_[WINP_WM_PARENT_CHANGING];
 
-	dispatchers_[WINP_WM_CHILD_INSERTED] = dispatchers_[WINP_WM_PARENT_CHANGED];
-	dispatchers_[WINP_WM_CHILD_REMOVED] = dispatchers_[WINP_WM_PARENT_CHANGED];
+	dispatchers_[WINP_WM_CHILD_INSERTING] = dispatchers_[WINP_WM_PARENT_CHANGING];
+	dispatchers_[WINP_WM_CHILD_REMOVING] = dispatchers_[WINP_WM_PARENT_CHANGING];
+
+	dispatchers_[WINP_WM_PARENT_CHANGED] = dispatchers_[WINP_WM_PARENT_CHANGING];
+	dispatchers_[WINP_WM_INDEX_CHANGED] = dispatchers_[WINP_WM_PARENT_CHANGING];
+	dispatchers_[WINP_WM_CHILD_INDEX_CHANGED] = dispatchers_[WINP_WM_PARENT_CHANGING];
+
+	dispatchers_[WINP_WM_CHILD_INSERTED] = dispatchers_[WINP_WM_PARENT_CHANGING];
+	dispatchers_[WINP_WM_CHILD_REMOVED] = dispatchers_[WINP_WM_PARENT_CHANGING];
 
 	dispatchers_[WM_NCCREATE] = std::make_shared<message::create_destroy_dispatcher>();
 	dispatchers_[WM_NCDESTROY] = dispatchers_[WM_NCCREATE];

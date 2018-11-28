@@ -293,6 +293,8 @@ bool winp::ui::object::destroy_(){
 	return true;
 }
 
+void winp::ui::object::add_to_toplevel_(bool update){}
+
 void winp::ui::object::set_handle_(HANDLE value){
 	handle_ = value;
 }
@@ -314,17 +316,6 @@ winp::ui::tree *winp::ui::object::get_parent_() const{
 	return parent_;
 }
 
-bool winp::ui::object::validate_parent_change_(tree *value, std::size_t index) const{
-	if (value != nullptr && value->thread_.local_id_ != thread_.local_id_)
-		return false;//Threads must match
-
-	auto current_parent = get_parent_();
-	if (current_parent != nullptr && !current_parent->validate_child_remove_(*this))
-		return false;
-
-	return (value == nullptr || value->validate_child_insert_(*this, index));
-}
-
 std::size_t winp::ui::object::change_parent_(tree *value, std::size_t index){
 	auto previous_parent = get_parent_();
 	if (value == previous_parent)//Same parent
@@ -335,21 +326,37 @@ std::size_t winp::ui::object::change_parent_(tree *value, std::size_t index){
 		return static_cast<std::size_t>(-1);
 	}
 
-	if (!validate_parent_change_(value, index))
-		return static_cast<std::size_t>(-1);
+	tree_change_info info{
+		this,
+		value,
+		index
+	};
 
 	auto previous_index = get_index_();
+	if (value->thread_.id_ != thread_.id_ || dispatch_message_(WINP_WM_PARENT_CHANGING, reinterpret_cast<WPARAM>(&info), 0) != 0)
+		return static_cast<std::size_t>(-1);
+
 	if (previous_parent != nullptr && !previous_parent->remove_child_(*this))
 		return static_cast<std::size_t>(-1);//Failed to remove from parent
 
 	if ((index = value->insert_child_(*this, index)) == static_cast<std::size_t>(-1))
 		return static_cast<std::size_t>(-1);//Failed to insert into parent
 
-	parent_changed_(previous_parent, previous_index);
-	index_changed_(previous_parent, previous_index);
+	info.parent = previous_parent;
+	info.index = previous_index;
 
-	dispatch_message_(WINP_WM_PARENT_CHANGED, reinterpret_cast<WPARAM>(previous_parent), static_cast<LPARAM>(previous_index), false);
-	dispatch_message_(WINP_WM_INDEX_CHANGED, reinterpret_cast<WPARAM>(previous_parent), static_cast<LPARAM>(previous_index), false);
+	dispatch_message_(WINP_WM_PARENT_CHANGED, reinterpret_cast<WPARAM>(&info), 0, false);
+	dispatch_message_(WINP_WM_INDEX_CHANGED, reinterpret_cast<WPARAM>(&info), 0, false);
+
+	if (auto handle = ((dynamic_cast<ui::window_surface *>(this) == nullptr) ? nullptr : static_cast<HWND>(get_handle_())); handle != nullptr){
+		add_to_toplevel_(true);
+		if (IsWindow(handle)){
+			SetWindowLongPtrW(handle, GWL_STYLE, ((static_cast<UINT>(GetWindowLongPtrW(handle, GWL_STYLE)) | WS_CHILD) & ~WS_POPUP));
+			auto window_parent = value->get_first_ancestor_of_<ui::window_surface>();
+			if (auto parent_handle = ((window_parent == nullptr) ? nullptr : static_cast<HWND>(window_parent->get_handle_())); parent_handle != nullptr)
+				SetParent(handle, parent_handle);
+		}
+	}
 
 	return index;
 }
@@ -359,63 +366,61 @@ bool winp::ui::object::remove_parent_(){
 	if (previous_parent == nullptr)
 		return true;
 
-	if (!validate_parent_change_(nullptr, static_cast<std::size_t>(-1)))
+	tree_change_info info{
+		this,
+		nullptr,
+		static_cast<std::size_t>(-1)
+	};
+
+	if (dispatch_message_(WINP_WM_PARENT_CHANGING, reinterpret_cast<WPARAM>(&info), 0) != 0)
 		return false;
 
 	auto previous_index = get_index_();
 	if (!previous_parent->remove_child_(*this))
 		return false;
 
-	parent_changed_(previous_parent, previous_index);
-	index_changed_(previous_parent, previous_index);
+	info.parent = previous_parent;
+	info.index = previous_index;
 
-	dispatch_message_(WINP_WM_PARENT_CHANGED, reinterpret_cast<WPARAM>(previous_parent), static_cast<LPARAM>(previous_index), false);
-	dispatch_message_(WINP_WM_INDEX_CHANGED, reinterpret_cast<WPARAM>(previous_parent), static_cast<LPARAM>(previous_index), false);
+	dispatch_message_(WINP_WM_PARENT_CHANGED, reinterpret_cast<WPARAM>(&info), 0, false);
+	dispatch_message_(WINP_WM_INDEX_CHANGED, reinterpret_cast<WPARAM>(&info), 0, false);
 
-	if (previous_parent != nullptr){
-		previous_parent->child_removed_(*this, previous_index);
-		previous_parent->dispatch_message_(WINP_WM_CHILD_REMOVED, reinterpret_cast<WPARAM>(this), previous_index, false);
+	if (auto handle = ((dynamic_cast<ui::window_surface *>(this) == nullptr) ? nullptr : static_cast<HWND>(get_handle_())); handle != nullptr){
+		add_to_toplevel_(true);
+		if (IsWindow(handle)){
+			SetParent(handle, nullptr);
+			SetWindowLongPtrW(handle, GWL_STYLE, (static_cast<UINT>(GetWindowLongPtrW(handle, GWL_STYLE)) & ~WS_CHILD));
+		}
 	}
 
 	return true;
 }
 
-void winp::ui::object::parent_changing_(){}
-
-void winp::ui::object::parent_changed_(tree *previous_parent, std::size_t previous_index){
-	dispatch_message_(WINP_WM_PARENT_CHANGED, reinterpret_cast<WPARAM>(previous_parent), static_cast<LPARAM>(previous_index));
-}
-
-bool winp::ui::object::validate_index_change_(std::size_t value) const{
-	auto parent = get_parent_();
-	return (parent == nullptr || parent->validate_child_index_change_(*this, value));
-}
-
 std::size_t winp::ui::object::change_index_(std::size_t value){
+	auto parent = get_parent_();
+	if (parent == nullptr)
+		return (index_ = value);
+
 	auto previous_index = get_index_();
 	if (value == previous_index)
 		return value;
 
-	if (!validate_index_change_(value))
+	tree_change_info info{
+		this,
+		parent,
+		value
+	};
+
+	if (dispatch_message_(WINP_WM_INDEX_CHANGING, reinterpret_cast<WPARAM>(&info), 0) != 0)
 		return static_cast<std::size_t>(-1);
 
-	if (parent_ != nullptr){
-		value = parent_->change_child_index_(*this, value);
-		if (value != static_cast<std::size_t>(-1) && value != previous_index){
-			index_changed_(get_parent_(), previous_index);
-			dispatch_message_(WINP_WM_INDEX_CHANGED, reinterpret_cast<WPARAM>(parent_), static_cast<LPARAM>(previous_index), false);
-		}
-	}
-	else
+	info.index = previous_index;
+	if (parent != nullptr && (value = parent->change_child_index_(*this, value)) != static_cast<std::size_t>(-1))
+		dispatch_message_(WINP_WM_INDEX_CHANGED, reinterpret_cast<WPARAM>(&info), 0, false);
+	else if (parent == nullptr)
 		index_ = value;
 
 	return value;
-}
-
-void winp::ui::object::index_changing_(){}
-
-void winp::ui::object::index_changed_(tree *previous_parent, std::size_t previous_index){
-	dispatch_message_(WINP_WM_INDEX_CHANGED, reinterpret_cast<WPARAM>(previous_parent), static_cast<LPARAM>(previous_index));
 }
 
 std::size_t winp::ui::object::get_index_() const{

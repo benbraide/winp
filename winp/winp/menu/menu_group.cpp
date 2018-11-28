@@ -88,38 +88,6 @@ HANDLE winp::menu::group::get_handle_() const{
 	return ((parent == nullptr) ? nullptr : parent->get_handle_());
 }
 
-bool winp::menu::group::validate_parent_change_(ui::tree *value, std::size_t index) const{
-	return (surface::validate_parent_change_(value, index) && (value == nullptr || dynamic_cast<menu::object *>(value) != nullptr));
-}
-
-void winp::menu::group::parent_changing_(){
-	if (!children_.empty()){
-		for (auto child : children_)
-			child->parent_changing_();
-	}
-}
-
-void winp::menu::group::parent_changed_(ui::tree *previous_parent, std::size_t previous_index){
-	if (!children_.empty()){
-		for (auto child : children_)
-			child->parent_changed_(previous_parent, previous_index);
-	}
-}
-
-void winp::menu::group::index_changing_(){
-	if (!children_.empty()){
-		for (auto child : children_)
-			child->index_changing_();
-	}
-}
-
-void winp::menu::group::index_changed_(ui::tree *previous_parent, std::size_t previous_index){
-	if (!children_.empty()){
-		for (auto child : children_)
-			child->index_changed_(previous_parent, previous_index);
-	}
-}
-
 UINT winp::menu::group::get_types_(std::size_t index) const{
 	auto parent = dynamic_cast<menu::tree *>(get_parent_());
 	return ((parent == nullptr) ? 0u : parent->get_types_(index));
@@ -201,6 +169,42 @@ std::size_t winp::menu::group::get_count_() const{
 	}
 
 	return count;
+}
+
+bool winp::menu::group::handle_parent_change_event_(event::tree &e){
+	if (e.get_attached_parent() != nullptr && dynamic_cast<menu::tree *>(e.get_attached_parent()) == nullptr)
+		return false;
+
+	if (!children_.empty()){
+		for (auto child : children_){
+			if (auto handler = dynamic_cast<event::tree_handler *>(child); handler != nullptr)
+				handler->handle_parent_change_event_(e);
+		}
+	}
+
+	return true;
+}
+
+bool winp::menu::group::handle_child_insert_event_(event::tree &e){
+	return (dynamic_cast<menu::component *>(e.get_target()) != nullptr);
+}
+
+void winp::menu::group::handle_parent_changed_event_(event::tree &e){
+	if (!children_.empty()){
+		for (auto child : children_){
+			if (auto handler = dynamic_cast<event::tree_handler *>(child); handler != nullptr)
+				handler->handle_parent_changed_event_(e);
+		}
+	}
+}
+
+void winp::menu::group::handle_index_changed_event_(event::tree &e){
+	if (!children_.empty()){
+		for (auto child : children_){
+			if (auto handler = dynamic_cast<event::tree_handler *>(child); handler != nullptr)
+				handler->handle_index_changed_event_(e);
+		}
+	}
 }
 
 std::size_t winp::menu::group::get_absolute_index_() const{

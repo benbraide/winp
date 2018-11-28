@@ -133,31 +133,52 @@ winp::message::tree_dispatcher::tree_dispatcher()
 	event_dispatcher_ = std::make_shared<event::tree_dispatcher>();
 }
 
-void winp::message::tree_dispatcher::fire_event_(event::object &e){
-	auto msg = e.get_info()->message;
-	if (msg != WINP_WM_PARENT_CHANGED && msg != WINP_WM_INDEX_CHANGED){
-		auto tree_target = dynamic_cast<ui::tree *>(e.get_context());
-		if (tree_target == nullptr)
-			return;
+void winp::message::tree_dispatcher::post_dispatch_(event::object &e){
+	set_result_of_(e, (default_prevented_of_(e) ? 1 : 0), true);
+}
 
-		switch (msg){
-		case WINP_WM_CHILD_INDEX_CHANGED:
-			fire_event_of_(*tree_target, tree_target->child_index_change_event, e);
-			break;
-		case WINP_WM_CHILD_INSERTED:
-			fire_event_of_(*tree_target, tree_target->child_insert_event, e);
-			break;
-		case WINP_WM_CHILD_REMOVED:
-			fire_event_of_(*tree_target, tree_target->child_remove_event, e);
-			break;
-		default:
-			break;
-		}
-	}
-	else if (msg != WINP_WM_PARENT_CHANGED)
+void winp::message::tree_dispatcher::fire_event_(event::object &e){
+	auto tree_target = dynamic_cast<ui::tree *>(e.get_context());
+	switch (e.get_info()->message){
+	case WINP_WM_PARENT_CHANGING:
 		fire_event_of_(*e.get_context(), e.get_context()->parent_change_event, e);
-	else if (msg != WINP_WM_INDEX_CHANGED)
+		break;
+	case WINP_WM_INDEX_CHANGING:
 		fire_event_of_(*e.get_context(), e.get_context()->index_change_event, e);
+		break;
+	case WINP_WM_CHILD_INDEX_CHANGING:
+		if (tree_target != nullptr)
+			fire_event_of_(*tree_target, tree_target->child_index_change_event, e);
+		break;
+	case WINP_WM_CHILD_INSERTING:
+		if (tree_target != nullptr)
+			fire_event_of_(*tree_target, tree_target->child_insert_event, e);
+		break;
+	case WINP_WM_CHILD_REMOVING:
+		if (tree_target != nullptr)
+			fire_event_of_(*tree_target, tree_target->child_remove_event, e);
+		break;
+	case WINP_WM_PARENT_CHANGED:
+		fire_event_of_(*e.get_context(), e.get_context()->parent_changed_event, e);
+		break;
+	case WINP_WM_INDEX_CHANGED:
+		fire_event_of_(*e.get_context(), e.get_context()->index_changed_event, e);
+		break;
+	case WINP_WM_CHILD_INDEX_CHANGED:
+		if (tree_target != nullptr)
+			fire_event_of_(*tree_target, tree_target->child_index_changed_event, e);
+		break;
+	case WINP_WM_CHILD_INSERTED:
+		if (tree_target != nullptr)
+			fire_event_of_(*tree_target, tree_target->child_inserted_event, e);
+		break;
+	case WINP_WM_CHILD_REMOVED:
+		if (tree_target != nullptr)
+			fire_event_of_(*tree_target, tree_target->child_removed_event, e);
+		break;
+	default:
+		break;
+	}
 }
 
 std::shared_ptr<winp::event::object> winp::message::tree_dispatcher::create_event_(ui::object &target, const MSG &info, bool call_default){
@@ -524,7 +545,7 @@ void winp::message::menu_dispatcher::post_dispatch_(event::object &e){
 		if (propagation_stopped_of_(e) || dynamic_cast<ui::window_surface *>(context) != nullptr)
 			return;//Bubbling prevented
 
-		auto object = find_object_(e.get_info()->hwnd);
+		auto object = find_object_(info.hwnd);
 		if (object == nullptr)//Object required
 			return;
 
@@ -535,10 +556,8 @@ void winp::message::menu_dispatcher::post_dispatch_(event::object &e){
 	dispatch_(e, false);
 	set_result_of_(e, saved_result, true);//Restore result
 
-	if (e.get_info()->message == WM_INITMENUPOPUP && default_prevented_of_(e))
-		set_result_of_(e, 1, true);//Prevent individual iteration
-	else if (e.get_info()->message == WINP_WM_MENU_INIT_ITEM && default_prevented_of_(e))
-		set_result_of_(e, 1, true);//Disable item
+	if (info.message == WM_INITMENUPOPUP || info.message == WINP_WM_MENU_INIT_ITEM)
+		set_result_of_(e, (default_prevented_of_(e) ? 1 : 0), true);
 }
 
 void winp::message::menu_dispatcher::fire_event_(event::object &e){
@@ -623,8 +642,7 @@ winp::message::frame_dispatcher::frame_dispatcher()
 }
 
 void winp::message::frame_dispatcher::post_dispatch_(event::object &e){
-	if (default_prevented_of_(e))
-		set_result_of_(e, 1, true);
+	set_result_of_(e, (default_prevented_of_(e) ? 1 : 0), true);
 }
 
 void winp::message::frame_dispatcher::fire_event_(event::object &e){

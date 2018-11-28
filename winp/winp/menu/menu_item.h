@@ -52,13 +52,13 @@ namespace winp::menu{
 		template <class> friend class menu::generic_collection_base;
 		friend class thread::surface_manager;
 
-		virtual bool validate_child_insert_(const ui::object &child, std::size_t index) const override;
+		virtual bool handle_child_insert_event_(event::tree &e) override;
 
-		virtual void child_inserted_(ui::object &child, tree *previous_parent, std::size_t previous_index) override;
+		virtual bool handle_child_remove_event_(event::tree &e) override;
 
-		virtual bool validate_child_remove_(const ui::object &child) const override;
+		virtual void handle_child_inserted_event_(event::tree &e) override;
 
-		virtual void child_removed_(ui::object &child, std::size_t previous_index) override;
+		virtual void handle_child_removed_event_(event::tree &e) override;
 
 		virtual ui::surface *get_popup_() const override;
 

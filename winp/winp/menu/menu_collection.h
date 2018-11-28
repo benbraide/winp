@@ -12,7 +12,8 @@ namespace winp::menu{
 		using m_base_type = base_type;
 
 		using item_ptr_type = std::shared_ptr<menu::component>;
-		using list_type = std::unordered_map<menu::component *, item_ptr_type>;
+		using list_type = std::list<item_ptr_type>;
+		using map_type = std::unordered_map<menu::component *, item_ptr_type>;
 
 		template <typename... args_types>
 		explicit generic_collection_base(args_types &&... args)
@@ -113,7 +114,8 @@ namespace winp::menu{
 		using m_generic_base_type = generic_collection_base<base_type>;
 
 		using item_ptr_type = std::shared_ptr<menu::component>;
-		using list_type = std::unordered_map<menu::component *, item_ptr_type>;
+		using list_type = std::list<item_ptr_type>;
+		using map_type = std::unordered_map<menu::component *, item_ptr_type>;
 
 		template <typename... args_types>
 		explicit generic_collection(args_types &&... args)
@@ -122,17 +124,30 @@ namespace winp::menu{
 		virtual ~generic_collection() = default;
 
 	protected:
-		virtual void child_removed_(ui::object &child, std::size_t previous_index) override{
-			m_generic_base_type::template child_removed_(child, previous_index);
-			if (!item_list_.empty())
-				item_list_.erase(dynamic_cast<menu::component *>(&child));
+		virtual void handle_child_inserted_event_(event::tree &e) override{
+			if (!marked_items_.empty())
+				marked_items_.clear();
+
+			m_generic_base_type::handle_child_inserted_event_(e);
+		}
+
+		virtual void handle_child_removed_event_(event::tree &e) override{
+			if (!item_map_.empty()){
+				if (auto it = item_map_.find(dynamic_cast<menu::component *>(e.get_target())); it != item_map_.end()){
+					marked_items_.push_back(it->second);
+					item_map_.erase(it);
+				}
+			}
+
+			m_generic_base_type::handle_child_removed_event_(e);
 		}
 
 		virtual void add_to_list_(item_ptr_type item) override{
-			item_list_[item.get()] = item;
+			item_map_[item.get()] = item;
 		}
 
-		list_type item_list_;
+		map_type item_map_;
+		list_type marked_items_;
 	};
 
 	template <>
@@ -141,6 +156,8 @@ namespace winp::menu{
 		using m_generic_base_type = generic_collection_base<wrapper>;
 
 		using item_ptr_type = std::shared_ptr<menu::component>;
+		using list_type = std::list<item_ptr_type>;
+		using map_type = std::unordered_map<menu::component *, item_ptr_type>;
 
 		template <typename... args_types>
 		explicit generic_collection(args_types &&... args)
@@ -150,7 +167,7 @@ namespace winp::menu{
 
 	protected:
 		virtual void add_to_list_(item_ptr_type item) override{
-			item_list_[item.get()] = item;
+			item_map_[item.get()] = item;
 		}
 	};
 

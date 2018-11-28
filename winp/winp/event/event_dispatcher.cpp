@@ -24,29 +24,48 @@ bool winp::event::dispatcher::default_prevented_of_(event::object &e){
 
 void winp::event::tree_dispatcher::dispatch_(object &e){
 	auto handler = dynamic_cast<tree_handler *>(e.get_context());
-	if (handler != nullptr){
-		switch (e.get_info()->message){
-		case WINP_WM_PARENT_CHANGED:
-			handler->handle_parent_change_event_(dynamic_cast<tree &>(e));
-			break;
-		case WINP_WM_INDEX_CHANGED:
-			handler->handle_index_change_event_(dynamic_cast<tree &>(e));
-			break;
-		case WINP_WM_CHILD_INDEX_CHANGED:
-			handler->handle_child_index_change_event_(dynamic_cast<tree &>(e));
-			break;
-		case WINP_WM_CHILD_INSERTED:
-			handler->handle_child_insert_event_(dynamic_cast<tree &>(e));
-			break;
-		case WINP_WM_CHILD_REMOVED:
-			handler->handle_child_remove_event_(dynamic_cast<tree &>(e));
-			break;
-		default:
-			break;
-		}
+	if (handler == nullptr)
+		return dispatcher::dispatch_(e);
+
+	switch (e.get_info()->message){
+	case WINP_WM_PARENT_CHANGING:
+		if (!handler->handle_parent_change_event_(dynamic_cast<tree &>(e)))
+			e.prevent_default();
+		break;
+	case WINP_WM_INDEX_CHANGING:
+		if (!handler->handle_index_change_event_(dynamic_cast<tree &>(e)))
+			e.prevent_default();
+		break;
+	case WINP_WM_CHILD_INDEX_CHANGING:
+		if (!handler->handle_child_index_change_event_(dynamic_cast<tree &>(e)))
+			e.prevent_default();
+		break;
+	case WINP_WM_CHILD_INSERTING:
+		if (!handler->handle_child_insert_event_(dynamic_cast<tree &>(e)))
+			e.prevent_default();
+		break;
+	case WINP_WM_CHILD_REMOVING:
+		if (!handler->handle_child_remove_event_(dynamic_cast<tree &>(e)))
+			e.prevent_default();
+		break;
+	case WINP_WM_PARENT_CHANGED:
+		handler->handle_parent_changed_event_(dynamic_cast<tree &>(e));
+		break;
+	case WINP_WM_INDEX_CHANGED:
+		handler->handle_index_changed_event_(dynamic_cast<tree &>(e));
+		break;
+	case WINP_WM_CHILD_INDEX_CHANGED:
+		handler->handle_child_index_changed_event_(dynamic_cast<tree &>(e));
+		break;
+	case WINP_WM_CHILD_INSERTED:
+		handler->handle_child_inserted_event_(dynamic_cast<tree &>(e));
+		break;
+	case WINP_WM_CHILD_REMOVED:
+		handler->handle_child_removed_event_(dynamic_cast<tree &>(e));
+		break;
+	default:
+		break;
 	}
-	else//Events are not subscribed to
-		dispatcher::dispatch_(e);
 }
 
 void winp::event::create_destroy_dispatcher::dispatch_(object &e){

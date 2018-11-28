@@ -116,10 +116,6 @@ void winp::ui::tree::traverse_children(const std::function<void(object *)> &call
 	}
 }
 
-bool winp::ui::tree::validate_child_insert_(const object &child, std::size_t index) const{
-	return (child.thread_.get_local_id() == thread_.get_local_id());
-}
-
 std::size_t winp::ui::tree::add_child_(object &child, std::size_t index){
 	return child.change_parent_(this, index);
 }
@@ -127,6 +123,15 @@ std::size_t winp::ui::tree::add_child_(object &child, std::size_t index){
 std::size_t winp::ui::tree::insert_child_(object &child, std::size_t index){
 	auto previous_parent = child.get_parent_();
 	if (previous_parent != nullptr)
+		return static_cast<std::size_t>(-1);
+
+	tree_change_info info{
+		&child,
+		nullptr,
+		index
+	};
+
+	if (child.thread_.get_local_id() != thread_.get_local_id() || dispatch_message_(WINP_WM_CHILD_INSERTING, reinterpret_cast<WPARAM>(&info), 0) != 0)
 		return static_cast<std::size_t>(-1);
 
 	auto previous_index = child.get_index_();
@@ -138,32 +143,12 @@ std::size_t winp::ui::tree::insert_child_(object &child, std::size_t index){
 		children_.insert(std::next(children_.begin(), index), &child);
 
 	child.set_parent_(this);
-	child_inserted_(child, previous_parent, previous_index);
-	child_index_changed_(child, previous_parent, previous_index);
-
-	child_change_info info{
-		&child,
-		previous_parent,
-		previous_index
-	};
+	info.index = static_cast<std::size_t>(-1);
 
 	dispatch_message_(WINP_WM_CHILD_INSERTED, reinterpret_cast<WPARAM>(&info), 0, false);
 	dispatch_message_(WINP_WM_CHILD_INDEX_CHANGED, reinterpret_cast<WPARAM>(&info), 0, false);
 
 	return index;
-}
-
-void winp::ui::tree::child_inserted_(object &child, tree *previous_parent, std::size_t previous_index){
-	child_change_info info{
-		&child,
-		previous_parent,
-		previous_index
-	};
-	dispatch_message_(WINP_WM_CHILD_INSERTED, reinterpret_cast<WPARAM>(&info), 0);
-}
-
-bool winp::ui::tree::validate_child_remove_(const object &child) const{
-	return true;
 }
 
 bool winp::ui::tree::erase_child_(object &child){
@@ -185,23 +170,19 @@ bool winp::ui::tree::remove_child_at_(std::size_t index){
 	auto it = std::next(children_.begin(), index);
 	auto child = *it;
 
-	child->parent_changing_();
+	tree_change_info info{
+		child,
+		nullptr,
+		static_cast<std::size_t>(-1)
+	};
+
+	if (dispatch_message_(WINP_WM_CHILD_REMOVING, reinterpret_cast<WPARAM>(&info), 0, false) != 0)
+		return false;
+
 	children_.erase(it);
 	child->set_parent_(nullptr);
+	dispatch_message_(WINP_WM_CHILD_REMOVED, reinterpret_cast<WPARAM>(&info), 0, false);
 
-	return true;
-}
-
-void winp::ui::tree::child_removed_(object &child, std::size_t previous_index){
-	child_change_info info{
-		&child,
-		this,
-		previous_index
-	};
-	dispatch_message_(WINP_WM_CHILD_REMOVED, reinterpret_cast<WPARAM>(&info), 0);
-}
-
-bool winp::ui::tree::validate_child_index_change_(const object &child, std::size_t index) const{
 	return true;
 }
 
@@ -213,31 +194,31 @@ std::size_t winp::ui::tree::change_child_index_(object &child, std::size_t index
 	if (it != children_.end())
 		return static_cast<std::size_t>(-1);
 
+	tree_change_info info{
+		&child,
+		nullptr,
+		index
+	};
+
+	if (dispatch_message_(WINP_WM_CHILD_INDEX_CHANGING, reinterpret_cast<WPARAM>(&info), 0, false) != 0)
+		return static_cast<std::size_t>(-1);
+
 	auto adjusted_index = ((index >= children_.size()) ? (children_.size() - 1u) : index);
 	std::size_t previous_index = std::distance(children_.begin(), it);
 
 	if (previous_index == adjusted_index)
 		return adjusted_index;//No changes
 
-	(*it)->index_changing_();
 	children_.erase(it);
-
 	if (index < children_.size())
 		children_.insert(std::next(children_.begin(), index), &child);
 	else
 		children_.push_back(&child);
 
-	child_index_changed_(child, this, previous_index);
-	return adjusted_index;
-}
+	info.index = adjusted_index;
+	dispatch_message_(WINP_WM_CHILD_INDEX_CHANGED, reinterpret_cast<WPARAM>(&info), 0, false);
 
-void winp::ui::tree::child_index_changed_(object &child, tree *previous_parent, std::size_t previous_index){
-	child_change_info info{
-		&child,
-		previous_parent,
-		previous_index
-	};
-	dispatch_message_(WINP_WM_CHILD_INDEX_CHANGED, reinterpret_cast<WPARAM>(&info), 0);
+	return adjusted_index;
 }
 
 std::size_t winp::ui::tree::find_child_(const object &child) const{

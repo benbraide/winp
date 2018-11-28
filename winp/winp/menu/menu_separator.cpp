@@ -11,11 +11,11 @@ winp::menu::separator::separator(ui::tree &parent)
 
 winp::menu::separator::~separator() = default;
 
-bool winp::menu::separator::validate_child_insert_(const ui::object &child, std::size_t index) const{
+bool winp::menu::separator::handle_child_insert_event_(event::tree &e){
 	return false;
 }
 
-bool winp::menu::separator::validate_child_remove_(const ui::object &child) const{
+bool winp::menu::separator::handle_child_remove_event_(event::tree &e){
 	return false;
 }
 

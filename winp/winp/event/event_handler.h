@@ -6,6 +6,10 @@ namespace winp::ui{
 	class object;
 }
 
+namespace winp::menu{
+	class group;
+}
+
 namespace winp::event{
 	class dispatcher;
 	class tree_dispatcher;
@@ -36,16 +40,27 @@ namespace winp::event{
 
 	protected:
 		friend class tree_dispatcher;
+		friend class menu::group;
 
-		virtual void handle_parent_change_event_(tree &e);
+		virtual bool handle_parent_change_event_(tree &e);
 
-		virtual void handle_index_change_event_(tree &e);
+		virtual bool handle_index_change_event_(tree &e);
 
-		virtual void handle_child_index_change_event_(tree &e);
+		virtual bool handle_child_index_change_event_(tree &e);
 
-		virtual void handle_child_insert_event_(tree &e);
+		virtual bool handle_child_insert_event_(tree &e);
 
-		virtual void handle_child_remove_event_(tree &e);
+		virtual bool handle_child_remove_event_(tree &e);
+
+		virtual void handle_parent_changed_event_(tree &e);
+
+		virtual void handle_index_changed_event_(tree &e);
+
+		virtual void handle_child_index_changed_event_(tree &e);
+
+		virtual void handle_child_inserted_event_(tree &e);
+
+		virtual void handle_child_removed_event_(tree &e);
 	};
 
 	class create_destroy_handler{

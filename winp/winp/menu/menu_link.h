@@ -42,7 +42,7 @@ namespace winp::menu{
 		template <class> friend class menu::generic_collection_base;
 		friend class menu::wrapper;
 
-		virtual void child_removed_(ui::object &child, std::size_t previous_index) override;
+		virtual void handle_child_inserted_event_(event::tree &e) override;
 
 		template <typename target_type, typename... args_types>
 		target_type *create_popup_(const std::function<bool(target_type &)> &callback, args_types... args){

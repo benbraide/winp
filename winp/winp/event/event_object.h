@@ -153,28 +153,24 @@ namespace winp::event{
 
 	class tree : public object{
 	public:
+		struct tree_change_info{
+			ui::object *child;
+			ui::tree *parent;
+			std::size_t index;
+		};
+
 		tree(ui::object &target, const callback_type &default_handler, const info_type &info);
 
 		tree(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info);
 
 		virtual ~tree();
 
-		virtual ui::tree *get_previous_parent() const;
+		virtual ui::tree *get_attached_parent() const;
 
-		virtual ui::tree *get_current_parent() const;
-
-		virtual std::size_t get_previous_index() const;
-
-		virtual std::size_t get_current_index() const;
+		virtual std::size_t get_attached_index() const;
 
 	protected:
-		void init_();
-
-		ui::tree *previous_parent_;
-		ui::tree *current_parent_;
-
-		std::size_t previous_index_;
-		std::size_t current_index_;
+		tree_change_info *change_info_ = nullptr;
 	};
 
 	class draw : public object{

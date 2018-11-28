@@ -11,12 +11,6 @@ namespace winp::menu{
 namespace winp::ui{
 	class tree : public object{
 	public:
-		struct child_change_info{
-			object *child;
-			tree *previous_parent_;
-			std::size_t previous_index_;
-		};
-
 		tree();
 
 		explicit tree(thread::object &thread);
@@ -41,6 +35,10 @@ namespace winp::ui{
 		event::manager<tree, event::tree> child_insert_event{ *this };
 		event::manager<tree, event::tree> child_remove_event{ *this };
 
+		event::manager<tree, event::tree> child_index_changed_event{ *this };
+		event::manager<tree, event::tree> child_inserted_event{ *this };
+		event::manager<tree, event::tree> child_removed_event{ *this };
+
 	protected:
 		friend class object;
 
@@ -48,15 +46,9 @@ namespace winp::ui{
 		friend class message::dispatcher;
 		friend class thread::surface_manager;
 
-		virtual bool validate_child_insert_(const object &child, std::size_t index) const;
-
 		virtual std::size_t add_child_(object &child, std::size_t index = static_cast<std::size_t>(-1));
 
 		virtual std::size_t insert_child_(object &child, std::size_t index = static_cast<std::size_t>(-1));
-
-		virtual void child_inserted_(object &child, tree *previous_parent, std::size_t previous_index);
-
-		virtual bool validate_child_remove_(const object &child) const;
 
 		virtual bool erase_child_(object &child);
 
@@ -66,13 +58,7 @@ namespace winp::ui{
 
 		virtual bool remove_child_at_(std::size_t index);
 
-		virtual void child_removed_(object &child, std::size_t previous_index);
-
-		virtual bool validate_child_index_change_(const object &child, std::size_t index) const;
-
 		virtual std::size_t change_child_index_(object &child, std::size_t index);
-
-		virtual void child_index_changed_(object &child, tree *previous_parent, std::size_t previous_index);
 
 		virtual std::size_t find_child_(const object &child) const;
 
