@@ -196,9 +196,11 @@ namespace winp::thread{
 
 		LRESULT move_frame_(ui::surface &target, const MSG &info, bool prevent_default);
 
-		message::dispatcher *find_dispatcher_(UINT msg);
-
 		void track_mouse_leave_(HWND target, UINT flags);
+
+		static bool initialize_dispatchers_();
+
+		static message::dispatcher *find_dispatcher_(UINT msg);
 
 		static LRESULT CALLBACK entry_(HWND handle, UINT msg, WPARAM wparam, LPARAM lparam);
 
@@ -215,7 +217,8 @@ namespace winp::thread{
 		mouse_info mouse_info_{};
 		surface_state state_{};
 
-		std::shared_ptr<message::dispatcher> default_dispatcher_;
-		std::unordered_map<UINT, std::shared_ptr<message::dispatcher>> dispatchers_;
+		static std::shared_ptr<message::dispatcher> default_dispatcher_;
+		static std::unordered_map<UINT, std::shared_ptr<message::dispatcher>> dispatchers_;
+		static bool unused_;
 	};
 }

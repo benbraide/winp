@@ -2,62 +2,7 @@
 #include "../message/message_dispatcher.h"
 #include "../app/app_object.h"
 
-winp::thread::surface_manager::surface_manager(){
-	default_dispatcher_ = std::make_shared<message::dispatcher>();
-
-	dispatchers_[WINP_WM_PARENT_CHANGED] = std::make_shared<message::tree_dispatcher>();
-	dispatchers_[WINP_WM_INDEX_CHANGED] = std::make_shared<message::tree_dispatcher>();
-	dispatchers_[WINP_WM_CHILD_INDEX_CHANGED] = std::make_shared<message::tree_dispatcher>();
-
-	dispatchers_[WINP_WM_CHILD_INSERTED] = std::make_shared<message::tree_dispatcher>();
-	dispatchers_[WINP_WM_CHILD_REMOVED] = std::make_shared<message::tree_dispatcher>();
-
-	dispatchers_[WM_NCCREATE] = std::make_shared<message::create_destroy_dispatcher>();
-	dispatchers_[WM_NCDESTROY] = std::make_shared<message::create_destroy_dispatcher>();
-
-	dispatchers_[WM_ERASEBKGND] = std::make_shared<message::draw_dispatcher>();
-	dispatchers_[WM_PAINT] = std::make_shared<message::draw_dispatcher>();
-	dispatchers_[WM_PRINTCLIENT] = std::make_shared<message::draw_dispatcher>();
-
-	dispatchers_[WM_DRAWITEM] = std::make_shared<message::draw_item_dispatcher>();
-	dispatchers_[WM_MEASUREITEM] = std::make_shared<message::draw_item_dispatcher>();
-
-	dispatchers_[WINP_WM_MOUSELEAVE] = std::make_shared<message::mouse_dispatcher>();
-	dispatchers_[WINP_WM_MOUSEENTER] = std::make_shared<message::mouse_dispatcher>();
-
-	dispatchers_[WINP_WM_MOUSEMOVE] = std::make_shared<message::mouse_dispatcher>();
-	dispatchers_[WINP_WM_MOUSEWHEEL] = std::make_shared<message::mouse_dispatcher>();
-
-	dispatchers_[WINP_WM_MOUSEDOWN] = std::make_shared<message::mouse_dispatcher>();
-	dispatchers_[WINP_WM_MOUSEUP] = std::make_shared<message::mouse_dispatcher>();
-	dispatchers_[WINP_WM_MOUSEDBLCLK] = std::make_shared<message::mouse_dispatcher>();
-
-	dispatchers_[WINP_WM_MOUSEDRAG] = std::make_shared<message::mouse_dispatcher>();
-	dispatchers_[WINP_WM_MOUSEDRAGBEGIN] = std::make_shared<message::mouse_dispatcher>();
-	dispatchers_[WINP_WM_MOUSEDRAGEND] = std::make_shared<message::mouse_dispatcher>();
-
-	dispatchers_[WM_SETCURSOR] = std::make_shared<message::cursor_dispatcher>();
-	dispatchers_[WINP_WM_FOCUS] = std::make_shared<message::focus_dispatcher>();
-	dispatchers_[WINP_WM_KEY] = std::make_shared<message::key_dispatcher>();
-
-	dispatchers_[WM_UNINITMENUPOPUP] = std::make_shared<message::menu_dispatcher>();
-	dispatchers_[WM_INITMENUPOPUP] = std::make_shared<message::menu_dispatcher>();
-	dispatchers_[WINP_WM_MENU_INIT_ITEM] = std::make_shared<message::menu_dispatcher>();
-
-	dispatchers_[WINP_WM_MENU_SELECT] = std::make_shared<message::menu_dispatcher>();
-	dispatchers_[WINP_WM_MENU_CHECK] = std::make_shared<message::menu_dispatcher>();
-	dispatchers_[WINP_WM_MENU_UNCHECK] = std::make_shared<message::menu_dispatcher>();
-
-	dispatchers_[WINP_WM_CONTEXT_MENU_QUERY] = std::make_shared<message::menu_dispatcher>();
-	dispatchers_[WINP_WM_CONTEXT_MENU_REQUEST] = std::make_shared<message::menu_dispatcher>();
-	dispatchers_[WM_CONTEXTMENU] = std::make_shared<message::menu_dispatcher>();
-
-	dispatchers_[WM_CLOSE] = std::make_shared<message::frame_dispatcher>();
-	dispatchers_[WM_SIZING] = std::make_shared<message::frame_dispatcher>();
-	dispatchers_[WM_MOVING] = std::make_shared<message::frame_dispatcher>();
-	dispatchers_[WM_SIZE] = std::make_shared<message::frame_dispatcher>();
-	dispatchers_[WM_MOVE] = std::make_shared<message::frame_dispatcher>();
-}
+winp::thread::surface_manager::surface_manager() = default;
 
 void winp::thread::surface_manager::prepare_for_run_(){
 	hook_handle_ = SetWindowsHookExW(WH_CBT, hook_entry_, nullptr, GetCurrentThreadId());
@@ -567,17 +512,76 @@ LRESULT winp::thread::surface_manager::move_frame_(ui::surface &target, const MS
 	return ((IsWindowUnicode(info.hwnd) == FALSE) ? CallWindowProcA(DefWindowProcA, info.hwnd, info.message, info.wParam, info.lParam) : CallWindowProcW(DefWindowProcW, info.hwnd, info.message, info.wParam, info.lParam));
 }
 
-winp::message::dispatcher *winp::thread::surface_manager::find_dispatcher_(UINT msg){
-	auto it = dispatchers_.find(msg);
-	return ((it == dispatchers_.end()) ? default_dispatcher_.get() : it->second.get());
-}
-
 void winp::thread::surface_manager::track_mouse_leave_(HWND target, UINT flags){
 	if (target != nullptr){
 		TRACKMOUSEEVENT info{ sizeof(TRACKMOUSEEVENT), (TME_LEAVE | flags), target, 0 };
 		TrackMouseEvent(&info);
 		mouse_info_.tracking_mouse = true;
 	}
+}
+
+bool winp::thread::surface_manager::initialize_dispatchers_(){
+	default_dispatcher_ = std::make_shared<message::dispatcher>();
+
+	dispatchers_[WINP_WM_PARENT_CHANGED] = std::make_shared<message::tree_dispatcher>();
+	dispatchers_[WINP_WM_INDEX_CHANGED] = dispatchers_[WINP_WM_PARENT_CHANGED];
+	dispatchers_[WINP_WM_CHILD_INDEX_CHANGED] = dispatchers_[WINP_WM_PARENT_CHANGED];
+
+	dispatchers_[WINP_WM_CHILD_INSERTED] = dispatchers_[WINP_WM_PARENT_CHANGED];
+	dispatchers_[WINP_WM_CHILD_REMOVED] = dispatchers_[WINP_WM_PARENT_CHANGED];
+
+	dispatchers_[WM_NCCREATE] = std::make_shared<message::create_destroy_dispatcher>();
+	dispatchers_[WM_NCDESTROY] = dispatchers_[WM_NCCREATE];
+
+	dispatchers_[WM_ERASEBKGND] = std::make_shared<message::draw_dispatcher>();
+	dispatchers_[WM_PAINT] = dispatchers_[WM_ERASEBKGND];
+	dispatchers_[WM_PRINTCLIENT] = dispatchers_[WM_ERASEBKGND];
+
+	dispatchers_[WM_DRAWITEM] = std::make_shared<message::draw_item_dispatcher>();
+	dispatchers_[WM_MEASUREITEM] = dispatchers_[WM_DRAWITEM];
+
+	dispatchers_[WINP_WM_MOUSELEAVE] = std::make_shared<message::mouse_dispatcher>();
+	dispatchers_[WINP_WM_MOUSEENTER] = dispatchers_[WINP_WM_MOUSELEAVE];
+
+	dispatchers_[WINP_WM_MOUSEMOVE] = dispatchers_[WINP_WM_MOUSELEAVE];
+	dispatchers_[WINP_WM_MOUSEWHEEL] = dispatchers_[WINP_WM_MOUSELEAVE];
+
+	dispatchers_[WINP_WM_MOUSEDOWN] = dispatchers_[WINP_WM_MOUSELEAVE];
+	dispatchers_[WINP_WM_MOUSEUP] = dispatchers_[WINP_WM_MOUSELEAVE];
+	dispatchers_[WINP_WM_MOUSEDBLCLK] = dispatchers_[WINP_WM_MOUSELEAVE];
+
+	dispatchers_[WINP_WM_MOUSEDRAG] = dispatchers_[WINP_WM_MOUSELEAVE];
+	dispatchers_[WINP_WM_MOUSEDRAGBEGIN] = dispatchers_[WINP_WM_MOUSELEAVE];
+	dispatchers_[WINP_WM_MOUSEDRAGEND] = dispatchers_[WINP_WM_MOUSELEAVE];
+
+	dispatchers_[WM_SETCURSOR] = std::make_shared<message::cursor_dispatcher>();
+	dispatchers_[WINP_WM_FOCUS] = std::make_shared<message::focus_dispatcher>();
+	dispatchers_[WINP_WM_KEY] = std::make_shared<message::key_dispatcher>();
+
+	dispatchers_[WM_UNINITMENUPOPUP] = std::make_shared<message::menu_dispatcher>();
+	dispatchers_[WM_INITMENUPOPUP] = dispatchers_[WM_UNINITMENUPOPUP];
+	dispatchers_[WINP_WM_MENU_INIT_ITEM] = dispatchers_[WM_UNINITMENUPOPUP];
+
+	dispatchers_[WINP_WM_MENU_SELECT] = dispatchers_[WM_UNINITMENUPOPUP];
+	dispatchers_[WINP_WM_MENU_CHECK] = dispatchers_[WM_UNINITMENUPOPUP];
+	dispatchers_[WINP_WM_MENU_UNCHECK] = dispatchers_[WM_UNINITMENUPOPUP];
+
+	dispatchers_[WINP_WM_CONTEXT_MENU_QUERY] = dispatchers_[WM_UNINITMENUPOPUP];
+	dispatchers_[WINP_WM_CONTEXT_MENU_REQUEST] = dispatchers_[WM_UNINITMENUPOPUP];
+	dispatchers_[WM_CONTEXTMENU] = dispatchers_[WM_UNINITMENUPOPUP];
+
+	dispatchers_[WM_CLOSE] = std::make_shared<message::frame_dispatcher>();
+	dispatchers_[WM_SIZING] = dispatchers_[WM_CLOSE];
+	dispatchers_[WM_MOVING] = dispatchers_[WM_CLOSE];
+	dispatchers_[WM_SIZE] = dispatchers_[WM_CLOSE];
+	dispatchers_[WM_MOVE] = dispatchers_[WM_CLOSE];
+
+	return true;
+}
+
+winp::message::dispatcher *winp::thread::surface_manager::find_dispatcher_(UINT msg){
+	auto it = dispatchers_.find(msg);
+	return ((it == dispatchers_.end()) ? default_dispatcher_.get() : it->second.get());
 }
 
 LRESULT CALLBACK winp::thread::surface_manager::entry_(HWND handle, UINT msg, WPARAM wparam, LPARAM lparam){
@@ -696,3 +700,9 @@ LRESULT CALLBACK winp::thread::surface_manager::hook_entry_(int code, WPARAM wpa
 
 	return CallNextHookEx(nullptr, code, wparam, lparam);
 }
+
+std::shared_ptr<winp::message::dispatcher> winp::thread::surface_manager::default_dispatcher_;
+
+std::unordered_map<UINT, std::shared_ptr<winp::message::dispatcher>> winp::thread::surface_manager::dispatchers_;
+
+bool winp::thread::surface_manager::unused_ = initialize_dispatchers_();
