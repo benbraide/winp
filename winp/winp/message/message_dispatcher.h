@@ -41,7 +41,7 @@ namespace winp::message{
 
 		virtual void do_dispatch_(event::object &e, bool call_default);
 
-		virtual void do_default_(event::object &e, bool call_default, bool no_soft_prevent);
+		virtual void do_default_(event::object &e, bool call_default);
 
 		virtual LRESULT call_default_(event::object &e);
 
@@ -52,16 +52,26 @@ namespace winp::message{
 		template <typename event_type, typename... other_types>
 		std::shared_ptr<event_type> create_new_event_(ui::object &target, const MSG &info, bool call_default, other_types &&... others){
 			return std::make_shared<event_type>(target, [this, call_default](event::object &e){
-				if (!e.default_prevented_() && !e.default_called_())
-					do_default_(e, call_default, true);
+				if (e.default_prevented_())
+					return;
+
+				if (!e.default_done_())
+					do_default_(e, call_default);
+				else if (!e.default_called_())
+					call_default_(e);
 			}, info, std::forward<other_types>(others)...);
 		}
 
 		template <typename event_type, typename... other_types>
 		std::shared_ptr<event_type> create_new_event_with_context_(ui::object &target, ui::object &context, const MSG &info, bool call_default, other_types &&... others){
 			return std::make_shared<event_type>(target, context, [this, call_default](event::object &e){
-				if (!e.default_prevented_() && !e.default_called_())
-					do_default_(e, call_default, true);
+				if (e.default_prevented_())
+					return;
+
+				if (!e.default_done_())
+					do_default_(e, call_default);
+				else if (!e.default_called_())
+					call_default_(e);
 			}, info, std::forward<other_types>(others)...);
 		}
 
@@ -133,10 +143,6 @@ namespace winp::message{
 		draw_dispatcher();
 
 	protected:
-		virtual void post_dispatch_(event::object &e) override;
-
-		virtual LRESULT call_default_(event::object &e) override;
-
 		virtual void fire_event_(event::object &e) override;
 
 		virtual std::shared_ptr<event::object> create_event_(ui::object &target, const MSG &info, bool call_default) override;

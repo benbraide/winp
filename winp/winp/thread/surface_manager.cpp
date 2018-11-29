@@ -90,6 +90,23 @@ LRESULT winp::thread::surface_manager::destroy_window_(ui::surface &target, cons
 	return find_dispatcher_(info.message)->dispatch_(target, info, true);
 }
 
+LRESULT winp::thread::surface_manager::draw_(ui::surface &target, const MSG &info, bool prevent_default, m_rect_type update_region){
+	if (IsRectEmpty(&update_region) != FALSE)
+		GetUpdateRect(static_cast<HWND>(target.get_handle_()), &update_region, FALSE);
+
+	if (info.message == WINP_WM_PAINT)//Erase background
+		find_dispatcher_(WINP_WM_ERASE_BACKGROUND)->dispatch_(target, MSG{ info.hwnd, WINP_WM_ERASE_BACKGROUND, info.wParam, info.lParam }, !prevent_default);
+	find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default);
+
+	non_window::child *non_window_child;
+	for (auto child : target.children_){
+		if ((non_window_child = dynamic_cast<non_window::child *>(child)) != nullptr && non_window_child->get_handle() != nullptr && non_window_child->is_visible() && !non_window_child->is_transparent())
+			draw_(*non_window_child, MSG{ info.hwnd, WINP_WM_PAINT, reinterpret_cast<WPARAM>(&update_region), info.lParam }, true, update_region);
+	}
+
+	return 0;
+}
+
 LRESULT winp::thread::surface_manager::mouse_nc_leave_(ui::io_surface &target, const MSG &info, DWORD mouse_position, bool prevent_default){
 	mouse_info_.tracking_mouse = false;
 
@@ -544,6 +561,9 @@ bool winp::thread::surface_manager::initialize_dispatchers_(){
 	dispatchers_[WM_PAINT] = dispatchers_[WM_ERASEBKGND];
 	dispatchers_[WM_PRINTCLIENT] = dispatchers_[WM_ERASEBKGND];
 
+	dispatchers_[WINP_WM_ERASE_BACKGROUND] = dispatchers_[WM_ERASEBKGND];
+	dispatchers_[WINP_WM_PAINT] = dispatchers_[WM_ERASEBKGND];
+
 	dispatchers_[WM_DRAWITEM] = std::make_shared<message::draw_item_dispatcher>();
 	dispatchers_[WM_MEASUREITEM] = dispatchers_[WM_DRAWITEM];
 
@@ -604,6 +624,10 @@ LRESULT CALLBACK winp::thread::surface_manager::entry_(HWND handle, UINT msg, WP
 	switch (msg){
 	case WM_NCDESTROY:
 		return manager.destroy_window_(*object, info);
+	case WM_PAINT:
+		return manager.draw_(*object, info, false, m_rect_type{});
+	case WM_PRINTCLIENT:
+		return manager.draw_(*object, info, false, object->get_client_dimension_());
 	case WM_COMMAND:
 		return manager.command_(*object, info, false);
 	case WM_SYSCOMMAND:

@@ -49,9 +49,9 @@ namespace winp::event{
 		struct state_type{
 			static constexpr unsigned int nil						= (0 << 0x0000);
 			static constexpr unsigned int default_prevented			= (1 << 0x0000);
-			static constexpr unsigned int soft_default_prevented	= (1 << 0x0001);
-			static constexpr unsigned int propagation_stopped		= (1 << 0x0002);
-			static constexpr unsigned int result_set				= (1 << 0x0003);
+			static constexpr unsigned int propagation_stopped		= (1 << 0x0001);
+			static constexpr unsigned int result_set				= (1 << 0x0002);
+			static constexpr unsigned int default_done				= (1 << 0x0003);
 			static constexpr unsigned int default_called			= (1 << 0x0004);
 		};
 
@@ -108,11 +108,11 @@ namespace winp::event{
 		template <typename target_type, typename before_type>
 		bool bubble_to_type_(std::false_type){
 			while (bubble_()){
-				if (dynamic_cast<target_type *>(context_) != nullptr)
-					return true;
-
 				if (dynamic_cast<before_type *>(context_) != nullptr)
 					break;
+
+				if (dynamic_cast<target_type *>(context_) != nullptr)
+					return true;
 			}
 
 			return false;
@@ -132,11 +132,11 @@ namespace winp::event{
 
 		virtual bool default_prevented_() const;
 
-		virtual bool soft_default_prevented_() const;
-
 		virtual bool propagation_stopped_() const;
 
 		virtual bool result_set_() const;
+
+		virtual bool default_done_() const;
 
 		virtual bool default_called_() const;
 
@@ -201,8 +201,6 @@ namespace winp::event{
 		friend class unhandled_handler;
 		friend class draw_handler;
 
-		virtual void set_context_(ui::object &value) override;
-
 		virtual void begin_();
 
 		virtual ID2D1RenderTarget *get_drawer_();
@@ -215,16 +213,9 @@ namespace winp::event{
 
 		virtual bool erase_background_();
 
-		bool context_changed_ = false;
-		bool began_draw_ = false;
-
 		ID2D1DCRenderTarget *drawer_ = nullptr;
 		ID2D1SolidColorBrush *color_brush_ = nullptr;
-
 		PAINTSTRUCT struct_{};
-		m_rect_type current_region_{};
-
-		int initial_device_state_id_ = -1;
 	};
 
 	class draw_item : public object{

@@ -187,7 +187,7 @@ namespace winp::ui{
 		target_type *get_first_ancestor_of_(std::false_type) const{
 			target_type *ancestor = nullptr;
 			for (auto parent = get_parent_(); parent != nullptr; get_parent_of_(*parent)){
-				if ((ancestor = dynamic_cast<target_type *>(parent)) != nullptr || dynamic_cast<before_type *>(parent) != nullptr)
+				if (dynamic_cast<before_type *>(parent) != nullptr || (ancestor = dynamic_cast<target_type *>(parent)) != nullptr)
 					break;
 			}
 

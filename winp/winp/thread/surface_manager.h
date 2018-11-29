@@ -46,6 +46,9 @@
 #define WINP_WM_CONTEXT_MENU_QUERY		(WM_APP + 0x1B)
 #define WINP_WM_CONTEXT_MENU_REQUEST	(WM_APP + 0x1C)
 
+#define WINP_WM_ERASE_BACKGROUND		(WM_APP + 0x1D)
+#define WINP_WM_PAINT					(WM_APP + 0x1E)
+
 namespace winp::app{
 	class object;
 }
@@ -83,6 +86,7 @@ namespace winp::thread{
 	public:
 		using m_point_type = POINT;
 		using m_size_type = SIZE;
+		using m_rect_type = RECT;
 
 		using map_type = std::unordered_map<HANDLE, ui::surface *>;
 		using id_map_type = std::unordered_map<UINT, ui::surface *>;
@@ -148,6 +152,8 @@ namespace winp::thread{
 		void create_window_(HWND handle, CBT_CREATEWNDW &info);
 
 		LRESULT destroy_window_(ui::surface &target, const MSG &info);
+
+		LRESULT draw_(ui::surface &target, const MSG &info, bool prevent_default, m_rect_type update_region);
 
 		LRESULT mouse_nc_leave_(ui::io_surface &target, const MSG &info, DWORD mouse_position, bool prevent_default);
 

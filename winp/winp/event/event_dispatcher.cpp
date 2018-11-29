@@ -95,7 +95,7 @@ void winp::event::draw_dispatcher::dispatch_(object &e){
 			break;
 		}
 	}
-	else if (e.get_info()->message == WM_ERASEBKGND && dynamic_cast<unhandled_handler *>(e.get_context()) == nullptr)//Do default painting
+	else if ((e.get_info()->message == WM_ERASEBKGND || e.get_info()->message == WINP_WM_ERASE_BACKGROUND) && dynamic_cast<unhandled_handler *>(e.get_context()) == nullptr)//Do default painting
 		erase_background_(dynamic_cast<draw &>(e));
 	else//Events are not subscribed to
 		dispatcher::dispatch_(e);

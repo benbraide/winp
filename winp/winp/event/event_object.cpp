@@ -83,16 +83,16 @@ bool winp::event::object::default_prevented_() const{
 	return ((state_ & state_type::default_prevented) != 0u);
 }
 
-bool winp::event::object::soft_default_prevented_() const{
-	return ((state_ & state_type::soft_default_prevented) != 0u);
-}
-
 bool winp::event::object::propagation_stopped_() const{
 	return ((state_ & state_type::propagation_stopped) != 0u);
 }
 
 bool winp::event::object::result_set_() const{
 	return ((state_ & state_type::result_set) != 0u);
+}
+
+bool winp::event::object::default_done_() const{
+	return ((state_ & state_type::default_done) != 0u);
 }
 
 bool winp::event::object::default_called_() const{
@@ -120,33 +120,23 @@ std::size_t winp::event::tree::get_attached_index() const{
 }
 
 winp::event::draw::draw(ui::object &target, const callback_type &default_handler, const info_type &info)
-	: object(target, default_handler, info){
-	state_ |= state_type::soft_default_prevented;
-	if (auto surface_target = dynamic_cast<ui::surface *>(context_); surface_target != nullptr)
-		current_region_ = surface_target->get_dimension_();
-}
+	: object(target, default_handler, info){}
 
 winp::event::draw::draw(ui::object &target, ui::object &context, const callback_type &default_handler, const info_type &info)
-	: object(target, context, default_handler, info){
-	state_ |= state_type::soft_default_prevented;
-	if (auto surface_target = dynamic_cast<ui::surface *>(context_); surface_target != nullptr)
-		current_region_ = surface_target->get_dimension_();
-}
+	: object(target, context, default_handler, info){}
 
 winp::event::draw::~draw(){
-	if (began_draw_ && drawer_ != nullptr)
+	if (drawer_ != nullptr)
 		drawer_->EndDraw();
 
 	if (struct_.hdc != nullptr){
 		if (info_.message == WM_PAINT)
 			EndPaint(static_cast<HWND>(dynamic_cast<ui::window_surface *>(target_)->get_handle_()), &struct_);
-		else if (initial_device_state_id_ != -1)
-			RestoreDC(struct_.hdc, initial_device_state_id_);
+		else if (info_.message == WINP_WM_ERASE_BACKGROUND || info_.message == WINP_WM_PAINT)
+			ReleaseDC(info_.hwnd, struct_.hdc);
 	}
 	else if (info_.message == WM_PAINT && !default_prevented_())
 		thread::surface_manager::default_dispatcher_->call_default_(*this);
-
-	struct_ = PAINTSTRUCT{};
 }
 
 ID2D1RenderTarget *winp::event::draw::get_drawer(){
@@ -169,48 +159,63 @@ bool winp::event::draw::erase_background(){
 	return (thread_.is_thread_context() ? erase_background_() : false);
 }
 
-void winp::event::draw::set_context_(ui::object &value){
-	auto surface_target = dynamic_cast<ui::surface *>(&value);
-	if (surface_target == nullptr || &value == context_)
-		return;//Do nothing
-
-	POINT parent_offset;
-	current_region_ = surface_target->get_dimension_();
-
-	for (auto parent = surface_target->get_first_ancestor_of_<ui::surface>(); parent != nullptr && parent != target_; parent = parent->get_first_ancestor_of_<ui::surface>()){
-		parent_offset = parent->get_position_();
-		OffsetRect(&current_region_, parent_offset.x, parent_offset.y);
-	}
-
-	context_changed_ = true;
-	context_ = &value;
-}
-
 void winp::event::draw::begin_(){
 	if (struct_.hdc != nullptr)
 		return;//Already initialized
 
+	state_ |= state_type::default_called;
 	switch (info_.message){
 	case WM_PAINT:
-		BeginPaint(static_cast<HWND>(dynamic_cast<ui::window_surface *>(target_)->get_handle_()), &struct_);
-		break;
+		BeginPaint(info_.hwnd, &struct_);
+		return;
 	case WM_PRINTCLIENT:
 		struct_.hdc = reinterpret_cast<HDC>(info_.wParam);
 		GetClipBox(struct_.hdc, &struct_.rcPaint);
-		struct_.fErase = ((info_.lParam & PRF_ERASEBKGND) == PRF_ERASEBKGND);
-		break;
+		struct_.fErase = (((info_.lParam & PRF_ERASEBKGND) == PRF_ERASEBKGND) ? TRUE : FALSE);
+		return;
 	case WM_ERASEBKGND:
 		struct_.hdc = reinterpret_cast<HDC>(info_.wParam);
 		GetClipBox(struct_.hdc, &struct_.rcPaint);
 		struct_.fErase = TRUE;
+		return;
+	case WINP_WM_ERASE_BACKGROUND:
+		struct_.hdc = GetDC(info_.hwnd);
+		struct_.rcPaint = *reinterpret_cast<m_rect_type *>(info_.wParam);
+		struct_.fErase = TRUE;
+		break;
+	case WINP_WM_PAINT:
+		struct_.hdc = GetDC(info_.hwnd);
+		struct_.rcPaint = *reinterpret_cast<m_rect_type *>(info_.wParam);
+		struct_.fErase = FALSE;
 		break;
 	default:
 		break;
 	}
 
-	began_draw_ = false;
-	if (struct_.hdc != nullptr)//Initialize
-		initial_device_state_id_ = SaveDC(struct_.hdc);
+	if (struct_.hdc == nullptr || dynamic_cast<ui::window_surface *>(context_) != nullptr)
+		return;
+	
+	auto surface_target = dynamic_cast<ui::surface *>(context_);
+	if (surface_target == nullptr)
+		return;//Do nothing
+
+	POINT parent_offset;
+	auto current_region = surface_target->get_dimension_();
+
+	for (auto parent = surface_target->get_first_ancestor_of_<ui::surface, ui::window_surface>(); parent != nullptr && parent != target_; parent = parent->get_first_ancestor_of_<ui::surface, ui::window_surface>()){
+		parent_offset = parent->get_position_();
+		OffsetRect(&current_region, parent_offset.x, parent_offset.y);
+	}
+
+	auto non_window_context = dynamic_cast<non_window::child *>(context_);
+	auto position = non_window_context->get_position_();
+
+	SelectClipRgn(struct_.hdc, static_cast<HRGN>(context_->get_handle_()));
+	OffsetClipRgn(struct_.hdc, (current_region.left - position.x), (current_region.top - position.y));
+	IntersectClipRect(struct_.hdc, struct_.rcPaint.left, struct_.rcPaint.top, struct_.rcPaint.right, struct_.rcPaint.bottom);
+
+	SetViewportOrgEx(struct_.hdc, current_region.left, current_region.top, nullptr);
+	OffsetRect(&struct_.rcPaint, -struct_.rcPaint.left, -struct_.rcPaint.top);//Move to (0, 0)
 }
 
 ID2D1RenderTarget *winp::event::draw::get_drawer_(){
@@ -218,13 +223,11 @@ ID2D1RenderTarget *winp::event::draw::get_drawer_(){
 	if (device == nullptr)//Failed to retrieve device
 		return nullptr;
 
-	if (drawer_ == nullptr && (drawer_ = thread_.get_device_drawer()) == nullptr)
-		return nullptr;//Failed to retrieve drawer
+	if (drawer_ == nullptr){
+		if ((drawer_ = thread_.get_device_drawer()) == nullptr)
+			return nullptr;//Failed to retrieve drawer
 
-	if (!began_draw_){//Begin draw
-		began_draw_ = true;
-		OffsetRect(&current_region_, -current_region_.left, -current_region_.top);//Move to (0, 0)
-		drawer_->BindDC(struct_.hdc, &current_region_);
+		drawer_->BindDC(struct_.hdc, &struct_.rcPaint);
 		drawer_->SetTransform(D2D1::IdentityMatrix());
 		drawer_->BeginDraw();
 	}
@@ -242,40 +245,12 @@ ID2D1SolidColorBrush *winp::event::draw::get_color_brush_(){
 
 HDC winp::event::draw::get_device_(){
 	begin_();
-	if (struct_.hdc == nullptr || IsRectEmpty(&current_region_) != FALSE)
-		return nullptr;//Failed to retrieve device Or empty update region
-
-	if (context_changed_){
-		context_changed_ = false;
-
-		if (began_draw_){//End draw
-			began_draw_ = false;
-			if (drawer_ != nullptr)
-				drawer_->EndDraw();
-		}
-
-		if (initial_device_state_id_ != -1){//Reset device
-			RestoreDC(struct_.hdc, initial_device_state_id_);
-			initial_device_state_id_ = SaveDC(struct_.hdc);
-		}
-
-		if (auto non_window_context = dynamic_cast<non_window::child *>(context_); non_window_context != nullptr){
-			auto position = non_window_context->get_position_();
-
-			SelectClipRgn(struct_.hdc, static_cast<HRGN>(context_->get_handle_()));
-			OffsetClipRgn(struct_.hdc, (current_region_.left - position.x), (current_region_.top - position.y));
-			IntersectClipRect(struct_.hdc, current_region_.left, current_region_.top, current_region_.right, current_region_.bottom);
-
-			SetViewportOrgEx(struct_.hdc, current_region_.left, current_region_.top, nullptr);
-		}
-	}
-	
 	return struct_.hdc;
 }
 
 winp::event::draw::m_rect_type winp::event::draw::get_region_(){
 	begin_();
-	return current_region_;
+	return struct_.rcPaint;
 }
 
 bool winp::event::draw::erase_background_(){

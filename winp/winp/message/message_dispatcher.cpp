@@ -30,19 +30,26 @@ void winp::message::dispatcher::post_dispatch_(event::object &e){}
 
 void winp::message::dispatcher::do_dispatch_(event::object &e, bool call_default){
 	fire_event_(e);
-	if (!e.default_prevented_() && !e.default_called_())
-		do_default_(e, call_default, false);
+	if (e.default_prevented_())
+		return;
+
+	if (!e.default_done_())
+		do_default_(e, call_default);
+	else if (!e.default_called_())
+		call_default_(e);
 }
 
-void winp::message::dispatcher::do_default_(event::object &e, bool call_default, bool no_soft_prevent){
-	e.state_ |= event::object::state_type::default_called;
+void winp::message::dispatcher::do_default_(event::object &e, bool call_default){
+	e.state_ |= event::object::state_type::default_done;
 	event_dispatcher_->dispatch_(e);
 
-	if (call_default && !e.default_prevented_() && (no_soft_prevent || !e.soft_default_prevented_()))
+	if (call_default && !e.default_prevented_() && !e.default_called_())
 		e.set_result_(call_default_(e), false);
 }
 
 LRESULT winp::message::dispatcher::call_default_(event::object &e){
+	e.state_ |= event::object::state_type::default_called;
+
 	auto &info = *e.get_info();
 	if (info.message >= WM_APP)
 		return 0;
@@ -205,32 +212,6 @@ void winp::message::create_destroy_dispatcher::fire_event_(event::object &e){
 winp::message::draw_dispatcher::draw_dispatcher()
 	: dispatcher(false){
 	event_dispatcher_ = std::make_shared<event::draw_dispatcher>();
-}
-
-void winp::message::draw_dispatcher::post_dispatch_(event::object &e){
-	auto tree_target = dynamic_cast<ui::tree *>(e.get_context());
-	if (tree_target == nullptr)
-		return;//Tree required
-
-	auto &info = *e.get_info();
-	auto saved_result = get_result_of_(e);
-
-	non_window::child *non_window_child;
-	for (auto child : get_children_of_(*tree_target)){
-		if (dynamic_cast<ui::window_surface *>(child) == nullptr){
-			if ((non_window_child = dynamic_cast<non_window::child *>(child)) != nullptr && non_window_child->get_handle() != nullptr && non_window_child->is_visible() && !non_window_child->is_transparent()){
-				dynamic_cast<event::draw &>(e).set_context_(*child);
-				dispatch_(e, false);
-			}
-		}
-	}
-
-	set_result_of_(e, saved_result, true);//Restore result
-}
-
-LRESULT winp::message::draw_dispatcher::call_default_(event::object &e){
-	e.prevent_default();
-	return dispatcher::call_default_(e);
 }
 
 void winp::message::draw_dispatcher::fire_event_(event::object &e){
