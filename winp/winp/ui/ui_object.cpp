@@ -357,6 +357,8 @@ std::size_t winp::ui::object::change_parent_(tree *value, std::size_t index){
 				SetParent(handle, parent_handle);
 		}
 	}
+	else if (auto non_window_self = dynamic_cast<non_window::child *>(this); non_window_self != nullptr)
+		non_window_self->redraw_(RECT{});
 
 	return index;
 }
@@ -374,6 +376,9 @@ bool winp::ui::object::remove_parent_(){
 
 	if (dispatch_message_(WINP_WM_PARENT_CHANGING, reinterpret_cast<WPARAM>(&info), 0) != 0)
 		return false;
+
+	if (auto non_window_self = dynamic_cast<non_window::child *>(this); non_window_self != nullptr)
+		non_window_self->redraw_(RECT{});
 
 	auto previous_index = get_index_();
 	if (!previous_parent->remove_child_(*this))

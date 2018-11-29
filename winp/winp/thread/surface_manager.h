@@ -61,6 +61,10 @@ namespace winp::message{
 	class dispatcher;
 }
 
+namespace winp::event{
+	class draw;
+}
+
 namespace winp::menu{
 	class item_component;
 	class item;
@@ -123,7 +127,9 @@ namespace winp::thread{
 		friend class ui::surface;
 		friend class ui::window_surface;
 
+		friend class event::draw;
 		friend class message::dispatcher;
+
 		friend class menu::item_component;
 		friend class menu::object;
 

@@ -52,6 +52,7 @@ namespace winp::event{
 			static constexpr unsigned int soft_default_prevented	= (1 << 0x0001);
 			static constexpr unsigned int propagation_stopped		= (1 << 0x0002);
 			static constexpr unsigned int result_set				= (1 << 0x0003);
+			static constexpr unsigned int default_called			= (1 << 0x0004);
 		};
 
 		object(thread::object &thread, const callback_type &default_handler, const info_type &info);
@@ -137,6 +138,8 @@ namespace winp::event{
 
 		virtual bool result_set_() const;
 
+		virtual bool default_called_() const;
+
 		ui::object *target_;
 		ui::object *context_;
 
@@ -213,14 +216,15 @@ namespace winp::event{
 		virtual bool erase_background_();
 
 		bool context_changed_ = false;
+		bool began_draw_ = false;
+
 		ID2D1DCRenderTarget *drawer_ = nullptr;
 		ID2D1SolidColorBrush *color_brush_ = nullptr;
 
 		PAINTSTRUCT struct_{};
-		POINT current_offset_{};
+		m_rect_type current_region_{};
 
 		int initial_device_state_id_ = -1;
-		std::function<void()> cleaner_;
 	};
 
 	class draw_item : public object{

@@ -8,6 +8,7 @@ namespace winp::thread{
 }
 
 namespace winp::event{
+	class draw;
 	class dispatcher;
 }
 
@@ -21,7 +22,9 @@ namespace winp::message{
 		dispatcher();
 
 	protected:
+		friend class event::draw;
 		friend class event::dispatcher;
+
 		friend class thread::surface_manager;
 		friend class ui::object;
 		friend class menu::object;
@@ -38,7 +41,7 @@ namespace winp::message{
 
 		virtual void do_dispatch_(event::object &e, bool call_default);
 
-		virtual void do_default_(event::object &e, bool call_default);
+		virtual void do_default_(event::object &e, bool call_default, bool no_soft_prevent);
 
 		virtual LRESULT call_default_(event::object &e);
 
@@ -49,14 +52,16 @@ namespace winp::message{
 		template <typename event_type, typename... other_types>
 		std::shared_ptr<event_type> create_new_event_(ui::object &target, const MSG &info, bool call_default, other_types &&... others){
 			return std::make_shared<event_type>(target, [this, call_default](event::object &e){
-				do_default_(e, call_default);
+				if (!e.default_prevented_() && !e.default_called_())
+					do_default_(e, call_default, true);
 			}, info, std::forward<other_types>(others)...);
 		}
 
 		template <typename event_type, typename... other_types>
 		std::shared_ptr<event_type> create_new_event_with_context_(ui::object &target, ui::object &context, const MSG &info, bool call_default, other_types &&... others){
 			return std::make_shared<event_type>(target, context, [this, call_default](event::object &e){
-				do_default_(e, call_default);
+				if (!e.default_prevented_() && !e.default_called_())
+					do_default_(e, call_default, true);
 			}, info, std::forward<other_types>(others)...);
 		}
 
@@ -100,7 +105,6 @@ namespace winp::message{
 
 		static bool result_set_of_(event::object &e);
 
-		bool is_doing_default_ = false;
 		std::shared_ptr<event::dispatcher> event_dispatcher_;
 	};
 
@@ -130,6 +134,8 @@ namespace winp::message{
 
 	protected:
 		virtual void post_dispatch_(event::object &e) override;
+
+		virtual LRESULT call_default_(event::object &e) override;
 
 		virtual void fire_event_(event::object &e) override;
 

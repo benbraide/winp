@@ -9,9 +9,30 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_sh
 	};
 
 	winp::non_window::child nwc(ws);
+	nwc.draw_event += [](winp::event::draw &e){
+		auto drawer = e.get_drawer();
+		if (drawer != nullptr){
+			auto size = dynamic_cast<winp::ui::surface *>(e.get_context())->get_size();
+			for (auto step = 10; step < size.cx; step += 10)
+				drawer->DrawLine(D2D1::Point2F((float)step, 0.f), D2D1::Point2F((float)step, (float)size.cy), e.get_color_brush());
+			for (auto step = 10; step < size.cy; step += 10)
+				drawer->DrawLine(D2D1::Point2F(0.f, (float)step), D2D1::Point2F((float)size.cx, (float)step), e.get_color_brush());
+		}
+	};
+
 	nwc.set_position(POINT{ 10, 10 });
 	nwc.set_size(SIZE{ 300, 200 });
 	nwc.set_background_color(D2D1::ColorF(D2D1::ColorF::Red));
+	nwc.set_border_type(winp::non_window::child::border_type::ellipse);
+	nwc.create();
+
+	winp::non_window::child nwc2(nwc);
+	nwc2.set_position(POINT{ 50, 50 });
+	nwc2.set_size(SIZE{ 90, 50 });
+	nwc2.set_background_color(D2D1::ColorF(D2D1::ColorF::Green));
+	nwc2.set_border_type(winp::non_window::child::border_type::ellipse);
+	nwc2.set_border_curve_size(SIZE{ 10, 10 });
+	nwc2.create();//Made non-window objects use region as their surface
 
 	ws.set_position(POINT{ 10, 10 });
 	ws.set_size(SIZE{ 600, 400 });
