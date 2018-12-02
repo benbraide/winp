@@ -10,8 +10,7 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_sh
 
 	winp::non_window::child nwc(ws);
 	nwc.draw_event += [](winp::event::draw &e){
-		auto drawer = e.get_drawer();
-		if (drawer != nullptr){
+		if (auto drawer = e.get_drawer(); drawer != nullptr){
 			auto size = dynamic_cast<winp::ui::surface *>(e.get_context())->get_size();
 			for (auto step = 10; step < size.cx; step += 10)
 				drawer->DrawLine(D2D1::Point2F((float)step, 0.f), D2D1::Point2F((float)step, (float)size.cy), e.get_color_brush());

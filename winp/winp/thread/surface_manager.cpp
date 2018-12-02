@@ -135,7 +135,7 @@ LRESULT winp::thread::surface_manager::mouse_nc_move_(ui::window_surface &target
 	if (!mouse_info_.tracking_mouse)
 		track_mouse_leave_(static_cast<HWND>(target.get_handle_()), TME_NONCLIENT);
 
-	mouse_move_(target, info, mouse_position, false);
+	mouse_move_(target, info, mouse_position, true);
 	return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), info.hwnd, info.message, info.wParam, info.lParam));
 }
 
@@ -165,7 +165,7 @@ LRESULT winp::thread::surface_manager::mouse_move_(ui::window_surface &target, c
 }
 
 LRESULT winp::thread::surface_manager::nc_mouse_other_(ui::window_surface &target, const MSG &info, DWORD mouse_position, UINT button, bool prevent_default){
-	mouse_other_(target, info, mouse_position, button, false);
+	mouse_other_(target, info, mouse_position, button, true);
 	return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), info.hwnd, info.message, info.wParam, info.lParam));
 }
 
