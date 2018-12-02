@@ -7,12 +7,16 @@ winp::message::dispatcher::dispatcher()
 
 winp::message::dispatcher::dispatcher(bool){}
 
-LRESULT winp::message::dispatcher::dispatch_(ui::object &target, const MSG &info, bool call_default){
-	auto e = create_event_(target, info, call_default);
-	return ((e == nullptr) ? 0 : dispatch_(*e, call_default));
+LRESULT winp::message::dispatcher::dispatch_(ui::object &target, const MSG &info, bool call_default, unsigned int *states){
+	return dispatch_(target, target, info, call_default, states);
 }
 
-LRESULT winp::message::dispatcher::dispatch_(event::object &e, bool call_default){
+LRESULT winp::message::dispatcher::dispatch_(ui::object &target, ui::object &context, const MSG &info, bool call_default, unsigned int *states){
+	auto e = create_event_(target, context, info, call_default);
+	return ((e == nullptr) ? 0 : dispatch_(*e, call_default, states));
+}
+
+LRESULT winp::message::dispatcher::dispatch_(event::object &e, bool call_default, unsigned int *states){
 	e.state_ &= ~event::object::state_type::default_called;
 	pre_dispatch_(e, call_default);
 
@@ -20,6 +24,9 @@ LRESULT winp::message::dispatcher::dispatch_(event::object &e, bool call_default
 		do_dispatch_(e, call_default);
 		post_dispatch_(e);
 	}
+
+	if (states != nullptr)//Update states
+		*states = e.state_;
 
 	return e.get_result_();
 }
@@ -35,8 +42,8 @@ void winp::message::dispatcher::do_dispatch_(event::object &e, bool call_default
 
 	if (!e.default_done_())
 		do_default_(e, call_default);
-	else if (!e.default_called_())
-		call_default_(e);
+	else if (call_default && !e.default_called_())
+		e.set_result_(call_default_(e), false);
 }
 
 void winp::message::dispatcher::do_default_(event::object &e, bool call_default){
@@ -51,23 +58,16 @@ LRESULT winp::message::dispatcher::call_default_(event::object &e){
 	e.state_ |= event::object::state_type::default_called;
 
 	auto &info = *e.get_info();
-	if (info.message >= WM_APP)
-		return 0;
+	if (info.message >= WM_APP || e.context_ != e.target_)
+		return 0;//APP message OR bubbled message
 
-	auto object = find_object_(info.hwnd);
-	if (object == nullptr){
-		if ((IsWindowUnicode(info.hwnd) == FALSE))
-			return CallWindowProcW(DefWindowProcA, info.hwnd, info.message, info.wParam, info.lParam);
-		return CallWindowProcW(DefWindowProcW, info.hwnd, info.message, info.wParam, info.lParam);
-	}
-
-	return CallWindowProcW(get_default_message_entry_of_(*object), info.hwnd, info.message, info.wParam, info.lParam);
+	return CallWindowProcW(get_default_message_entry_of_(*e.context_), info.hwnd, info.message, info.wParam, info.lParam);
 }
 
 void winp::message::dispatcher::fire_event_(event::object &e){}
 
-std::shared_ptr<winp::event::object> winp::message::dispatcher::create_event_(ui::object &target, const MSG &info, bool call_default){
-	return create_new_event_<event::object>(target, info, call_default);
+std::shared_ptr<winp::event::object> winp::message::dispatcher::create_event_(ui::object &target, ui::object &context, const MSG &info, bool call_default){
+	return create_new_event_<event::object>(target, context, info, call_default);
 }
 
 winp::ui::object *winp::message::dispatcher::find_object_(HANDLE handle){
@@ -135,10 +135,6 @@ winp::message::tree_dispatcher::tree_dispatcher()
 	event_dispatcher_ = std::make_shared<event::tree_dispatcher>();
 }
 
-void winp::message::tree_dispatcher::post_dispatch_(event::object &e){
-	set_result_of_(e, (default_prevented_of_(e) ? 1 : 0), true);
-}
-
 void winp::message::tree_dispatcher::fire_event_(event::object &e){
 	auto tree_target = dynamic_cast<ui::tree *>(e.get_context());
 	switch (e.get_info()->message){
@@ -183,8 +179,8 @@ void winp::message::tree_dispatcher::fire_event_(event::object &e){
 	}
 }
 
-std::shared_ptr<winp::event::object> winp::message::tree_dispatcher::create_event_(ui::object &target, const MSG &info, bool call_default){
-	return create_new_event_<event::tree>(target, info, call_default);
+std::shared_ptr<winp::event::object> winp::message::tree_dispatcher::create_event_(ui::object &target, ui::object &context, const MSG &info, bool call_default){
+	return create_new_event_<event::tree>(target, context, info, call_default);
 }
 
 winp::message::create_destroy_dispatcher::create_destroy_dispatcher()
@@ -225,32 +221,13 @@ void winp::message::draw_dispatcher::fire_event_(event::object &e){
 		fire_event_of_(*visible_target, visible_target->draw_event, e);
 }
 
-std::shared_ptr<winp::event::object> winp::message::draw_dispatcher::create_event_(ui::object &target, const MSG &info, bool call_default){
-	return create_new_event_<event::draw>(target, info, call_default);
+std::shared_ptr<winp::event::object> winp::message::draw_dispatcher::create_event_(ui::object &target, ui::object &context, const MSG &info, bool call_default){
+	return create_new_event_<event::draw>(target, context, info, call_default);
 }
 
 winp::message::draw_item_dispatcher::draw_item_dispatcher()
 	: dispatcher(false){
 	event_dispatcher_ = std::make_shared<event::draw_item_dispatcher>();
-}
-
-void winp::message::draw_item_dispatcher::post_dispatch_(event::object &e){
-	if (propagation_stopped_of_(e))
-		return;
-
-	auto context = e.get_context();
-	if (dynamic_cast<ui::window_surface *>(context) != nullptr)
-		return;//No bubbling
-
-	if (!bubble_to_type_of_<menu::object, ui::window_surface>(e)){
-		set_context_of_(e, *context);
-		if (!bubble_to_type_of_<ui::window_surface>(e))
-			return;
-	}
-
-	auto saved_result = get_result_of_(e);
-	dispatch_(e, false);
-	set_result_of_(e, saved_result, true);//Restore result
 }
 
 void winp::message::draw_item_dispatcher::fire_event_(event::object &e){
@@ -279,12 +256,12 @@ void winp::message::draw_item_dispatcher::fire_event_(event::object &e){
 		set_result_of_(e, 1, false);
 }
 
-std::shared_ptr<winp::event::object> winp::message::draw_item_dispatcher::create_event_(ui::object &target, const MSG &info, bool call_default){
+std::shared_ptr<winp::event::object> winp::message::draw_item_dispatcher::create_event_(ui::object &target, ui::object &context, const MSG &info, bool call_default){
 	if (info.message == WM_DRAWITEM)
-		return create_new_event_<event::draw_item>(target, info, call_default);
+		return create_new_event_<event::draw_item>(target, context, info, call_default);
 
 	if (info.message == WM_MEASUREITEM)
-		return create_new_event_<event::measure_item>(target, info, call_default);
+		return create_new_event_<event::measure_item>(target, context, info, call_default);
 
 	return nullptr;
 }
@@ -304,8 +281,8 @@ void winp::message::cursor_dispatcher::fire_event_(event::object &e){
 		fire_event_of_(*surface_target, surface_target->set_cursor_event, e);
 }
 
-std::shared_ptr<winp::event::object> winp::message::cursor_dispatcher::create_event_(ui::object &target, const MSG &info, bool call_default){
-	return create_new_event_<event::cursor>(target, info, call_default);
+std::shared_ptr<winp::event::object> winp::message::cursor_dispatcher::create_event_(ui::object &target, ui::object &context, const MSG &info, bool call_default){
+	return create_new_event_<event::cursor>(target, context, info, call_default);
 }
 
 HCURSOR winp::message::cursor_dispatcher::get_default_cursor_(event::cursor &e) const{
@@ -349,25 +326,16 @@ winp::message::mouse_dispatcher::mouse_dispatcher()
 	event_dispatcher_ = std::make_shared<event::mouse_dispatcher>();
 }
 
-void winp::message::mouse_dispatcher::post_dispatch_(event::object &e){
-	if (!dynamic_cast<event::mouse &>(e).bubble_to_type_<ui::io_surface>())
-		return;//Failed to bubble
-
-	auto saved_result = get_result_of_(e);
-	dispatch_(e, false);
-	set_result_of_(e, saved_result, true);//Restore result
-}
-
 void winp::message::mouse_dispatcher::fire_event_(event::object &e){
 	auto manager = get_event_manager_(e);
 	if (manager != nullptr)
 		fire_event_of_(*dynamic_cast<ui::io_surface *>(e.get_context()), *manager, e);
 }
 
-std::shared_ptr<winp::event::object> winp::message::mouse_dispatcher::create_event_(ui::object &target, const MSG &info, bool call_default){
+std::shared_ptr<winp::event::object> winp::message::mouse_dispatcher::create_event_(ui::object &target, ui::object &context, const MSG &info, bool call_default){
 	auto mouse_position = GetMessagePos();
 	POINT computed_mouse_position{ GET_X_LPARAM(mouse_position), GET_Y_LPARAM(mouse_position) };
-	return create_new_event_<event::mouse>(target, info, call_default, computed_mouse_position, get_button_(info));
+	return create_new_event_<event::mouse>(target, context, info, call_default, computed_mouse_position, get_button_(info));
 }
 
 winp::event::mouse::button_type winp::message::mouse_dispatcher::get_button_(const MSG &info){
@@ -476,23 +444,14 @@ winp::message::key_dispatcher::key_dispatcher()
 	event_dispatcher_ = std::make_shared<event::key_dispatcher>();
 }
 
-void winp::message::key_dispatcher::post_dispatch_(event::object &e){
-	if (!dynamic_cast<event::key &>(e).bubble_to_type_<ui::io_surface>())
-		return;//Failed to bubble
-
-	auto saved_result = get_result_of_(e);
-	dispatch_(e, false);
-	set_result_of_(e, saved_result, true);//Restore result
-}
-
 void winp::message::key_dispatcher::fire_event_(event::object &e){
 	auto manager = get_event_manager_(e);
 	if (manager != nullptr)
 		fire_event_of_(*dynamic_cast<ui::io_surface *>(e.get_context()), *manager, e);
 }
 
-std::shared_ptr<winp::event::object> winp::message::key_dispatcher::create_event_(ui::object &target, const MSG &info, bool call_default){
-	return create_new_event_<event::key>(target, info, call_default);
+std::shared_ptr<winp::event::object> winp::message::key_dispatcher::create_event_(ui::object &target, ui::object &context, const MSG &info, bool call_default){
+	return create_new_event_<event::key>(target, context, info, call_default);
 }
 
 winp::event::manager_base *winp::message::key_dispatcher::get_event_manager_(event::object &e){
@@ -517,31 +476,6 @@ winp::event::manager_base *winp::message::key_dispatcher::get_event_manager_(eve
 winp::message::menu_dispatcher::menu_dispatcher()
 	: dispatcher(false){
 	event_dispatcher_ = std::make_shared<event::menu_dispatcher>();
-}
-
-void winp::message::menu_dispatcher::post_dispatch_(event::object &e){
-	auto info = *e.get_info();
-	if (info.message == WINP_WM_CONTEXT_MENU_QUERY || info.message == WINP_WM_CONTEXT_MENU_REQUEST || info.message == WM_CONTEXTMENU)
-		return;//No bubbling
-
-	auto context = e.get_context();
-	if (!bubble_to_type_of_<menu::object, ui::window_surface>(e)){
-		if (propagation_stopped_of_(e) || dynamic_cast<ui::window_surface *>(context) != nullptr)
-			return;//Bubbling prevented
-
-		auto object = find_object_(info.hwnd);
-		if (object == nullptr)//Object required
-			return;
-
-		set_context_of_(e, *object);//Bubble to window
-	}
-
-	auto saved_result = get_result_of_(e);
-	dispatch_(e, false);
-	set_result_of_(e, saved_result, true);//Restore result
-
-	if (info.message == WM_INITMENUPOPUP || info.message == WINP_WM_MENU_INIT_ITEM)
-		set_result_of_(e, (default_prevented_of_(e) ? 1 : 0), true);
 }
 
 void winp::message::menu_dispatcher::fire_event_(event::object &e){
@@ -599,34 +533,33 @@ void winp::message::menu_dispatcher::fire_event_(event::object &e){
 	}
 }
 
-std::shared_ptr<winp::event::object> winp::message::menu_dispatcher::create_event_(ui::object &target, const MSG &info, bool call_default){
-	if (info.message == WINP_WM_MENU_INIT_ITEM || info.message == WINP_WM_MENU_SELECT || info.message == WINP_WM_MENU_CHECK || info.message == WINP_WM_MENU_UNCHECK)
-		return create_new_event_<event::object>(*reinterpret_cast<menu::item_component *>(info.wParam), info, call_default);
+std::shared_ptr<winp::event::object> winp::message::menu_dispatcher::create_event_(ui::object &target, ui::object &context, const MSG &info, bool call_default){
+	if (info.message == WINP_WM_MENU_INIT_ITEM || info.message == WINP_WM_MENU_SELECT || info.message == WINP_WM_MENU_CHECK || info.message == WINP_WM_MENU_UNCHECK){
+		if (auto item = reinterpret_cast<menu::item_component *>(info.wParam); item != nullptr)
+			return create_new_event_<event::object>(*item, *item, info, call_default);
+		return nullptr;
+	}
 
 	if (info.message == WINP_WM_CONTEXT_MENU_QUERY || info.message == WINP_WM_CONTEXT_MENU_REQUEST)
-		return create_new_event_<event::context_menu_prefix>(target, info, call_default);
+		return create_new_event_<event::context_menu_prefix>(target, context, info, call_default);
 
 	if (info.message == WM_CONTEXTMENU){
 		auto context_targets = reinterpret_cast<thread::surface_manager::context_menu_targets_info *>(info.wParam);
 		if (context_targets->surface == nullptr)
-			return create_new_event_<event::context_menu>(target, MSG{ info.hwnd, info.message, reinterpret_cast<WPARAM>(context_targets->menu), info.lParam }, call_default);
-		return create_new_event_with_context_<event::context_menu>(*context_targets->surface, target, MSG{ info.hwnd, info.message, reinterpret_cast<WPARAM>(context_targets->menu), info.lParam }, call_default);
+			return create_new_event_<event::context_menu>(target, context, MSG{ info.hwnd, info.message, reinterpret_cast<WPARAM>(context_targets->menu), info.lParam }, call_default);
+		return create_new_event_<event::context_menu>(*context_targets->surface, target, MSG{ info.hwnd, info.message, reinterpret_cast<WPARAM>(context_targets->menu), info.lParam }, call_default);
 	}
 
 	auto menu_target = find_object_(reinterpret_cast<HMENU>(info.wParam));
 	if (menu_target == nullptr)
-		return create_new_event_<event::object>(target, info, call_default);
+		return create_new_event_<event::object>(target, context, info, call_default);
 
-	return create_new_event_<event::object>(*menu_target, info, call_default);
+	return create_new_event_<event::object>(*menu_target, *menu_target, info, call_default);
 }
 
 winp::message::frame_dispatcher::frame_dispatcher()
 	: dispatcher(false){
 	event_dispatcher_ = std::make_shared<event::frame_dispatcher>();
-}
-
-void winp::message::frame_dispatcher::post_dispatch_(event::object &e){
-	set_result_of_(e, (default_prevented_of_(e) ? 1 : 0), true);
 }
 
 void winp::message::frame_dispatcher::fire_event_(event::object &e){
@@ -671,15 +604,15 @@ void winp::message::frame_dispatcher::fire_event_(event::object &e){
 	}
 }
 
-std::shared_ptr<winp::event::object> winp::message::frame_dispatcher::create_event_(ui::object &target, const MSG &info, bool call_default){
+std::shared_ptr<winp::event::object> winp::message::frame_dispatcher::create_event_(ui::object &target, ui::object &context, const MSG &info, bool call_default){
 	switch (info.message){
 	case WM_SIZING:
-		return create_new_event_<event::size>(target, info, call_default);
+		return create_new_event_<event::size>(target, context, info, call_default);
 	case WM_MOVING:
-		return create_new_event_<event::position>(target, info, call_default);
+		return create_new_event_<event::position>(target, context, info, call_default);
 	default:
 		break;
 	}
 
-	return create_new_event_<event::object>(target, info, call_default);
+	return create_new_event_<event::object>(target, context, info, call_default);
 }

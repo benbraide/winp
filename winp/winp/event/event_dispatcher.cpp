@@ -29,24 +29,19 @@ void winp::event::tree_dispatcher::dispatch_(object &e){
 
 	switch (e.get_info()->message){
 	case WINP_WM_PARENT_CHANGING:
-		if (!handler->handle_parent_change_event_(dynamic_cast<tree &>(e)))
-			e.prevent_default();
+		e.set_result((handler->handle_parent_change_event_(dynamic_cast<tree &>(e)) ? 0 : 1), true);
 		break;
 	case WINP_WM_INDEX_CHANGING:
-		if (!handler->handle_index_change_event_(dynamic_cast<tree &>(e)))
-			e.prevent_default();
+		e.set_result((handler->handle_index_change_event_(dynamic_cast<tree &>(e)) ? 0 : 1), true);
 		break;
 	case WINP_WM_CHILD_INDEX_CHANGING:
-		if (!handler->handle_child_index_change_event_(dynamic_cast<tree &>(e)))
-			e.prevent_default();
+		e.set_result((handler->handle_child_index_change_event_(dynamic_cast<tree &>(e)) ? 0 : 1), true);
 		break;
 	case WINP_WM_CHILD_INSERTING:
-		if (!handler->handle_child_insert_event_(dynamic_cast<tree &>(e)))
-			e.prevent_default();
+		e.set_result((handler->handle_child_insert_event_(dynamic_cast<tree &>(e)) ? 0 : 1), true);
 		break;
 	case WINP_WM_CHILD_REMOVING:
-		if (!handler->handle_child_remove_event_(dynamic_cast<tree &>(e)))
-			e.prevent_default();
+		e.set_result((handler->handle_child_remove_event_(dynamic_cast<tree &>(e)) ? 0 : 1), true);
 		break;
 	case WINP_WM_PARENT_CHANGED:
 		handler->handle_parent_changed_event_(dynamic_cast<tree &>(e));
@@ -508,21 +503,15 @@ void winp::event::menu_dispatcher::dispatch_(object &e){
 		case WINP_WM_MENU_UNCHECK:
 			handler->handle_menu_uncheck_event_(e);
 			break;
-		case WINP_WM_CONTEXT_MENU_QUERY:
-			if (handler->handle_context_menu_query_event_(dynamic_cast<context_menu_prefix &>(e)) && !default_prevented_of_(e))
-				set_result_of_(e, 1, false);
-			break;
 		case WINP_WM_CONTEXT_MENU_REQUEST:
 		{
 			auto value = handler->handle_context_menu_request_event_(dynamic_cast<context_menu_prefix &>(e));
-			if (value != nullptr && !default_prevented_of_(e))
+			if (value != nullptr)
 				set_result_of_(e, reinterpret_cast<LRESULT>(value), false);
 			break;
 		}
 		case WM_CONTEXTMENU:
 			handler->handle_context_menu_event_(dynamic_cast<context_menu &>(e));
-			if (default_prevented_of_(e))
-				set_result_of_(e, 1, true);
 			break;
 		default:
 			break;

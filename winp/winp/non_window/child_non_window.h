@@ -3,7 +3,7 @@
 #include "../ui/ui_window_surface.h"
 
 namespace winp::non_window{
-	class child : public ui::io_surface{
+	class child : public ui::visible_surface{
 	public:
 		enum class border_type{
 			nil,

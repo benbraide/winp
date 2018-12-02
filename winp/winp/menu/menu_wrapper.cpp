@@ -120,6 +120,7 @@ bool winp::menu::wrapper::wrap_(HMENU value){
 			else//Set ID
 				menu_item->local_id_ = info.wID;
 
+			menu_item->register_id_();
 			if (info.cch > 0u){//Cache text
 				label.resize(info.cch);
 

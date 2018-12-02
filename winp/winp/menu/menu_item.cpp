@@ -144,14 +144,19 @@ HBITMAP winp::menu::item::get_bitmap(const std::function<void(HBITMAP)> &callbac
 
 bool winp::menu::item::select(const std::function<void(item_component &, bool)> &callback){
 	if (thread_.is_thread_context()){
-		auto result = select_();
+		unsigned int states = 0;
+		auto result = select_(nullptr, nullptr, true, states);
+
 		if (callback != nullptr)
 			callback(*this, result);
+
 		return result;
 	}
 
 	thread_.queue.post([=]{
-		auto result = select_();
+		unsigned int states = 0;
+		auto result = select_(nullptr, nullptr, true, states);
+
 		if (callback != nullptr)
 			callback(*this, result);
 	}, thread::queue::send_priority, id_);
@@ -234,12 +239,13 @@ HBITMAP winp::menu::item::get_bitmap_() const{
 	return bitmap_;
 }
 
-bool winp::menu::item::select_(){
-	if (!is_created_)
-		return false;
+bool winp::menu::item::select_(ui::surface *target, const MSG *info, bool prevent_default, unsigned int &states){
+	return select_(WINP_WM_MENU_SELECT, target, info, prevent_default, states);
+}
 
-	dispatch_message_(WINP_WM_MENU_SELECT, reinterpret_cast<WPARAM>(static_cast<item_component *>(this)), 0);
-	return true;
+bool winp::menu::item::select_(UINT msg, ui::surface *target, const MSG *info, bool prevent_default, unsigned int &states){
+	thread_.surface_manager_.select_menu_item_(msg, *this, target, info, prevent_default, states);
+	return ((states & event::object::state_type::default_prevented) == 0u);
 }
 
 bool winp::menu::item::update_popup_(){

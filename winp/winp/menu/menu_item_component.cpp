@@ -460,6 +460,11 @@ bool winp::menu::item_component::update_types_(){
 	});
 }
 
+void winp::menu::item_component::register_id_(){
+	if (local_id_ != 0u && id_is_unique_())
+		thread_.surface_manager_.id_map_[local_id_] = this;
+}
+
 void winp::menu::item_component::generate_id_(std::size_t max_tries){
 	if (local_id_ != 0u)
 		return;//ID is unique
@@ -486,36 +491,11 @@ void winp::menu::item_component::generate_id_(std::size_t max_tries){
 }
 
 bool winp::menu::item_component::id_is_unique_() const{
-	if (HIWORD(local_id_) == 1u)
+	if (thread_.surface_manager_.menu_item_id_is_reserved_(local_id_))
 		return false;//Reserved ID
 
 	if (!thread_.surface_manager_.id_map_.empty() && thread_.surface_manager_.id_map_.find(local_id_) != thread_.surface_manager_.id_map_.end())
 		return false;//Already in use
-
-	switch (local_id_ & 0xFFF0){
-	case SC_CLOSE:
-	case SC_CONTEXTHELP:
-	case SC_DEFAULT:
-	case SC_HOTKEY:
-	case SC_HSCROLL:
-	case SCF_ISSECURE:
-	case SC_KEYMENU:
-	case SC_MAXIMIZE:
-	case SC_MINIMIZE:
-	case SC_MONITORPOWER:
-	case SC_MOUSEMENU:
-	case SC_MOVE:
-	case SC_NEXTWINDOW:
-	case SC_PREVWINDOW:
-	case SC_RESTORE:
-	case SC_SCREENSAVE:
-	case SC_SIZE:
-	case SC_TASKLIST:
-	case SC_VSCROLL:
-		return false;//Reserved for system menu items
-	default:
-		break;
-	}
 
 	return true;//ID is unique
 }

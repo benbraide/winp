@@ -31,9 +31,11 @@ namespace winp::message{
 
 		dispatcher(bool);
 
-		virtual LRESULT dispatch_(ui::object &target, const MSG &info, bool call_default);
+		virtual LRESULT dispatch_(ui::object &target, const MSG &info, bool call_default, unsigned int *states);
 
-		virtual LRESULT dispatch_(event::object &e, bool call_default);
+		virtual LRESULT dispatch_(ui::object &target, ui::object &context, const MSG &info, bool call_default, unsigned int *states);
+
+		virtual LRESULT dispatch_(event::object &e, bool call_default, unsigned int *states);
 
 		virtual void pre_dispatch_(event::object &e, bool &call_default);
 
@@ -47,23 +49,10 @@ namespace winp::message{
 
 		virtual void fire_event_(event::object &e);
 
-		virtual std::shared_ptr<event::object> create_event_(ui::object &target, const MSG &info, bool call_default);
+		virtual std::shared_ptr<event::object> create_event_(ui::object &target, ui::object &context, const MSG &info, bool call_default);
 
 		template <typename event_type, typename... other_types>
-		std::shared_ptr<event_type> create_new_event_(ui::object &target, const MSG &info, bool call_default, other_types &&... others){
-			return std::make_shared<event_type>(target, [this, call_default](event::object &e){
-				if (e.default_prevented_())
-					return;
-
-				if (!e.default_done_())
-					do_default_(e, call_default);
-				else if (!e.default_called_())
-					call_default_(e);
-			}, info, std::forward<other_types>(others)...);
-		}
-
-		template <typename event_type, typename... other_types>
-		std::shared_ptr<event_type> create_new_event_with_context_(ui::object &target, ui::object &context, const MSG &info, bool call_default, other_types &&... others){
+		std::shared_ptr<event_type> create_new_event_(ui::object &target, ui::object &context, const MSG &info, bool call_default, other_types &&... others){
 			return std::make_shared<event_type>(target, context, [this, call_default](event::object &e){
 				if (e.default_prevented_())
 					return;
@@ -123,11 +112,9 @@ namespace winp::message{
 		tree_dispatcher();
 
 	protected:
-		virtual void post_dispatch_(event::object &e) override;
-
 		virtual void fire_event_(event::object &e) override;
 
-		virtual std::shared_ptr<event::object> create_event_(ui::object &target, const MSG &info, bool call_default) override;
+		virtual std::shared_ptr<event::object> create_event_(ui::object &target, ui::object &context, const MSG &info, bool call_default) override;
 	};
 
 	class create_destroy_dispatcher : public dispatcher{
@@ -145,7 +132,7 @@ namespace winp::message{
 	protected:
 		virtual void fire_event_(event::object &e) override;
 
-		virtual std::shared_ptr<event::object> create_event_(ui::object &target, const MSG &info, bool call_default) override;
+		virtual std::shared_ptr<event::object> create_event_(ui::object &target, ui::object &context, const MSG &info, bool call_default) override;
 	};
 
 	class draw_item_dispatcher : public dispatcher{
@@ -153,11 +140,9 @@ namespace winp::message{
 		draw_item_dispatcher();
 
 	protected:
-		virtual void post_dispatch_(event::object &e) override;
-
 		virtual void fire_event_(event::object &e) override;
 
-		virtual std::shared_ptr<event::object> create_event_(ui::object &target, const MSG &info, bool call_default) override;
+		virtual std::shared_ptr<event::object> create_event_(ui::object &target, ui::object &context, const MSG &info, bool call_default) override;
 	};
 
 	class cursor_dispatcher : public dispatcher{
@@ -169,7 +154,7 @@ namespace winp::message{
 
 		virtual void fire_event_(event::object &e) override;
 
-		virtual std::shared_ptr<event::object> create_event_(ui::object &target, const MSG &info, bool call_default) override;
+		virtual std::shared_ptr<event::object> create_event_(ui::object &target, ui::object &context, const MSG &info, bool call_default) override;
 
 		virtual HCURSOR get_default_cursor_(event::cursor &e) const;
 	};
@@ -179,11 +164,9 @@ namespace winp::message{
 		mouse_dispatcher();
 
 	protected:
-		virtual void post_dispatch_(event::object &e) override;
-
 		virtual void fire_event_(event::object &e) override;
 
-		virtual std::shared_ptr<event::object> create_event_(ui::object &target, const MSG &info, bool call_default) override;
+		virtual std::shared_ptr<event::object> create_event_(ui::object &target, ui::object &context, const MSG &info, bool call_default) override;
 
 		virtual event::mouse::button_type get_button_(const MSG &info);
 
@@ -203,11 +186,9 @@ namespace winp::message{
 		key_dispatcher();
 
 	protected:
-		virtual void post_dispatch_(event::object &e) override;
-
 		virtual void fire_event_(event::object &e) override;
 
-		virtual std::shared_ptr<event::object> create_event_(ui::object &target, const MSG &info, bool call_default) override;
+		virtual std::shared_ptr<event::object> create_event_(ui::object &target, ui::object &context, const MSG &info, bool call_default) override;
 
 		virtual event::manager_base *get_event_manager_(event::object &e);
 	};
@@ -217,11 +198,9 @@ namespace winp::message{
 		menu_dispatcher();
 
 	protected:
-		virtual void post_dispatch_(event::object &e) override;
-
 		virtual void fire_event_(event::object &e) override;
 
-		virtual std::shared_ptr<event::object> create_event_(ui::object &target, const MSG &info, bool call_default) override;
+		virtual std::shared_ptr<event::object> create_event_(ui::object &target, ui::object &context, const MSG &info, bool call_default) override;
 	};
 
 	class frame_dispatcher : public dispatcher{
@@ -229,10 +208,8 @@ namespace winp::message{
 		frame_dispatcher();
 
 	protected:
-		virtual void post_dispatch_(event::object &e) override;
-
 		virtual void fire_event_(event::object &e) override;
 
-		virtual std::shared_ptr<event::object> create_event_(ui::object &target, const MSG &info, bool call_default) override;
+		virtual std::shared_ptr<event::object> create_event_(ui::object &target, ui::object &context, const MSG &info, bool call_default) override;
 	};
 }

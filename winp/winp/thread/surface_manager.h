@@ -7,17 +7,17 @@
 
 #include "thread_item.h"
 
-#define WINP_WM_MOUSELEAVE				(WM_APP + 0x01)
-#define WINP_WM_MOUSEENTER				(WM_APP + 0x02)
+#define WINP_WM_MOUSELEAVE				(WM_APP + 0x00)
+#define WINP_WM_MOUSEENTER				(WM_APP + 0x01)
+#define WINP_WM_MOUSEMOVE				(WM_APP + 0x02)
+#define WINP_WM_MOUSEWHEEL				(WM_APP + 0x03)
 
-#define WINP_WM_MOUSEMOVE				(WM_APP + 0x03)
-#define WINP_WM_MOUSEWHEEL				(WM_APP + 0x04)
+#define WINP_WM_MOUSEDOWN				(WM_APP + 0x04)
+#define WINP_WM_MOUSEUP					(WM_APP + 0x05)
+#define WINP_WM_MOUSEDBLCLK				(WM_APP + 0x06)
 
-#define WINP_WM_MOUSEDOWN				(WM_APP + 0x05)
-#define WINP_WM_MOUSEUP					(WM_APP + 0x06)
-#define WINP_WM_MOUSEDBLCLK				(WM_APP + 0x07)
-
-#define WINP_WM_MOUSEDRAG				(WM_APP + 0x08)
+#define WINP_WM_MOUSEDRAG				(WM_APP + 0x07)
+#define WINP_WM_MOUSEDRAGQUERY			(WM_APP + 0x08)
 #define WINP_WM_MOUSEDRAGBEGIN			(WM_APP + 0x09)
 #define WINP_WM_MOUSEDRAGEND			(WM_APP + 0x0A)
 
@@ -99,21 +99,13 @@ namespace winp::thread{
 		};
 
 		struct mouse_info{
-			ui::io_surface *mouse_target;
-			ui::io_surface *drag_target;
-
-			m_point_type last_position;
-			m_point_type pressed_position;
-
-			UINT first_button_pressed;
-			UINT button_pressed;
-
+			ui::window_surface *mouse_target;
 			bool tracking_mouse;
 		};
 
 		struct surface_state{
-			ui::io_surface *focused;
-			ui::io_surface *mouse_focused;
+			ui::window_surface *focused;
+			ui::window_surface *mouse_focused;
 		};
 
 		struct context_menu_targets_info{
@@ -135,6 +127,7 @@ namespace winp::thread{
 		friend class message::dispatcher;
 
 		friend class menu::item_component;
+		friend class menu::item;
 		friend class menu::object;
 
 		void prepare_for_run_();
@@ -149,43 +142,33 @@ namespace winp::thread{
 
 		ui::surface *find_item_(UINT id) const;
 
+		menu::item_component *find_system_menu_item_(ui::surface &target, UINT id) const;
+
 		void create_window_(HWND handle, CBT_CREATEWNDW &info);
 
 		LRESULT destroy_window_(ui::surface &target, const MSG &info);
 
 		LRESULT draw_(ui::surface &target, const MSG &info, bool prevent_default, m_rect_type update_region);
 
-		LRESULT mouse_nc_leave_(ui::io_surface &target, const MSG &info, DWORD mouse_position, bool prevent_default);
+		LRESULT mouse_nc_leave_(ui::window_surface &target, const MSG &info, DWORD mouse_position, bool prevent_default);
 
-		LRESULT mouse_leave_(ui::io_surface &target, const MSG &info, DWORD mouse_position, bool prevent_default);
+		LRESULT mouse_leave_(ui::window_surface &target, const MSG &info, DWORD mouse_position, bool prevent_default);
 
-		LRESULT mouse_enter_(ui::io_surface &target, const MSG &info, DWORD mouse_position);
+		LRESULT mouse_nc_move_(ui::window_surface &target, const MSG &info, DWORD mouse_position, bool prevent_default);
 
-		LRESULT mouse_nc_move_(ui::io_surface &target, const MSG &info, DWORD mouse_position, bool prevent_default);
+		LRESULT mouse_move_(ui::window_surface &target, const MSG &info, DWORD mouse_position, bool prevent_default);
 
-		LRESULT mouse_move_(ui::io_surface &target, const MSG &info, DWORD mouse_position, bool prevent_default);
+		LRESULT nc_mouse_other_(ui::window_surface &target, const MSG &info, DWORD mouse_position, UINT button, bool prevent_default);
 
-		LRESULT mouse_nc_down_(ui::io_surface &target, const MSG &info, DWORD mouse_position, UINT button, bool prevent_default);
+		LRESULT mouse_other_(ui::window_surface &target, const MSG &info, DWORD mouse_position, UINT button, bool prevent_default);
 
-		LRESULT mouse_down_(ui::io_surface &target, const MSG &info, DWORD mouse_position, UINT button, bool prevent_default);
+		LRESULT set_cursor_(ui::window_surface &target, const MSG &info, bool prevent_default);
 
-		LRESULT mouse_nc_up_(ui::io_surface &target, const MSG &info, DWORD mouse_position, UINT button, bool prevent_default);
+		LRESULT set_focus_(ui::window_surface &target, const MSG &info, bool prevent_default);
 
-		LRESULT mouse_up_(ui::io_surface &target, const MSG &info, DWORD mouse_position, UINT button, bool prevent_default);
+		LRESULT kill_focus_(ui::window_surface &target, const MSG &info, bool prevent_default);
 
-		LRESULT mouse_nc_dbl_click_(ui::io_surface &target, const MSG &info, DWORD mouse_position, UINT button, bool prevent_default);
-
-		LRESULT mouse_dbl_click_(ui::io_surface &target, const MSG &info, DWORD mouse_position, UINT button, bool prevent_default);
-
-		LRESULT mouse_wheel_(ui::io_surface &target, const MSG &info, DWORD mouse_position, bool prevent_default);
-
-		LRESULT set_cursor_(ui::io_surface &target, const MSG &info, bool prevent_default);
-
-		LRESULT set_focus_(ui::io_surface &target, const MSG &info, bool prevent_default);
-
-		LRESULT kill_focus_(ui::io_surface &target, const MSG &info, bool prevent_default);
-
-		LRESULT key_(ui::io_surface &target, const MSG &info, bool prevent_default);
+		LRESULT key_(ui::window_surface &target, const MSG &info, bool prevent_default);
 
 		LRESULT command_(ui::surface &target, const MSG &info, bool prevent_default);
 
@@ -203,7 +186,9 @@ namespace winp::thread{
 
 		LRESULT menu_select_(ui::surface &target, const MSG &info, menu::item_component &item, bool prevent_default);
 
-		LRESULT context_menu_(ui::io_surface &target, const MSG &info, bool prevent_default);
+		LRESULT select_menu_item_(UINT msg, menu::item &item, ui::surface *target, const MSG *info, bool prevent_default, unsigned int &states);
+
+		LRESULT context_menu_(ui::window_surface &target, const MSG &info, bool prevent_default);
 
 		LRESULT draw_item_(ui::surface &target, const MSG &info, bool prevent_default);
 
@@ -216,6 +201,8 @@ namespace winp::thread{
 		LRESULT move_frame_(ui::surface &target, const MSG &info, bool prevent_default);
 
 		void track_mouse_leave_(HWND target, UINT flags);
+
+		static bool menu_item_id_is_reserved_(UINT id);
 
 		static bool initialize_dispatchers_();
 

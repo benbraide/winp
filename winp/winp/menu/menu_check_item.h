@@ -51,15 +51,17 @@ namespace winp::menu{
 
 		virtual HBITMAP get_checked_bitmap_() const override;
 
-		virtual bool select_() override;
+		virtual bool select_(ui::surface *target, const MSG *info, bool prevent_default, unsigned int &states) override;
 
 		virtual bool is_radio_() const;
 
-		virtual bool check_();
+		virtual bool check_(ui::surface *target, const MSG *info, bool prevent_default, unsigned int &states);
 
-		virtual bool uncheck_(bool force);
+		virtual bool uncheck_(ui::surface *target, const MSG *info, bool prevent_default, unsigned int &states, bool force);
 
-		virtual bool toggle_check_();
+		virtual bool toggle_check_(ui::surface *target, const MSG *info, bool prevent_default, unsigned int &states);
+
+		virtual bool uncheck_siblings_(ui::tree &parent, ui::surface *target, bool force);
 
 		virtual bool set_checked_bitmap_(HBITMAP value);
 

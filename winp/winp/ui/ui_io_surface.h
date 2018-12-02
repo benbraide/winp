@@ -54,14 +54,6 @@ namespace winp::ui{
 
 		virtual io_surface *get_io_surface_parent_() const;
 
-		virtual io_surface *get_top_moused_() const;
-
-		virtual io_surface *find_moused_child_(const m_point_type &position) const;
-
-		virtual io_surface *get_drag_target_(const m_size_type &delta) const;
-
 		virtual bool is_dialog_message_(MSG &msg) const;
-
-		io_surface *moused_ = nullptr;
 	};
 }

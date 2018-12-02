@@ -1,12 +1,12 @@
 #include "../app/app_object.h"
 
 winp::non_window::child::child(ui::window_surface &parent)
-	: io_surface(parent.get_thread()){
+	: visible_surface(parent.get_thread()){
 	change_parent_(&parent);
 }
 
 winp::non_window::child::child(child &parent)
-	: io_surface(parent.get_thread()){
+	: visible_surface(parent.get_thread()){
 	change_parent_(&parent);
 }
 
@@ -82,7 +82,7 @@ winp::ui::surface::m_size_type winp::non_window::child::get_border_curve_size(co
 
 void winp::non_window::child::destruct_(){
 	destroy_();
-	io_surface::destruct_();
+	visible_surface::destruct_();
 }
 
 bool winp::non_window::child::create_(){
@@ -130,7 +130,7 @@ bool winp::non_window::child::destroy_(){
 bool winp::non_window::child::set_size_(const m_size_type &value){
 	auto handle = get_handle_();
 	if (handle == nullptr)
-		return io_surface::set_size_(value);
+		return visible_surface::set_size_(value);
 
 	auto size = get_size_();
 	if (value.cx == size.cx && value.cy == size.cy)
@@ -162,7 +162,7 @@ bool winp::non_window::child::set_size_(const m_size_type &value){
 bool winp::non_window::child::set_position_(const m_point_type &value){
 	auto handle = get_handle_();
 	if (handle == nullptr)
-		return io_surface::set_position_(value);
+		return visible_surface::set_position_(value);
 
 	auto position = get_position_();
 	if (value.x == position.x && value.y == position.y)
@@ -186,7 +186,7 @@ bool winp::non_window::child::set_position_(const m_point_type &value){
 UINT winp::non_window::child::hit_test_(const m_point_type &pt, bool is_absolute) const{
 	auto handle = get_handle_();
 	if (handle == nullptr)
-		return io_surface::hit_test_(pt, is_absolute);
+		return visible_surface::hit_test_(pt, is_absolute);
 
 	auto relative_pt = (is_absolute ? convert_position_from_absolute_value_(pt) : pt);
 	return (PtInRegion(static_cast<HRGN>(handle), relative_pt.x, relative_pt.y) != FALSE);

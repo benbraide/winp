@@ -113,7 +113,7 @@ HANDLE winp::menu::object::get_handle_() const{
 }
 
 LRESULT winp::menu::object::dispatch_message_(UINT msg, WPARAM wparam, LPARAM lparam, bool call_default){
-	return find_dispatcher_(msg)->dispatch_(*this, MSG{ nullptr, msg, wparam, lparam }, call_default);
+	return find_dispatcher_(msg)->dispatch_(*this, MSG{ nullptr, msg, wparam, lparam }, call_default, nullptr);
 }
 
 UINT winp::menu::object::get_types_(std::size_t index) const{

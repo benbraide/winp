@@ -135,6 +135,8 @@ namespace winp::menu{
 
 		virtual bool update_types_();
 
+		virtual void register_id_();
+
 		virtual void generate_id_(std::size_t max_tries = 0xFFFFu);
 
 		virtual bool id_is_unique_() const;

@@ -74,7 +74,9 @@ namespace winp::menu{
 
 		virtual bool set_bitmap_(HBITMAP value);
 
-		virtual bool select_();
+		virtual bool select_(ui::surface *target, const MSG *info, bool prevent_default, unsigned int &states);
+
+		virtual bool select_(UINT msg, ui::surface *target, const MSG *info, bool prevent_default, unsigned int &states);
 
 		virtual bool update_popup_();
 

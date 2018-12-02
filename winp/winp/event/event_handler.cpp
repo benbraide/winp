@@ -99,10 +99,6 @@ void winp::event::menu_handler::handle_menu_check_event_(object &e){}
 
 void winp::event::menu_handler::handle_menu_uncheck_event_(object &e){}
 
-bool winp::event::menu_handler::handle_context_menu_query_event_(context_menu_prefix &e){
-	return false;
-}
-
 winp::menu::object *winp::event::menu_handler::handle_context_menu_request_event_(context_menu_prefix &e){
 	return nullptr;
 }

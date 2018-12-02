@@ -64,6 +64,22 @@ HANDLE winp::ui::object::get_handle(const std::function<void(HANDLE)> &callback)
 	return thread_.queue.execute([this]{ return get_handle_(); }, thread::queue::send_priority, id_);
 }
 
+bool winp::ui::object::is_ancestor(const tree &target, const std::function<void(bool)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = is_ancestor_(target);
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
+	if (callback != nullptr){
+		thread_.queue.post([this, callback, ptarget = &target]{ callback(is_ancestor_(*ptarget)); }, thread::queue::send_priority, id_);
+		return false;
+	}
+
+	return thread_.queue.execute([&]{ return is_ancestor_(target); }, thread::queue::send_priority, id_);
+}
+
 std::size_t winp::ui::object::set_parent(tree *value, const std::function<void(object &, bool, std::size_t)> &callback){
 	if (thread_.is_thread_context()){
 		auto index = change_parent_(value, get_index());
@@ -308,6 +324,11 @@ WNDPROC winp::ui::object::get_default_message_entry_() const{
 	return ((parent == nullptr) ? nullptr : parent->get_default_message_entry_());
 }
 
+bool winp::ui::object::is_ancestor_(const tree &target) const{
+	auto parent = get_parent_();
+	return (parent != nullptr && (&target == parent || parent->is_ancestor_(target)));
+}
+
 void winp::ui::object::set_parent_(tree *value){
 	parent_ = value;
 }
@@ -508,7 +529,7 @@ winp::message::dispatcher *winp::ui::object::find_dispatcher_(UINT msg){
 }
 
 LRESULT winp::ui::object::dispatch_message_(UINT msg, WPARAM wparam, LPARAM lparam, bool call_default){
-	return find_dispatcher_(msg)->dispatch_(*this, MSG{ static_cast<HWND>(get_handle_()), msg, wparam, lparam }, call_default);
+	return find_dispatcher_(msg)->dispatch_(*this, MSG{ static_cast<HWND>(get_handle_()), msg, wparam, lparam }, call_default, nullptr);
 }
 
 winp::ui::tree *winp::ui::object::get_parent_of_(const object &target){

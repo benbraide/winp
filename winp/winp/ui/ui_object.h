@@ -48,6 +48,8 @@ namespace winp::ui{
 
 		virtual HANDLE get_handle(const std::function<void(HANDLE)> &callback = nullptr) const;
 
+		virtual bool is_ancestor(const tree &target, const std::function<void(bool)> &callback = nullptr) const;
+
 		virtual std::size_t set_parent(tree *value, const std::function<void(object &, bool, std::size_t)> &callback = nullptr);
 
 		virtual tree *get_parent(const std::function<void(tree *)> &callback = nullptr) const;
@@ -140,6 +142,8 @@ namespace winp::ui{
 
 		virtual WNDPROC get_default_message_entry_() const;
 
+		virtual bool is_ancestor_(const tree &target) const;
+
 		virtual void set_parent_(tree *value);
 
 		virtual tree *get_parent_() const;
@@ -186,7 +190,7 @@ namespace winp::ui{
 		template <typename target_type, typename before_type>
 		target_type *get_first_ancestor_of_(std::false_type) const{
 			target_type *ancestor = nullptr;
-			for (auto parent = get_parent_(); parent != nullptr; get_parent_of_(*parent)){
+			for (auto parent = get_parent_(); parent != nullptr; parent = get_parent_of_(*parent)){
 				if (dynamic_cast<before_type *>(parent) != nullptr || (ancestor = dynamic_cast<target_type *>(parent)) != nullptr)
 					break;
 			}
@@ -197,7 +201,7 @@ namespace winp::ui{
 		template <typename target_type, typename before_type>
 		target_type *get_first_ancestor_of_(std::true_type) const{
 			target_type *ancestor = nullptr;
-			for (auto parent = get_parent_(); parent != nullptr; get_parent_of_(*parent)){
+			for (auto parent = get_parent_(); parent != nullptr; parent = get_parent_of_(*parent)){
 				if ((ancestor = dynamic_cast<target_type *>(parent)) != nullptr)
 					break;
 			}
