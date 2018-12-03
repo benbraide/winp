@@ -23,7 +23,11 @@ namespace winp::ui{
 
 		virtual bool set_size(const m_size_type &value, const std::function<void(object &, bool)> &callback = nullptr);
 
+		virtual bool set_size(int width, int height, const std::function<void(object &, bool)> &callback = nullptr);
+
 		virtual bool offset_size(const m_size_type &value, const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual bool offset_size(int width, int height, const std::function<void(object &, bool)> &callback = nullptr);
 
 		virtual m_size_type get_size(const std::function<void(const m_size_type &)> &callback = nullptr) const;
 
@@ -31,13 +35,23 @@ namespace winp::ui{
 
 		virtual bool set_position(const m_point_type &value, const std::function<void(object &, bool)> &callback = nullptr);
 
-		virtual bool offset_position(const m_size_type &value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_position(int x, int y, const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual bool offset_position(const m_point_type &value, const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual bool offset_position(int x, int y, const std::function<void(object &, bool)> &callback = nullptr);
 
 		virtual m_point_type get_position(const std::function<void(const m_point_type &)> &callback = nullptr) const;
 
 		virtual bool set_absolute_position(const m_point_type &value, const std::function<void(object &, bool)> &callback = nullptr);
 
+		virtual bool set_absolute_position(int x, int y, const std::function<void(object &, bool)> &callback = nullptr);
+
 		virtual m_point_type get_absolute_position(const std::function<void(const m_point_type &)> &callback = nullptr) const;
+
+		virtual bool set_dimension(const m_point_type &offset, const m_size_type &size, const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual bool set_dimension(int x, int y, int width, int height, const std::function<void(object &, bool)> &callback = nullptr);
 
 		virtual m_rect_type get_dimension(const std::function<void(const m_rect_type &)> &callback = nullptr) const;
 
@@ -90,7 +104,7 @@ namespace winp::ui{
 
 		virtual bool set_position_(const m_point_type &value);
 
-		virtual bool offset_position_(const m_size_type &value);
+		virtual bool offset_position_(const m_point_type &value);
 
 		virtual m_point_type get_position_() const;
 
@@ -99,6 +113,8 @@ namespace winp::ui{
 		virtual bool set_absolute_position_(const m_point_type &value);
 
 		virtual m_point_type get_absolute_position_() const;
+
+		virtual bool set_dimension_(const m_point_type &offset, const m_size_type &size);
 
 		virtual m_rect_type get_dimension_() const;
 

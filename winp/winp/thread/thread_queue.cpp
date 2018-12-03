@@ -31,6 +31,7 @@ bool winp::thread::queue::is_black_listed_(unsigned __int64 id) const{
 void winp::thread::queue::add_(const callback_type &task, int priority){
 	std::lock_guard<std::mutex> guard(lock_);
 	map_[priority].push_back(task);
+	thread_.post_message(WM_NULL);//Release loop if idle
 }
 
 void winp::thread::queue::pop_all_send_priorities_(std::list<callback_type> &list){

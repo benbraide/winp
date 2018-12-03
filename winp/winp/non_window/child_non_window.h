@@ -25,6 +25,8 @@ namespace winp::non_window{
 
 		virtual bool set_border_curve_size(const m_size_type &value, const std::function<void(object &, bool)> &callback = nullptr);
 
+		virtual bool set_border_curve_size(int width, int height, const std::function<void(object &, bool)> &callback = nullptr);
+
 		virtual m_size_type get_border_curve_size(const std::function<void(const m_size_type &)> &callback = nullptr) const;
 
 		static const unsigned int state_nil					= (0 << 0x0000);
@@ -57,8 +59,6 @@ namespace winp::non_window{
 		virtual bool set_transparency_(bool is_transparent) override;
 
 		virtual bool is_transparent_() const override;
-
-		virtual void hide_region_(m_rect_type region);
 
 		virtual bool set_border_type_(border_type value);
 

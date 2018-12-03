@@ -24,6 +24,10 @@ bool winp::ui::surface::set_size(const m_size_type &value, const std::function<v
 	return true;
 }
 
+bool winp::ui::surface::set_size(int width, int height, const std::function<void(object &, bool)> &callback){
+	return set_size(m_size_type{ width, height }, callback);
+}
+
 bool winp::ui::surface::offset_size(const m_size_type &value, const std::function<void(object &, bool)> &callback){
 	if (thread_.is_thread_context()){
 		auto result = offset_size_(value);
@@ -39,6 +43,10 @@ bool winp::ui::surface::offset_size(const m_size_type &value, const std::functio
 	}, thread::queue::send_priority, id_);
 
 	return true;
+}
+
+bool winp::ui::surface::offset_size(int width, int height, const std::function<void(object &, bool)> &callback){
+	return offset_size(m_size_type{ width, height }, callback);
 }
 
 winp::ui::surface::m_size_type winp::ui::surface::get_size(const std::function<void(const m_size_type &)> &callback) const{
@@ -90,7 +98,11 @@ bool winp::ui::surface::set_position(const m_point_type &value, const std::funct
 	return true;
 }
 
-bool winp::ui::surface::offset_position(const m_size_type &value, const std::function<void(object &, bool)> &callback){
+bool winp::ui::surface::set_position(int x, int y, const std::function<void(object &, bool)> &callback){
+	return set_position(m_point_type{ x, y }, callback);
+}
+
+bool winp::ui::surface::offset_position(const m_point_type &value, const std::function<void(object &, bool)> &callback){
 	if (thread_.is_thread_context()){
 		auto result = offset_position_(value);
 		if (callback != nullptr)
@@ -105,6 +117,10 @@ bool winp::ui::surface::offset_position(const m_size_type &value, const std::fun
 	}, thread::queue::send_priority, id_);
 
 	return true;
+}
+
+bool winp::ui::surface::offset_position(int x, int y, const std::function<void(object &, bool)> &callback){
+	return offset_position(m_point_type{ x, y }, callback);
 }
 
 winp::ui::surface::m_point_type winp::ui::surface::get_position(const std::function<void(const m_point_type &)> &callback) const{
@@ -140,6 +156,10 @@ bool winp::ui::surface::set_absolute_position(const m_point_type &value, const s
 	return true;
 }
 
+bool winp::ui::surface::set_absolute_position(int x, int y, const std::function<void(object &, bool)> &callback){
+	return set_absolute_position(m_point_type{ x, y }, callback);
+}
+
 winp::ui::surface::m_point_type winp::ui::surface::get_absolute_position(const std::function<void(const m_point_type &)> &callback) const{
 	if (thread_.is_thread_context()){
 		auto result = get_absolute_position_();
@@ -154,6 +174,27 @@ winp::ui::surface::m_point_type winp::ui::surface::get_absolute_position(const s
 	}
 
 	return thread_.queue.execute([this]{ return get_absolute_position_(); }, thread::queue::send_priority, id_);
+}
+
+bool winp::ui::surface::set_dimension(const m_point_type &offset, const m_size_type &size, const std::function<void(object &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = set_dimension_(offset, size);
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
+	thread_.queue.post([=]{
+		auto result = set_dimension_(offset, size);
+		if (callback != nullptr)
+			callback(*this, result);
+	}, thread::queue::send_priority, id_);
+
+	return true;
+}
+
+bool winp::ui::surface::set_dimension(int x, int y, int width, int height, const std::function<void(object &, bool)> &callback){
+	return set_dimension(m_point_type{ x, y }, m_size_type{ width, height }, callback);
 }
 
 winp::ui::surface::m_rect_type winp::ui::surface::get_dimension(const std::function<void(const m_rect_type &)> &callback) const{
@@ -341,9 +382,9 @@ bool winp::ui::surface::set_position_(const m_point_type &value){
 	return true;
 }
 
-bool winp::ui::surface::offset_position_(const m_size_type &value){
+bool winp::ui::surface::offset_position_(const m_point_type &value){
 	auto position = get_position_();
-	return set_position_(m_point_type{ (position.x + value.cx), (position.y + value.cy) });
+	return set_position_(m_point_type{ (position.x + value.x), (position.y + value.y) });
 }
 
 winp::ui::surface::m_point_type winp::ui::surface::get_position_() const{
@@ -362,6 +403,10 @@ bool winp::ui::surface::set_absolute_position_(const m_point_type &value){
 winp::ui::surface::m_point_type winp::ui::surface::get_absolute_position_() const{
 	auto surface_parent = get_surface_parent_();
 	return ((surface_parent == nullptr) ? get_position_() : surface_parent->convert_position_to_absolute_value_(get_position_()));
+}
+
+bool winp::ui::surface::set_dimension_(const m_point_type &offset, const m_size_type &size){
+	return (set_position_(offset) && set_size_(size));
 }
 
 winp::ui::surface::m_rect_type winp::ui::surface::get_dimension_() const{

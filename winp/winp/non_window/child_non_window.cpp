@@ -64,6 +64,10 @@ bool winp::non_window::child::set_border_curve_size(const m_size_type &value, co
 	return true;
 }
 
+bool winp::non_window::child::set_border_curve_size(int width, int height, const std::function<void(object &, bool)> &callback){
+	return set_border_curve_size(m_size_type{ width, height }, callback);
+}
+
 winp::ui::surface::m_size_type winp::non_window::child::get_border_curve_size(const std::function<void(const m_size_type &)> &callback) const{
 	if (thread_.is_thread_context()){
 		auto result = get_border_curve_size_();
@@ -89,6 +93,12 @@ bool winp::non_window::child::create_(){
 	if (get_handle_() != nullptr)
 		return true;//Already created
 
+	if (auto non_window_parent = get_first_ancestor_of_<child, ui::window_surface>(); non_window_parent != nullptr && non_window_parent->get_handle_() == nullptr)
+		return false;//Parent not created
+	
+	if (auto window_parent = get_first_ancestor_of_<ui::window_surface, child>(); window_parent != nullptr && window_parent->get_handle_() == nullptr)
+		return false;//Parent not created
+
 	HRGN handle = nullptr;
 	auto region = get_dimension_();
 	auto &border_curve_size = get_border_curve_size_();
@@ -110,6 +120,7 @@ bool winp::non_window::child::create_(){
 	if (handle != nullptr){
 		set_handle_(handle);
 		redraw_(m_rect_type{});
+		dispatch_message_(WM_NCCREATE, 0, 0);
 	}
 
 	return (get_handle_() != nullptr);
@@ -120,9 +131,14 @@ bool winp::non_window::child::destroy_(){
 	if (handle == nullptr)
 		return true;
 
-	hide_region_(m_rect_type{});
-	if (DeleteObject(handle) != FALSE)
-		set_handle_(nullptr);
+	if (DeleteObject(handle) == FALSE)
+		return false;
+
+	set_handle_(nullptr);
+	dispatch_message_(WM_NCDESTROY, 0, 0);
+
+	if (auto parent = get_first_ancestor_of_<ui::visible_surface>(); parent != nullptr && is_visible_())
+		parent->redraw_(get_dimension_());//Clear view
 
 	return (get_handle_() == nullptr);
 }
@@ -137,25 +153,21 @@ bool winp::non_window::child::set_size_(const m_size_type &value){
 		return true;//No changes
 
 	auto position = get_position_();
-	m_rect_type updated_region{
-		position.x,
-		position.y,
-		(position.x + value.cx),
-		(position.y + value.cy)
-	};
-
 	if (border_type_ == border_type::rect)
-		hide_region_(updated_region);
+		redraw_(m_rect_type{});
 	else//Region object cannot be resized
 		destroy_();
 
-	size_ = value;//Update value
-	if (border_type_ == border_type::rect)
+	if (!visible_surface::set_size_(value))
+		return false;
+
+	if (border_type_ == border_type::rect){
 		SetRectRgn(static_cast<HRGN>(handle), position.x, position.y, (position.x + value.cx), (position.y + value.cy));
+		redraw_(m_rect_type{});
+	}
 	else//Region object cannot be resized
 		create_();
 
-	redraw_(m_rect_type{});
 	return true;
 }
 
@@ -168,16 +180,11 @@ bool winp::non_window::child::set_position_(const m_point_type &value){
 	if (value.x == position.x && value.y == position.y)
 		return true;//No changes
 
-	auto size = get_size_();
-	m_rect_type updated_region{
-		value.x,
-		value.y,
-		(value.x + size.cx),
-		(value.y + size.cy)
-	};
+	redraw_(m_rect_type{});
+	if (!visible_surface::set_position_(value))
+		return false;
 
-	hide_region_(updated_region);
-	OffsetRgn(static_cast<HRGN>(handle), value.x, value.y);
+	OffsetRgn(static_cast<HRGN>(handle), (value.x - position.x), (value.y - position.y));
 	redraw_(m_rect_type{});
 
 	return true;
@@ -201,7 +208,7 @@ void winp::non_window::child::redraw_(const m_rect_type &region){
 		return;
 
 	auto position = get_position_();
-	auto update_region = ((region.left < region.right && region.top < region.bottom) ? region : get_client_dimension_());
+	auto update_region = ((IsRectEmpty(&region) == FALSE) ? region : get_client_dimension_());
 
 	OffsetRect(&update_region, position.x, position.y);
 	parent->redraw_(update_region);
@@ -239,31 +246,6 @@ bool winp::non_window::child::set_transparency_(bool is_transparent){
 
 bool winp::non_window::child::is_transparent_() const{
 	return ((state_ & state_transparent) == state_transparent);
-}
-
-void winp::non_window::child::hide_region_(m_rect_type region){
-	if (!is_visible_() || get_handle_() == nullptr)
-		return;
-
-	m_rect_type client_rect = get_client_dimension_(), computed{};
-	region = ((region.left < region.right && region.top < region.bottom) ? region : client_rect);
-	IntersectRect(&computed, &client_rect, &region);
-
-	auto was_visible = is_visible_();
-	if (was_visible)//Make invisible
-		state_ &= ~state_visible;
-
-	if (IsRectEmpty(&computed) == FALSE){
-		if (computed.left != client_rect.left || computed.top != client_rect.top || computed.right != client_rect.right || computed.bottom != client_rect.bottom){//Region is shrunken
-			SubtractRect(&computed, &client_rect, &computed);
-			redraw_(computed);
-		}
-	}
-	else//Region lies outside
-		redraw_(m_rect_type{});
-
-	if (was_visible)//Restore visibility
-		state_ |= state_visible;
 }
 
 bool winp::non_window::child::set_border_type_(border_type value){

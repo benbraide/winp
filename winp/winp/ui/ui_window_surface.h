@@ -96,6 +96,8 @@ namespace winp::ui{
 
 		virtual m_point_type get_absolute_position_() const override;
 
+		virtual bool set_dimension_(const m_point_type &offset, const m_size_type &size) override;
+
 		virtual m_rect_type get_dimension_() const override;
 
 		virtual m_rect_type get_absolute_dimension_() const override;

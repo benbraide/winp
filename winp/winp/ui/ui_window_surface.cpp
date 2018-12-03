@@ -386,6 +386,14 @@ winp::ui::surface::m_point_type winp::ui::window_surface::get_absolute_position_
 	return m_point_type{ dimension.left, dimension.top };
 }
 
+bool winp::ui::window_surface::set_dimension_(const m_point_type &offset, const m_size_type &size){
+	auto handle = get_handle_();
+	if (handle == nullptr)
+		return io_surface::set_dimension_(offset, size);
+
+	return (SetWindowPos(static_cast<HWND>(handle), nullptr, offset.x, offset.y, size.cx, size.cy, (SWP_NOZORDER | SWP_NOACTIVATE)) != FALSE);
+}
+
 winp::ui::surface::m_rect_type winp::ui::window_surface::get_dimension_() const{
 	auto handle = get_handle_();
 	if (handle == nullptr)

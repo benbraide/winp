@@ -193,13 +193,13 @@ void winp::message::create_destroy_dispatcher::fire_event_(event::object &e){
 	if (window_target == nullptr){//Try menu
 		auto menu_target = dynamic_cast<menu::object *>(e.get_context());
 		if (menu_target != nullptr){//Window or menu target is required
-			if (e.get_info()->message == WM_CREATE)
+			if (e.get_info()->message == WM_NCCREATE || e.get_info()->message == WM_CREATE)
 				fire_event_of_(*menu_target, menu_target->create_event, e);
 			else
 				fire_event_of_(*menu_target, menu_target->destroy_event, e);
 		}
 	}
-	else if (e.get_info()->message == WM_CREATE)
+	else if (e.get_info()->message == WM_NCCREATE || e.get_info()->message == WM_CREATE)
 		fire_event_of_(*window_target, window_target->create_event, e);
 	else
 		fire_event_of_(*window_target, window_target->destroy_event, e);
