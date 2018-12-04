@@ -59,7 +59,7 @@ namespace winp::message{
 
 				if (!e.default_done_())
 					do_default_(e, call_default);
-				else if (!e.default_called_())
+				else if (call_default && !e.default_called_())
 					call_default_(e);
 			}, info, std::forward<other_types>(others)...);
 		}

@@ -269,6 +269,7 @@ bool winp::menu::item_component::create_(){
 	if (menu_parent != nullptr)
 		menu_parent->redraw_();
 
+	dispatch_message_(WM_NCCREATE, 0, 0);
 	return (is_created_ = true);
 }
 
@@ -285,12 +286,15 @@ bool winp::menu::item_component::destroy_(){
 	if (handle == nullptr || IsMenu(handle) == FALSE)//Parent not created
 		return true;
 
-	auto result = ((local_id_ == 0u) ? RemoveMenu(handle, static_cast<UINT>(get_absolute_index_()), MF_BYPOSITION) : RemoveMenu(handle, local_id_, MF_BYCOMMAND));
+	if (((local_id_ == 0u) ? RemoveMenu(handle, static_cast<UINT>(get_absolute_index_()), MF_BYPOSITION) : RemoveMenu(handle, local_id_, MF_BYCOMMAND)) == FALSE)
+		return false;
+
 	auto menu_parent = dynamic_cast<menu::object *>(parent);
 	if (menu_parent != nullptr)
 		menu_parent->redraw_();
 
-	return (result != FALSE);
+	dispatch_message_(WM_NCDESTROY, 0, 0);
+	return true;
 }
 
 const wchar_t *winp::menu::item_component::get_theme_name_() const{

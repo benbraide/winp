@@ -55,7 +55,7 @@ void winp::message::dispatcher::do_default_(event::object &e, bool call_default)
 }
 
 LRESULT winp::message::dispatcher::call_default_(event::object &e){
-	e.state_ |= event::object::state_type::default_called;
+	e.state_ |= (event::object::state_type::default_done | event::object::state_type::default_called);
 
 	auto &info = *e.get_info();
 	if (info.message >= WM_APP || e.context_ != e.target_)
@@ -189,20 +189,20 @@ winp::message::create_destroy_dispatcher::create_destroy_dispatcher()
 }
 
 void winp::message::create_destroy_dispatcher::fire_event_(event::object &e){
-	auto window_target = dynamic_cast<ui::window_surface *>(e.get_context());
-	if (window_target == nullptr){//Try menu
-		auto menu_target = dynamic_cast<menu::object *>(e.get_context());
-		if (menu_target != nullptr){//Window or menu target is required
-			if (e.get_info()->message == WM_NCCREATE || e.get_info()->message == WM_CREATE)
-				fire_event_of_(*menu_target, menu_target->create_event, e);
-			else
-				fire_event_of_(*menu_target, menu_target->destroy_event, e);
-		}
-	}
-	else if (e.get_info()->message == WM_NCCREATE || e.get_info()->message == WM_CREATE)
-		fire_event_of_(*window_target, window_target->create_event, e);
-	else
-		fire_event_of_(*window_target, window_target->destroy_event, e);
+	auto context = e.get_context();
+	event::manager_base *ev = nullptr;
+
+	if (auto target = dynamic_cast<ui::window_surface *>(context); target != nullptr)
+		ev = (((e.get_info()->message == WM_NCCREATE || e.get_info()->message == WM_CREATE)) ? &target->create_event : &target->destroy_event);
+	else if (auto target = dynamic_cast<non_window::child *>(context); target != nullptr)
+		ev = (((e.get_info()->message == WM_NCCREATE || e.get_info()->message == WM_CREATE)) ? &target->create_event : &target->destroy_event);
+	else if (auto target = dynamic_cast<menu::object *>(context); target != nullptr)
+		ev = (((e.get_info()->message == WM_NCCREATE || e.get_info()->message == WM_CREATE)) ? &target->create_event : &target->destroy_event);
+	else if (auto target = dynamic_cast<menu::item_component *>(context); target != nullptr)
+		ev = (((e.get_info()->message == WM_NCCREATE || e.get_info()->message == WM_CREATE)) ? &target->create_event : &target->destroy_event);
+
+	if (ev != nullptr)
+		fire_event_of_(*context, *ev, e);
 }
 
 winp::message::draw_dispatcher::draw_dispatcher()

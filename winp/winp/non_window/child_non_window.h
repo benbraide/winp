@@ -29,6 +29,9 @@ namespace winp::non_window{
 
 		virtual m_size_type get_border_curve_size(const std::function<void(const m_size_type &)> &callback = nullptr) const;
 
+		event::manager<child, event::object> create_event{ *this };
+		event::manager<child, event::object> destroy_event{ *this };
+
 		static const unsigned int state_nil					= (0 << 0x0000);
 		static const unsigned int state_visible				= (1 << 0x0000);
 		static const unsigned int state_transparent			= (1 << 0x0001);

@@ -3,29 +3,24 @@
 #include "window/frame_window.h"
 
 int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_show){
-	std::shared_ptr<std::thread> thnd;
-
 	winp::window::frame ws;
 	ws.close_event += [](winp::event::object &e){
 		//e.prevent_default();
 	};
 
-	/*ws.create_event += [thnd, &ws]() mutable {
-		thnd = std::make_shared<std::thread>(
-			[&ws]{
-				std::this_thread::sleep_for(std::chrono::seconds(3));
-				for (auto step = 1, count = 0; ; count += step){
-					if (count == 20)
-						step = -1;
-					else if (count == 0)
-						step = 1;
-					ws.offset_position(10 * step, 0);
-					std::this_thread::sleep_for(std::chrono::milliseconds(50));
-				}
+	ws.create_event += [&ws]() mutable {
+		std::thread([&ws]{
+			std::this_thread::sleep_for(std::chrono::seconds(3));
+			for (auto step = 1, count = 0; ; count += step){
+				if (count == 20)
+					step = -1;
+				else if (count == 0)
+					step = 1;
+				ws.offset_position(10 * step, 0);
+				std::this_thread::sleep_for(std::chrono::milliseconds(50));
 			}
-		);
-		thnd->detach();
-	};*/
+		}).detach();
+	};
 
 	ws.set_position(POINT{ 10, 10 });
 	ws.set_size(SIZE{ 600, 400 });

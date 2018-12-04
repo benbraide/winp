@@ -57,6 +57,9 @@ namespace winp::menu{
 
 		virtual bool is_popup_item(const std::function<void(bool)> &callback = nullptr) const;
 
+		event::manager<item_component, event::object> create_event{ *this };
+		event::manager<item_component, event::object> destroy_event{ *this };
+
 		event::manager<item_component, event::draw_item> draw_item_event{ *this };
 		event::manager<item_component, event::measure_item> measure_item_event{ *this };
 
