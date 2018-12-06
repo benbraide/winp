@@ -37,11 +37,14 @@ namespace winp::non_window{
 namespace winp::ui{
 	class tree;
 	class window_surface;
+	class hook;
 
 	class object : public thread::item{
 	public:
 		using tree_change_info = event::tree::tree_change_info;
-		using hook_map_type = std::unordered_map<unsigned int, std::shared_ptr<hook>>;
+
+		using hook_list_type = std::map<int, std::shared_ptr<hook>>;
+		using hook_map_type = std::unordered_map<unsigned int, hook_list_type>;
 
 		object();
 
@@ -174,6 +177,7 @@ namespace winp::ui{
 		friend class menu::object;
 
 		friend class non_window::child;
+		friend class hook;
 
 		void init_();
 
@@ -231,12 +235,12 @@ namespace winp::ui{
 
 			auto code = hook->get_hook_code();
 			if ((code & ui::hook::parent_size_change_hook_code) != 0u)
-				hook_map_[ui::hook::parent_size_change_hook_code] = hook;
+				hook_map_[ui::hook::parent_size_change_hook_code][hook->get_hook_index()] = hook;
 
 			if ((code & ui::hook::child_size_change_hook_code) != 0u)
-				hook_map_[ui::hook::child_size_change_hook_code] = hook;
+				hook_map_[ui::hook::child_size_change_hook_code][hook->get_hook_index()] = hook;
 
-			hook->handle_hook_callback(code);
+			call_hook_(code);
 			return hook.get();
 		}
 
@@ -244,7 +248,7 @@ namespace winp::ui{
 
 		virtual bool has_hook_(unsigned int code) const;
 
-		virtual hook *find_hook_(unsigned int code) const;
+		virtual const hook_list_type *find_hook_(unsigned int code) const;
 
 		virtual void call_hook_(unsigned int code);
 

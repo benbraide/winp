@@ -81,16 +81,17 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_sh
 	nwc.set_background_color(D2D1::ColorF(D2D1::ColorF::Red));
 	nwc.set_border_type(winp::non_window::child::border_type::ellipse);
 	nwc.create();
-	nwc.set_hook<winp::ui::alignment_modifier>()->set_modifier_alignment(winp::ui::alignment_modifier::align_bottom | winp::ui::alignment_modifier::align_right);
+	nwc.set_hook<winp::ui::alignment_modifier>()->set_alignment_modifier_alignment(winp::ui::alignment_modifier::align_bottom | winp::ui::alignment_modifier::align_right);
 
 	winp::non_window::child nwc2(nwc);
 	//nwc2.set_position(POINT{ 50, 50 });
-	nwc2.set_size(SIZE{ 90, 50 });
+	//nwc2.set_size(SIZE{ 90, 50 });
 	nwc2.set_background_color(D2D1::ColorF(D2D1::ColorF::Green));
 	nwc2.set_border_type(winp::non_window::child::border_type::round_rect);
 	nwc2.set_border_curve_size(SIZE{ 10, 10 });
 	nwc2.create();//Made non-window objects use region as their surface
-	nwc2.set_hook<winp::ui::alignment_modifier>()->set_modifier_alignment(winp::ui::alignment_modifier::align_center | winp::ui::alignment_modifier::align_vcenter);
+	nwc2.set_hook<winp::ui::alignment_modifier>()->set_alignment_modifier_alignment(winp::ui::alignment_modifier::align_center | winp::ui::alignment_modifier::align_vcenter);
+	nwc2.set_hook<winp::ui::size_modifier>()->set_size_modifier_offset(0.5f, 0.5f);
 
 	return winp::app::object::run();
 }

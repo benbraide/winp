@@ -566,22 +566,24 @@ bool winp::ui::object::has_hook_(unsigned int code) const{
 	return (find_hook_(code) != nullptr);
 }
 
-winp::ui::hook *winp::ui::object::find_hook_(unsigned int code) const{
+const winp::ui::object::hook_list_type *winp::ui::object::find_hook_(unsigned int code) const{
 	auto it = hook_map_.find(code);
-	return ((it == hook_map_.end()) ? nullptr : it->second.get());
+	return ((it == hook_map_.end()) ? nullptr : &it->second);
 }
 
 void winp::ui::object::call_hook_(unsigned int code){
-	ui::hook *hook = nullptr;
-	if ((code & ui::hook::parent_size_change_hook_code) != 0u && (hook = find_hook_(ui::hook::parent_size_change_hook_code)) != nullptr){
+	const hook_list_type *hook_list = nullptr;
+	if ((code & ui::hook::parent_size_change_hook_code) != 0u && (hook_list = find_hook_(ui::hook::parent_size_change_hook_code)) != nullptr){
 		called_hook_ |= ui::hook::parent_size_change_hook_code;
-		hook->handle_hook_callback(ui::hook::parent_size_change_hook_code);
+		for (auto &hook : *hook_list)
+			hook.second->handle_hook_callback(ui::hook::parent_size_change_hook_code);
 		called_hook_ &= ~ui::hook::parent_size_change_hook_code;
 	}
 
-	if ((code & ui::hook::child_size_change_hook_code) != 0u && (hook = find_hook_(ui::hook::child_size_change_hook_code)) != nullptr){
+	if ((code & ui::hook::child_size_change_hook_code) != 0u && (hook_list = find_hook_(ui::hook::child_size_change_hook_code)) != nullptr){
 		called_hook_ |= ui::hook::child_size_change_hook_code;
-		hook->handle_hook_callback(ui::hook::child_size_change_hook_code);
+		for (auto &hook : *hook_list)
+			hook.second->handle_hook_callback(ui::hook::child_size_change_hook_code);
 		called_hook_ &= ~ui::hook::child_size_change_hook_code;
 	}
 }
