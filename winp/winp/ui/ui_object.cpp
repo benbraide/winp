@@ -553,18 +553,6 @@ bool winp::ui::object::remove_hook_(unsigned int code){
 	if (!hook_map_.empty())
 		return false;
 
-	if ((code & ui::hook::parent_change_hook_code) != 0u)
-		hook_map_.erase(ui::hook::parent_change_hook_code);
-
-	if ((code & ui::hook::siblings_count_hook_code) != 0u)
-		hook_map_.erase(ui::hook::siblings_count_hook_code);
-
-	if ((code & ui::hook::child_insert_hook_code) != 0u)
-		hook_map_.erase(ui::hook::child_insert_hook_code);
-
-	if ((code & ui::hook::child_remove_hook_code) != 0u)
-		hook_map_.erase(ui::hook::child_remove_hook_code);
-
 	if ((code & ui::hook::parent_size_change_hook_code) != 0u)
 		hook_map_.erase(ui::hook::parent_size_change_hook_code);
 
@@ -585,30 +573,6 @@ winp::ui::hook *winp::ui::object::find_hook_(unsigned int code) const{
 
 void winp::ui::object::call_hook_(unsigned int code){
 	ui::hook *hook = nullptr;
-	if ((code & ui::hook::parent_change_hook_code) != 0u && (hook = find_hook_(ui::hook::parent_change_hook_code)) != nullptr){
-		called_hook_ |= ui::hook::parent_change_hook_code;
-		hook->handle_hook_callback(ui::hook::parent_change_hook_code);
-		called_hook_ &= ~ui::hook::parent_change_hook_code;
-	}
-
-	if ((code & ui::hook::siblings_count_hook_code) != 0u && (hook = find_hook_(ui::hook::siblings_count_hook_code)) != nullptr){
-		called_hook_ |= ui::hook::siblings_count_hook_code;
-		hook->handle_hook_callback(ui::hook::siblings_count_hook_code);
-		called_hook_ &= ~ui::hook::siblings_count_hook_code;
-	}
-
-	if ((code & ui::hook::child_insert_hook_code) != 0u && (hook = find_hook_(ui::hook::child_insert_hook_code)) != nullptr){
-		called_hook_ |= ui::hook::child_insert_hook_code;
-		hook->handle_hook_callback(ui::hook::child_insert_hook_code);
-		called_hook_ &= ~ui::hook::child_insert_hook_code;
-	}
-
-	if ((code & ui::hook::child_remove_hook_code) != 0u && (hook = find_hook_(ui::hook::child_remove_hook_code)) != nullptr){
-		called_hook_ |= ui::hook::child_remove_hook_code;
-		hook->handle_hook_callback(ui::hook::child_remove_hook_code);
-		called_hook_ &= ~ui::hook::child_remove_hook_code;
-	}
-
 	if ((code & ui::hook::parent_size_change_hook_code) != 0u && (hook = find_hook_(ui::hook::parent_size_change_hook_code)) != nullptr){
 		called_hook_ |= ui::hook::parent_size_change_hook_code;
 		hook->handle_hook_callback(ui::hook::parent_size_change_hook_code);

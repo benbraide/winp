@@ -13,14 +13,8 @@ namespace winp::ui{
 
 		static const unsigned int nil_hook_code							= (0 << 0x0000);
 
-		static const unsigned int parent_change_hook_code				= (1 << 0x0000);
-		static const unsigned int siblings_count_hook_code				= (1 << 0x0001);
-
-		static const unsigned int child_insert_hook_code				= (1 << 0x0002);
-		static const unsigned int child_remove_hook_code				= (1 << 0x0003);
-
-		static const unsigned int parent_size_change_hook_code			= (1 << 0x0004);
-		static const unsigned int child_size_change_hook_code			= (1 << 0x0005);
+		static const unsigned int parent_size_change_hook_code			= (1 << 0x0000);
+		static const unsigned int child_size_change_hook_code			= (1 << 0x0001);
 	};
 
 	template <unsigned int code>

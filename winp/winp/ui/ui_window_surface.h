@@ -88,7 +88,7 @@ namespace winp::ui{
 
 		virtual m_size_type get_size_() const override;
 
-		virtual m_size_type get_client_position_offset_() const override;
+		virtual m_point_type get_client_position_offset_() const override;
 
 		virtual bool set_position_(const m_point_type &value) override;
 

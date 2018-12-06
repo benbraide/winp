@@ -65,7 +65,23 @@ winp::ui::surface::m_size_type winp::ui::surface::get_size(const std::function<v
 	return thread_.queue.execute([this]{ return get_size_(); }, thread::queue::send_priority, id_);
 }
 
-winp::ui::surface::m_size_type winp::ui::surface::get_client_position_offset(const std::function<void(const m_size_type &)> &callback) const{
+winp::ui::surface::m_size_type winp::ui::surface::get_client_size(const std::function<void(const m_size_type &)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = get_client_size_();
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
+	if (callback != nullptr){
+		thread_.queue.post([=]{ callback(get_client_size_()); }, thread::queue::send_priority, id_);
+		return m_size_type{};
+	}
+
+	return thread_.queue.execute([this]{ return get_client_size_(); }, thread::queue::send_priority, id_);
+}
+
+winp::ui::surface::m_point_type winp::ui::surface::get_client_position_offset(const std::function<void(const m_point_type &)> &callback) const{
 	if (thread_.is_thread_context()){
 		auto result = get_client_position_offset_();
 		if (callback != nullptr)
@@ -75,7 +91,7 @@ winp::ui::surface::m_size_type winp::ui::surface::get_client_position_offset(con
 
 	if (callback != nullptr){
 		thread_.queue.post([=]{ callback(get_client_position_offset_()); }, thread::queue::send_priority, id_);
-		return m_size_type{};
+		return m_point_type{};
 	}
 
 	return thread_.queue.execute([this]{ return get_client_position_offset_(); }, thread::queue::send_priority, id_);
@@ -373,8 +389,13 @@ winp::ui::surface::m_size_type winp::ui::surface::get_size_() const{
 	return size_;
 }
 
-winp::ui::surface::m_size_type winp::ui::surface::get_client_position_offset_() const{
-	return m_size_type{};
+winp::ui::surface::m_size_type winp::ui::surface::get_client_size_() const{
+	auto dimension = get_client_dimension_();
+	return m_size_type{ (dimension.right - dimension.left), (dimension.bottom - dimension.top) };
+}
+
+winp::ui::surface::m_point_type winp::ui::surface::get_client_position_offset_() const{
+	return m_point_type{};
 }
 
 bool winp::ui::surface::set_position_(const m_point_type &value){
@@ -442,22 +463,22 @@ winp::ui::surface::m_point_type winp::ui::surface::convert_position_from_absolut
 	auto absolute_position = get_absolute_position_();
 	auto client_offset = get_client_position_offset_();
 
-	return m_point_type{ (value.x - absolute_position.x - client_offset.cx), (value.y - absolute_position.y - client_offset.cy) };
+	return m_point_type{ (value.x - absolute_position.x - client_offset.x), (value.y - absolute_position.y - client_offset.y) };
 }
 
 winp::ui::surface::m_point_type winp::ui::surface::convert_position_to_absolute_value_(const m_point_type &value) const{
 	auto absolute_position = get_absolute_position_();
 	auto client_offset = get_client_position_offset_();
 
-	return m_point_type{ (value.x + absolute_position.x + client_offset.cx), (value.y + absolute_position.y + client_offset.cy) };
+	return m_point_type{ (value.x + absolute_position.x + client_offset.x), (value.y + absolute_position.y + client_offset.y) };
 }
 
 winp::ui::surface::m_rect_type winp::ui::surface::convert_dimension_from_absolute_value_(const m_rect_type &value) const{
 	auto absolute_position = get_absolute_position_();
 	auto client_offset = get_client_position_offset_();
 
-	auto h_offset = (absolute_position.x - client_offset.cx);
-	auto v_offset = (absolute_position.y - client_offset.cy);
+	auto h_offset = (absolute_position.x - client_offset.x);
+	auto v_offset = (absolute_position.y - client_offset.y);
 
 	return m_rect_type{ (value.left - h_offset), (value.top - v_offset), (value.right - h_offset), (value.bottom - v_offset) };
 }
@@ -466,8 +487,8 @@ winp::ui::surface::m_rect_type winp::ui::surface::convert_dimension_to_absolute_
 	auto absolute_position = get_absolute_position_();
 	auto client_offset = get_client_position_offset_();
 
-	auto h_offset = (absolute_position.x + client_offset.cx);
-	auto v_offset = (absolute_position.y + client_offset.cy);
+	auto h_offset = (absolute_position.x + client_offset.x);
+	auto v_offset = (absolute_position.y + client_offset.y);
 
 	return m_rect_type{ (value.left + h_offset), (value.top + v_offset), (value.right + h_offset), (value.bottom + v_offset) };
 }
@@ -476,8 +497,8 @@ UINT winp::ui::surface::hit_test_(const m_point_type &pt, bool is_absolute) cons
 	auto pos = (is_absolute ? get_absolute_position_() : get_position_());
 	auto client_offset = get_client_position_offset_();
 	{//Update position
-		pos.x += client_offset.cx;
-		pos.y += client_offset.cy;
+		pos.x += client_offset.x;
+		pos.y += client_offset.y;
 	}
 
 	return ((hit_test_(pt, pos, get_size_()) == utility::hit_target::inside) ? HTCLIENT : HTNOWHERE);
@@ -487,8 +508,8 @@ winp::utility::hit_target winp::ui::surface::hit_test_(const m_rect_type &rect, 
 	auto pos = (is_absolute ? get_absolute_position_() : get_position_());
 	auto client_offset = get_client_position_offset_();
 	{//Update position
-		pos.x += client_offset.cx;
-		pos.y += client_offset.cy;
+		pos.x += client_offset.x;
+		pos.y += client_offset.y;
 	}
 
 	auto size = get_size_();

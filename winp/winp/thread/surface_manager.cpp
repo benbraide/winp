@@ -514,14 +514,17 @@ LRESULT winp::thread::surface_manager::size_frame_(ui::surface &target, const MS
 		drag_rect->bottom = drag_rect->top;
 	}
 
-	auto result = (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), info.hwnd, info.message, info.wParam, info.lParam));
+	return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), info.hwnd, info.message, info.wParam, info.lParam));
+}
+
+LRESULT winp::thread::surface_manager::sized_frame_(ui::surface &target, const MSG &info, bool prevent_default){
 	if (auto parent = target.get_parent_(); parent != nullptr)
 		parent->call_hook_(ui::hook::child_size_change_hook_code);
 
 	for (auto child : target.children_)
 		child->call_hook_(ui::hook::parent_size_change_hook_code);
 
-	return result;
+	return find_dispatcher_(info.message)->dispatch_(target, info, false, nullptr);
 }
 
 LRESULT winp::thread::surface_manager::move_frame_(ui::surface &target, const MSG &info, bool prevent_default){
@@ -532,6 +535,10 @@ LRESULT winp::thread::surface_manager::move_frame_(ui::surface &target, const MS
 		*reinterpret_cast<RECT *>(info.lParam) = target.get_absolute_dimension_();
 
 	return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), info.hwnd, info.message, info.wParam, info.lParam));
+}
+
+LRESULT winp::thread::surface_manager::moved_frame_(ui::surface &target, const MSG &info, bool prevent_default){
+	return find_dispatcher_(info.message)->dispatch_(target, info, false, nullptr);
 }
 
 void winp::thread::surface_manager::track_mouse_leave_(HWND target, UINT flags){
@@ -683,8 +690,12 @@ LRESULT CALLBACK winp::thread::surface_manager::entry_(HWND handle, UINT msg, WP
 		return manager.close_frame_(*object, info, false);
 	case WM_SIZING:
 		return manager.size_frame_(*object, info, false);
+	case WM_SIZE:
+		return manager.sized_frame_(*object, info, false);
 	case WM_MOVING:
 		return manager.move_frame_(*object, info, false);
+	case WM_MOVE:
+		return manager.moved_frame_(*object, info, false);
 	default:
 		break;
 	}

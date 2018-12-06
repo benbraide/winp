@@ -340,7 +340,7 @@ winp::ui::surface::m_size_type winp::ui::window_surface::get_size_() const{
 	return m_size_type{ (dimension.right - dimension.left), (dimension.bottom - dimension.top) };
 }
 
-winp::ui::surface::m_size_type winp::ui::window_surface::get_client_position_offset_() const{
+winp::ui::surface::m_point_type winp::ui::window_surface::get_client_position_offset_() const{
 	auto handle = get_handle_();
 	if (handle == nullptr)
 		return io_surface::get_client_position_offset_();
@@ -351,7 +351,7 @@ winp::ui::surface::m_size_type winp::ui::window_surface::get_client_position_off
 	RECT window_rect{};
 	GetWindowRect(static_cast<HWND>(handle), &window_rect);
 
-	return m_size_type{ (client_offset.x - window_rect.left), (client_offset.y - window_rect.top) };
+	return m_point_type{ (client_offset.x - window_rect.left), (client_offset.y - window_rect.top) };
 }
 
 bool winp::ui::window_surface::set_position_(const m_point_type &value){

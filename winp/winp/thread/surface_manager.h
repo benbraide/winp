@@ -198,7 +198,11 @@ namespace winp::thread{
 
 		LRESULT size_frame_(ui::surface &target, const MSG &info, bool prevent_default);
 
+		LRESULT sized_frame_(ui::surface &target, const MSG &info, bool prevent_default);
+
 		LRESULT move_frame_(ui::surface &target, const MSG &info, bool prevent_default);
+
+		LRESULT moved_frame_(ui::surface &target, const MSG &info, bool prevent_default);
 
 		void track_mouse_leave_(HWND target, UINT flags);
 

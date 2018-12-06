@@ -31,7 +31,9 @@ namespace winp::ui{
 
 		virtual m_size_type get_size(const std::function<void(const m_size_type &)> &callback = nullptr) const;
 
-		virtual m_size_type get_client_position_offset(const std::function<void(const m_size_type &)> &callback = nullptr) const;
+		virtual m_size_type get_client_size(const std::function<void(const m_size_type &)> &callback = nullptr) const;
+
+		virtual m_point_type get_client_position_offset(const std::function<void(const m_point_type &)> &callback = nullptr) const;
 
 		virtual bool set_position(const m_point_type &value, const std::function<void(object &, bool)> &callback = nullptr);
 
@@ -100,7 +102,9 @@ namespace winp::ui{
 
 		virtual m_size_type get_size_() const;
 
-		virtual m_size_type get_client_position_offset_() const;
+		virtual m_size_type get_client_size_() const;
+
+		virtual m_point_type get_client_position_offset_() const;
 
 		virtual bool set_position_(const m_point_type &value);
 

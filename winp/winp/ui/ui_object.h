@@ -230,18 +230,6 @@ namespace winp::ui{
 				return nullptr;
 
 			auto code = hook->get_hook_code();
-			if ((code & ui::hook::parent_change_hook_code) != 0u)
-				hook_map_[ui::hook::parent_change_hook_code] = hook;
-
-			if ((code & ui::hook::siblings_count_hook_code) != 0u)
-				hook_map_[ui::hook::siblings_count_hook_code] = hook;
-
-			if ((code & ui::hook::child_insert_hook_code) != 0u)
-				hook_map_[ui::hook::child_insert_hook_code] = hook;
-
-			if ((code & ui::hook::child_remove_hook_code) != 0u)
-				hook_map_[ui::hook::child_remove_hook_code] = hook;
-
 			if ((code & ui::hook::parent_size_change_hook_code) != 0u)
 				hook_map_[ui::hook::parent_size_change_hook_code] = hook;
 

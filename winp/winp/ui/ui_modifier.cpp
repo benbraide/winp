@@ -130,7 +130,7 @@ void winp::ui::alignment_modifier::align_(){
 		return;//Ignore
 
 	POINT position{};
-	auto size = surface_target->get_size(), parent_size = surface_parent->get_size();
+	auto size = surface_target->get_size(), parent_size = surface_parent->get_client_size();
 
 	if ((alignment_ & align_left) != 0u)
 		position.x = 0;
