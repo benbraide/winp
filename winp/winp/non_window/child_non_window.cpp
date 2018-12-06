@@ -121,6 +121,12 @@ bool winp::non_window::child::create_(){
 		set_handle_(handle);
 		redraw_(m_rect_type{});
 		dispatch_message_(WM_NCCREATE, 0, 0);
+
+		if (auto parent = get_parent_(); parent != nullptr)
+			parent->call_hook_(ui::hook::child_size_change_hook_code);
+
+		for (auto child : children_)
+			child->call_hook_(ui::hook::parent_size_change_hook_code);
 	}
 
 	return (get_handle_() != nullptr);

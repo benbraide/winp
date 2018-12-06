@@ -40,15 +40,27 @@ void winp::thread::item::destruct(){
 		destruct_();
 }
 
-void winp::thread::item::use_context(const queue::callback_type &task, int priority){
+void winp::thread::item::use_context(const queue::callback_type &task, int priority) const{
 	if (thread_.is_thread_context())
 		task();
 	else
 		thread_.queue.post(task, priority, id_);
 }
 
+bool winp::thread::item::is_thread_context() const{
+	return thread_.is_thread_context();
+}
+
+unsigned __int64 winp::thread::item::get_id() const{
+	return id_;
+}
+
 void winp::thread::item::event_handlers_count_changed_(event::manager_base &e, std::size_t previous_count, std::size_t current_count){}
 
 void winp::thread::item::destruct_(){
 	thread_.add_to_black_list_(id_);
+}
+
+winp::thread::queue &winp::thread::item::get_queue_() const{
+	return thread_.queue;
 }

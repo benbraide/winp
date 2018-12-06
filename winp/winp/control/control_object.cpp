@@ -109,6 +109,10 @@ DWORD winp::control::object::get_filtered_extended_styles_() const{
 	return (WS_EX_APPWINDOW | WS_EX_CONTEXTHELP | WS_EX_DLGMODALFRAME);
 }
 
+void winp::control::object::handle_unhandled_event_(event::object &e){
+	e.do_default();
+}
+
 bool winp::control::object::set_font_(HFONT value){
 	return false;
 }

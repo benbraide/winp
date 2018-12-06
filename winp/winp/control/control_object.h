@@ -1,9 +1,10 @@
 #pragma once
 
 #include "../ui/ui_window_surface.h"
+#include "../event/event_handler.h"
 
 namespace winp::control{
-	class object : public ui::window_surface{
+	class object : public ui::window_surface, public event::unhandled_handler{
 	public:
 		object();
 
@@ -32,6 +33,8 @@ namespace winp::control{
 		virtual DWORD get_filtered_styles_() const override;
 
 		virtual DWORD get_filtered_extended_styles_() const override;
+
+		virtual void handle_unhandled_event_(event::object &e) override;
 
 		virtual bool set_font_(HFONT value);
 

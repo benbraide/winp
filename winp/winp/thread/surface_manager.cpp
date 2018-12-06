@@ -75,6 +75,8 @@ void winp::thread::surface_manager::create_window_(HWND handle, CBT_CREATEWNDW &
 	auto frame_object = dynamic_cast<window::frame *>(cache_.object);
 	if (frame_object != nullptr)//Update system menu
 		frame_object->system_menu_.init_(GetSystemMenu(handle, FALSE));
+
+	static_cast<ui::surface *>(info.lpcs->lpCreateParams)->call_hook_(ui::hook::parent_size_change_hook_code);
 }
 
 LRESULT winp::thread::surface_manager::destroy_window_(ui::surface &target, const MSG &info){
@@ -499,7 +501,7 @@ LRESULT winp::thread::surface_manager::close_frame_(ui::surface &target, const M
 	if ((states & event::object::state_type::default_prevented) != 0u)
 		return 0;//Default prevented
 
-	return ((IsWindowUnicode(info.hwnd) == FALSE) ? CallWindowProcA(DefWindowProcA, info.hwnd, info.message, info.wParam, info.lParam) : CallWindowProcW(DefWindowProcW, info.hwnd, info.message, info.wParam, info.lParam));
+	return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), info.hwnd, info.message, info.wParam, info.lParam));
 }
 
 LRESULT winp::thread::surface_manager::size_frame_(ui::surface &target, const MSG &info, bool prevent_default){
@@ -512,7 +514,14 @@ LRESULT winp::thread::surface_manager::size_frame_(ui::surface &target, const MS
 		drag_rect->bottom = drag_rect->top;
 	}
 
-	return ((IsWindowUnicode(info.hwnd) == FALSE) ? CallWindowProcA(DefWindowProcA, info.hwnd, info.message, info.wParam, info.lParam) : CallWindowProcW(DefWindowProcW, info.hwnd, info.message, info.wParam, info.lParam));
+	auto result = (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), info.hwnd, info.message, info.wParam, info.lParam));
+	if (auto parent = target.get_parent_(); parent != nullptr)
+		parent->call_hook_(ui::hook::child_size_change_hook_code);
+
+	for (auto child : target.children_)
+		child->call_hook_(ui::hook::parent_size_change_hook_code);
+
+	return result;
 }
 
 LRESULT winp::thread::surface_manager::move_frame_(ui::surface &target, const MSG &info, bool prevent_default){
@@ -522,7 +531,7 @@ LRESULT winp::thread::surface_manager::move_frame_(ui::surface &target, const MS
 	if ((states & event::object::state_type::default_prevented) != 0u)//Default prevented
 		*reinterpret_cast<RECT *>(info.lParam) = target.get_absolute_dimension_();
 
-	return ((IsWindowUnicode(info.hwnd) == FALSE) ? CallWindowProcA(DefWindowProcA, info.hwnd, info.message, info.wParam, info.lParam) : CallWindowProcW(DefWindowProcW, info.hwnd, info.message, info.wParam, info.lParam));
+	return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), info.hwnd, info.message, info.wParam, info.lParam));
 }
 
 void winp::thread::surface_manager::track_mouse_leave_(HWND target, UINT flags){

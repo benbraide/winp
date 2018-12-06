@@ -244,6 +244,39 @@ bool winp::ui::object::post_message(UINT msg, const std::function<void(bool)> &c
 	return do_post_message_(msg, 0, 0, callback);
 }
 
+bool winp::ui::object::remove_hook(unsigned int code, const std::function<void(object &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = remove_hook_(code);
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
+	thread_.queue.post([=]{
+		auto result = remove_hook_(code);
+		if (callback != nullptr)
+			callback(*this, result);
+	}, thread::queue::send_priority, id_);
+
+	return false;
+}
+
+bool winp::ui::object::has_hook(unsigned int code, const std::function<void(bool)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = has_hook_(code);
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
+	if (callback != nullptr){
+		thread_.queue.post([=]{ callback(has_hook_(code)); }, thread::queue::send_priority, id_);
+		return false;
+	}
+
+	return thread_.queue.execute([=]{ return has_hook_(code); }, thread::queue::send_priority, id_);
+}
+
 void winp::ui::object::init_(){
 	ancestor_list_.init_([this](){//begin
 		if (thread_.is_thread_context())
@@ -514,6 +547,79 @@ bool winp::ui::object::post_message_(UINT msg, WPARAM wparam, LPARAM lparam){
 
 	dispatch_message_(msg, wparam, lparam, false);
 	return true;
+}
+
+bool winp::ui::object::remove_hook_(unsigned int code){
+	if (!hook_map_.empty())
+		return false;
+
+	if ((code & ui::hook::parent_change_hook_code) != 0u)
+		hook_map_.erase(ui::hook::parent_change_hook_code);
+
+	if ((code & ui::hook::siblings_count_hook_code) != 0u)
+		hook_map_.erase(ui::hook::siblings_count_hook_code);
+
+	if ((code & ui::hook::child_insert_hook_code) != 0u)
+		hook_map_.erase(ui::hook::child_insert_hook_code);
+
+	if ((code & ui::hook::child_remove_hook_code) != 0u)
+		hook_map_.erase(ui::hook::child_remove_hook_code);
+
+	if ((code & ui::hook::parent_size_change_hook_code) != 0u)
+		hook_map_.erase(ui::hook::parent_size_change_hook_code);
+
+	if ((code & ui::hook::child_size_change_hook_code) != 0u)
+		hook_map_.erase(ui::hook::child_size_change_hook_code);
+
+	return true;
+}
+
+bool winp::ui::object::has_hook_(unsigned int code) const{
+	return (find_hook_(code) != nullptr);
+}
+
+winp::ui::hook *winp::ui::object::find_hook_(unsigned int code) const{
+	auto it = hook_map_.find(code);
+	return ((it == hook_map_.end()) ? nullptr : it->second.get());
+}
+
+void winp::ui::object::call_hook_(unsigned int code){
+	ui::hook *hook = nullptr;
+	if ((code & ui::hook::parent_change_hook_code) != 0u && (hook = find_hook_(ui::hook::parent_change_hook_code)) != nullptr){
+		called_hook_ |= ui::hook::parent_change_hook_code;
+		hook->handle_hook_callback(ui::hook::parent_change_hook_code);
+		called_hook_ &= ~ui::hook::parent_change_hook_code;
+	}
+
+	if ((code & ui::hook::siblings_count_hook_code) != 0u && (hook = find_hook_(ui::hook::siblings_count_hook_code)) != nullptr){
+		called_hook_ |= ui::hook::siblings_count_hook_code;
+		hook->handle_hook_callback(ui::hook::siblings_count_hook_code);
+		called_hook_ &= ~ui::hook::siblings_count_hook_code;
+	}
+
+	if ((code & ui::hook::child_insert_hook_code) != 0u && (hook = find_hook_(ui::hook::child_insert_hook_code)) != nullptr){
+		called_hook_ |= ui::hook::child_insert_hook_code;
+		hook->handle_hook_callback(ui::hook::child_insert_hook_code);
+		called_hook_ &= ~ui::hook::child_insert_hook_code;
+	}
+
+	if ((code & ui::hook::child_remove_hook_code) != 0u && (hook = find_hook_(ui::hook::child_remove_hook_code)) != nullptr){
+		called_hook_ |= ui::hook::child_remove_hook_code;
+		hook->handle_hook_callback(ui::hook::child_remove_hook_code);
+		called_hook_ &= ~ui::hook::child_remove_hook_code;
+	}
+
+	if ((code & ui::hook::parent_size_change_hook_code) != 0u && (hook = find_hook_(ui::hook::parent_size_change_hook_code)) != nullptr){
+		called_hook_ |= ui::hook::parent_size_change_hook_code;
+		hook->handle_hook_callback(ui::hook::parent_size_change_hook_code);
+		called_hook_ &= ~ui::hook::parent_size_change_hook_code;
+	}
+
+	if ((code & ui::hook::child_size_change_hook_code) != 0u && (hook = find_hook_(ui::hook::child_size_change_hook_code)) != nullptr){
+		called_hook_ |= ui::hook::child_size_change_hook_code;
+		hook->handle_hook_callback(ui::hook::child_size_change_hook_code);
+		called_hook_ &= ~ui::hook::child_size_change_hook_code;
+	}
 }
 
 std::size_t winp::ui::object::event_handlers_count_(event::manager_base &ev) const{

@@ -4,6 +4,8 @@
 #include "../utility/dynamic_list.h"
 #include "../thread/thread_item.h"
 
+#include "ui_modifier.h"
+
 namespace winp::event{
 	class object;
 	class tree;
@@ -28,6 +30,10 @@ namespace winp::menu{
 	class separator;
 }
 
+namespace winp::non_window{
+	class child;
+}
+
 namespace winp::ui{
 	class tree;
 	class window_surface;
@@ -35,6 +41,7 @@ namespace winp::ui{
 	class object : public thread::item{
 	public:
 		using tree_change_info = event::tree::tree_change_info;
+		using hook_map_type = std::unordered_map<unsigned int, std::shared_ptr<hook>>;
 
 		object();
 
@@ -53,6 +60,23 @@ namespace winp::ui{
 		virtual std::size_t set_parent(tree *value, const std::function<void(object &, bool, std::size_t)> &callback = nullptr);
 
 		virtual tree *get_parent(const std::function<void(tree *)> &callback = nullptr) const;
+
+		template <typename target_type, typename before_type = void>
+		target_type *get_first_ancestor_of(const std::function<void(tree *)> &callback = nullptr) const{
+			if (is_thread_context()){
+				auto result = get_first_ancestor_of_<target_type, before_type>();
+				if (callback != nullptr)
+					callback(result);
+				return result;
+			}
+
+			if (callback != nullptr){
+				use_context([=]{ callback(get_first_ancestor_of_<target_type, before_type>()); }, thread::queue::send_priority);
+				return nullptr;
+			}
+
+			return execute_using_context([this]{ return get_first_ancestor_of_<target_type, before_type>(); }, thread::queue::send_priority);
+		}
 
 		virtual std::size_t set_index(std::size_t value, const std::function<void(object &, bool, std::size_t)> &callback = nullptr);
 
@@ -96,6 +120,29 @@ namespace winp::ui{
 			return do_post_message_(msg, (WPARAM)wparam, (LPARAM)lparam, callback);
 		}
 
+		template <typename hook_type>
+		hook_type *set_hook(const std::function<void(object &, bool)> &callback = nullptr){
+			if (is_thread_context()){
+				auto result = set_hook_<hook_type>();
+				if (callback != nullptr)
+					callback(*this, result);
+				return result;
+			}
+
+			use_context([=]{
+				auto result = set_hook_<hook_type>();
+				if (callback != nullptr)
+					callback(*this, result);
+				return result;
+			}, thread::queue::send_priority);
+
+			return nullptr;
+		}
+
+		virtual bool remove_hook(unsigned int code, const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual bool has_hook(unsigned int code, const std::function<void(bool)> &callback = nullptr) const;
+
 		event::manager<object, event::tree> parent_change_event{ *this };
 		event::manager<object, event::tree> index_change_event{ *this };
 
@@ -125,6 +172,8 @@ namespace winp::ui{
 
 		friend class menu::group;
 		friend class menu::object;
+
+		friend class non_window::child;
 
 		void init_();
 
@@ -174,6 +223,43 @@ namespace winp::ui{
 
 		virtual bool post_message_(UINT msg, WPARAM wparam, LPARAM lparam);
 
+		template <typename hook_type>
+		hook_type *set_hook_(){
+			auto hook = std::make_shared<hook_type>(*this);
+			if (hook == nullptr)
+				return nullptr;
+
+			auto code = hook->get_hook_code();
+			if ((code & ui::hook::parent_change_hook_code) != 0u)
+				hook_map_[ui::hook::parent_change_hook_code] = hook;
+
+			if ((code & ui::hook::siblings_count_hook_code) != 0u)
+				hook_map_[ui::hook::siblings_count_hook_code] = hook;
+
+			if ((code & ui::hook::child_insert_hook_code) != 0u)
+				hook_map_[ui::hook::child_insert_hook_code] = hook;
+
+			if ((code & ui::hook::child_remove_hook_code) != 0u)
+				hook_map_[ui::hook::child_remove_hook_code] = hook;
+
+			if ((code & ui::hook::parent_size_change_hook_code) != 0u)
+				hook_map_[ui::hook::parent_size_change_hook_code] = hook;
+
+			if ((code & ui::hook::child_size_change_hook_code) != 0u)
+				hook_map_[ui::hook::child_size_change_hook_code] = hook;
+
+			hook->handle_hook_callback(code);
+			return hook.get();
+		}
+
+		virtual bool remove_hook_(unsigned int code);
+
+		virtual bool has_hook_(unsigned int code) const;
+
+		virtual hook *find_hook_(unsigned int code) const;
+
+		virtual void call_hook_(unsigned int code);
+
 		virtual std::size_t event_handlers_count_(event::manager_base &ev) const;
 
 		virtual void fire_event_(event::manager_base &ev, event::object &e) const;
@@ -214,6 +300,9 @@ namespace winp::ui{
 		HANDLE handle_;
 		tree *parent_;
 		std::size_t index_;
+
+		hook_map_type hook_map_;
+		unsigned int called_hook_ = called_hook_ = ui::hook::nil_hook_code;
 
 		utility::dynamic_list<tree, object> ancestor_list_;
 		utility::dynamic_list<object, object> sibling_list_;
