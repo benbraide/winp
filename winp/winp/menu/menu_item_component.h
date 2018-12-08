@@ -82,6 +82,8 @@ namespace winp::menu{
 
 		virtual bool destroy_() override;
 
+		virtual bool is_created_() const override;
+
 		virtual const wchar_t *get_theme_name_() const override;
 
 		virtual std::size_t get_count_() const override;
@@ -145,7 +147,7 @@ namespace winp::menu{
 		virtual bool id_is_unique_() const;
 
 		UINT local_id_ = 0u;
-		bool is_created_ = false;
+		bool is_created_state_ = false;
 
 		UINT states_ = 0u;
 		UINT types_ = 0u;

@@ -48,6 +48,22 @@ bool winp::ui::object::destroy(const std::function<void(object &, bool)> &callba
 	return true;
 }
 
+bool winp::ui::object::is_created(const std::function<void(bool)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = is_created_();
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
+	if (callback != nullptr){
+		thread_.queue.post([=]{ callback(is_created_()); }, thread::queue::send_priority, id_);
+		return false;
+	}
+
+	return thread_.queue.execute([this]{ return is_created_(); }, thread::queue::send_priority, id_);
+}
+
 HANDLE winp::ui::object::get_handle(const std::function<void(HANDLE)> &callback) const{
 	if (thread_.is_thread_context()){
 		auto result = get_handle_();
@@ -340,6 +356,10 @@ bool winp::ui::object::create_(){
 
 bool winp::ui::object::destroy_(){
 	return true;
+}
+
+bool winp::ui::object::is_created_() const{
+	return false;
 }
 
 void winp::ui::object::add_to_toplevel_(bool update){}

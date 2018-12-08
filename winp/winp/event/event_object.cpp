@@ -178,33 +178,53 @@ void winp::event::draw::begin_(){
 		GetClipBox(struct_.hdc, &struct_.rcPaint);
 		struct_.fErase = TRUE;
 		return;
-	case WINP_WM_ERASE_BACKGROUND:
-		struct_.hdc = GetDC(info_.hwnd);
-		struct_.rcPaint = *reinterpret_cast<m_rect_type *>(info_.wParam);
-		struct_.fErase = TRUE;
-		break;
-	case WINP_WM_PAINT:
-		struct_.hdc = GetDC(info_.hwnd);
-		struct_.rcPaint = *reinterpret_cast<m_rect_type *>(info_.wParam);
-		struct_.fErase = FALSE;
-		break;
 	default:
 		break;
 	}
 
-	if (struct_.hdc == nullptr || dynamic_cast<ui::window_surface *>(context_) != nullptr)
-		return;
-	
+	if (struct_.hdc == nullptr && dynamic_cast<ui::window_surface *>(context_) == nullptr){
+		switch (info_.message){
+		case WINP_WM_ERASE_BACKGROUND:
+		case WINP_WM_ERASE_CLIENT_BACKGROUND:
+			struct_.hdc = GetDC(info_.hwnd);
+			struct_.rcPaint = *reinterpret_cast<m_rect_type *>(info_.wParam);
+			struct_.fErase = TRUE;
+			break;
+		case WINP_WM_PAINT:
+			struct_.hdc = GetDC(info_.hwnd);
+			struct_.rcPaint = *reinterpret_cast<m_rect_type *>(info_.wParam);
+			struct_.fErase = FALSE;
+			break;
+		default:
+			break;
+		}
+
+		if (struct_.hdc == nullptr)
+			return;//Error
+	}
+	else if (struct_.hdc == nullptr)
+		return;//Error
+
 	auto surface_target = dynamic_cast<ui::surface *>(context_);
 	if (surface_target == nullptr)
 		return;//Do nothing
 
 	auto offset = surface_target->compute_offset_from_ancestor_of_<ui::window_surface>();
+	if (auto non_window_target = dynamic_cast<non_window::child *>(context_); non_window_target != nullptr){
+		if (info_.message == WINP_WM_ERASE_CLIENT_BACKGROUND || (info_.message == WINP_WM_PAINT && non_window_target->client_handle_ != nullptr)){//Clip to client region
+			SelectClipRgn(struct_.hdc, non_window_target->client_handle_);
+			{//Offset by additional padding
+				offset.x += non_window_target->padding_.left;
+				offset.y += non_window_target->padding_.top;
+			}
+		}
+		else//Clip to outer region
+			SelectClipRgn(struct_.hdc, static_cast<HRGN>(context_->get_handle_()));
 
-	SelectClipRgn(struct_.hdc, static_cast<HRGN>(context_->get_handle_()));
-	OffsetClipRgn(struct_.hdc, offset.x, offset.y);
-	IntersectClipRect(struct_.hdc, struct_.rcPaint.left, struct_.rcPaint.top, struct_.rcPaint.right, struct_.rcPaint.bottom);
-
+		OffsetClipRgn(struct_.hdc, offset.x, offset.y);
+		IntersectClipRect(struct_.hdc, struct_.rcPaint.left, struct_.rcPaint.top, struct_.rcPaint.right, struct_.rcPaint.bottom);
+	}
+	
 	SetViewportOrgEx(struct_.hdc, offset.x, offset.y, nullptr);
 	OffsetRect(&struct_.rcPaint, -struct_.rcPaint.left, -struct_.rcPaint.top);//Move to (0, 0)
 }

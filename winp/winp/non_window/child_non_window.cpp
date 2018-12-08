@@ -197,7 +197,7 @@ bool winp::non_window::child::create_(){
 	if (handle != nullptr){
 		set_handle_(handle);
 		create_client_region_();
-		if (client_region_ == nullptr)
+		if (client_handle_ == nullptr)
 			redraw_(m_rect_type{});
 
 		dispatch_message_(WM_NCCREATE, 0, 0);
@@ -219,10 +219,10 @@ bool winp::non_window::child::destroy_(){
 	if (DeleteObject(handle) == FALSE)
 		return false;
 
-	if (client_region_ != nullptr){
-		if (client_region_ != handle)
-			DeleteObject(client_region_);
-		client_region_ = nullptr;
+	if (client_handle_ != nullptr){
+		if (client_handle_ != handle)
+			DeleteObject(client_handle_);
+		client_handle_ = nullptr;
 	}
 
 	set_handle_(nullptr);
@@ -232,6 +232,10 @@ bool winp::non_window::child::destroy_(){
 		parent->redraw_(get_dimension_());//Clear view
 
 	return (get_handle_() == nullptr);
+}
+
+bool winp::non_window::child::is_created_() const{
+	return (get_handle_() != nullptr);
 }
 
 bool winp::non_window::child::set_size_(const m_size_type &value){
@@ -388,20 +392,20 @@ bool winp::non_window::child::create_client_region_(){
 
 	switch (border_type){
 	case border_type::rect:
-		client_region_ = CreateRectRgnIndirect(&region);
+		client_handle_ = CreateRectRgnIndirect(&region);
 		break;
 	case border_type::round_rect:
-		client_region_ = CreateRoundRectRgn(region.left, region.top, region.right, region.bottom, client_border_curve_size.cx, client_border_curve_size.cy);
+		client_handle_ = CreateRoundRectRgn(region.left, region.top, region.right, region.bottom, client_border_curve_size.cx, client_border_curve_size.cy);
 		break;
 	case border_type::ellipse:
-		client_region_ = CreateEllipticRgnIndirect(&region);
+		client_handle_ = CreateEllipticRgnIndirect(&region);
 		break;
 	default:
-		client_region_ = create_complex_client_region_();
+		client_handle_ = create_complex_client_region_();
 		break;
 	}
 
-	if (client_region_ != nullptr){
+	if (client_handle_ != nullptr){
 		redraw_(m_rect_type{});
 		return true;
 	}
@@ -445,10 +449,10 @@ bool winp::non_window::child::set_client_border_type_(border_type value){
 			auto region = get_client_dimension_();
 			OffsetRect(&region, -region.left, -region.top);//Move to (0, 0)
 
-			if (SetRectRgn(client_region_, region.left, region.top, region.right, region.bottom) != FALSE)
+			if (SetRectRgn(client_handle_, region.left, region.top, region.right, region.bottom) != FALSE)
 				redraw_(m_rect_type{});
 		}
-		else if (client_region_ == nullptr || DeleteObject(client_region_) != FALSE)
+		else if (client_handle_ == nullptr || DeleteObject(client_handle_) != FALSE)
 			create_client_region_();
 	}
 
@@ -481,7 +485,7 @@ bool winp::non_window::child::set_client_border_curve_size_(const m_size_type &v
 		return true;//No changes
 
 	client_border_curve_size_ = value;
-	if (get_client_border_type_() == border_type::round_rect && get_handle_() != nullptr && (client_region_ == nullptr || DeleteObject(client_region_) != FALSE))
+	if (get_client_border_type_() == border_type::round_rect && get_handle_() != nullptr && (client_handle_ == nullptr || DeleteObject(client_handle_) != FALSE))
 		create_client_region_();
 
 	return true;

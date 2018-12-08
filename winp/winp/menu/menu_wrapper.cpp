@@ -132,7 +132,7 @@ bool winp::menu::wrapper::wrap_(HMENU value){
 					menu_item->set_label_(label);
 			}
 
-			menu_item->is_created_ = true;
+			menu_item->is_created_state_ = true;
 			menu_item->states_ = info.fState;
 			menu_item->types_ = info.fType;
 

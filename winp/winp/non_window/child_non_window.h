@@ -51,6 +51,7 @@ namespace winp::non_window{
 		friend class ui::object;
 		friend class event::draw;
 		friend class event::draw_handler;
+		friend class thread::surface_manager;
 
 		explicit child(thread::object &thread);
 
@@ -59,6 +60,8 @@ namespace winp::non_window{
 		virtual bool create_() override;
 
 		virtual bool destroy_() override;
+
+		virtual bool is_created_() const override;
 
 		virtual bool set_size_(const m_size_type &value) override;
 
@@ -104,7 +107,7 @@ namespace winp::non_window{
 
 		virtual HRGN create_complex_client_region_() const;
 
-		HRGN client_region_ = nullptr;
+		HRGN client_handle_ = nullptr;
 		unsigned int state_ = state_visible;
 
 		border_type border_type_ = border_type::rect;

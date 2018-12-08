@@ -48,6 +48,8 @@ namespace winp::menu{
 
 		virtual bool destroy_() override;
 
+		virtual bool is_created_() const override;
+
 		virtual HANDLE get_handle_() const override;
 
 		virtual LRESULT dispatch_message_(UINT msg, WPARAM wparam, LPARAM lparam, bool call_default = false) override;

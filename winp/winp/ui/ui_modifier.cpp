@@ -252,8 +252,8 @@ void winp::ui::size_modifier::do_modify_size_(){
 	if (std::holds_alternative<relative_size>(offset_)){//Proportional offset
 		auto psize = std::get<relative_size>(offset_);
 		{//Compute offset
-			offset.cx = static_cast<int>(parent_size.cx * psize.width);
-			offset.cy = static_cast<int>(parent_size.cy * psize.height);
+			offset.cx = static_cast<int>(parent_size.cx * (1.0f - psize.width));
+			offset.cy = static_cast<int>(parent_size.cy * (1.0f - psize.height));
 		}
 	}
 	else//Fixed size

@@ -308,6 +308,10 @@ bool winp::ui::window_surface::destroy_(){
 	return (DestroyWindow(static_cast<HWND>(handle)) != FALSE);
 }
 
+bool winp::ui::window_surface::is_created_() const{
+	return (get_handle_() != nullptr);
+}
+
 const wchar_t *winp::ui::window_surface::get_theme_name_() const{
 	return L"WINDOW";
 }

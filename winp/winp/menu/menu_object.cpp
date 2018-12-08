@@ -108,6 +108,10 @@ bool winp::menu::object::destroy_(){
 	return true;
 }
 
+bool winp::menu::object::is_created_() const{
+	return (get_handle_() != nullptr);
+}
+
 HANDLE winp::menu::object::get_handle_() const{
 	return ui::object::get_handle_();
 }

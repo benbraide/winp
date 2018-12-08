@@ -202,7 +202,7 @@ void winp::menu::item_component::destruct_(){
 }
 
 bool winp::menu::item_component::create_(){
-	if (is_created_)
+	if (is_created_state_)
 		return true;
 
 	auto parent = get_parent_();
@@ -270,14 +270,14 @@ bool winp::menu::item_component::create_(){
 		menu_parent->redraw_();
 
 	dispatch_message_(WM_NCCREATE, 0, 0);
-	return (is_created_ = true);
+	return (is_created_state_ = true);
 }
 
 bool winp::menu::item_component::destroy_(){
-	if (!is_created_)
+	if (!is_created_state_)
 		return true;
 
-	is_created_ = false;
+	is_created_state_ = false;
 	auto parent = get_parent_();
 	if (parent == nullptr)
 		return true;
@@ -297,6 +297,10 @@ bool winp::menu::item_component::destroy_(){
 	return true;
 }
 
+bool winp::menu::item_component::is_created_() const{
+	return is_created_state_;
+}
+
 const wchar_t *winp::menu::item_component::get_theme_name_() const{
 	return L"MENU";
 }
@@ -309,23 +313,23 @@ bool winp::menu::item_component::handle_parent_change_event_(event::tree &e){
 	if (e.get_attached_parent() != nullptr && dynamic_cast<menu::tree *>(e.get_attached_parent()) == nullptr)
 		return false;
 
-	if (auto is_created = is_created_; is_created){
+	if (auto is_created = is_created_state_; is_created){
 		destroy_();
-		is_created_ = is_created;
+		is_created_state_ = is_created;
 	}
 
 	return true;
 }
 
 void winp::menu::item_component::handle_parent_changed_event_(event::tree &e){
-	if (is_created_){//Ignore if item wasn't previously created
-		is_created_ = false;
+	if (is_created_state_){//Ignore if item wasn't previously created
+		is_created_state_ = false;
 		create_();
 	}
 }
 
 void winp::menu::item_component::handle_index_changed_event_(event::tree &e){
-	if (is_created_ && e.get_attached_parent() == get_parent_()){
+	if (is_created_state_ && e.get_attached_parent() == get_parent_()){
 		destroy_();
 		create_();
 	}
@@ -422,7 +426,7 @@ HBITMAP winp::menu::item_component::get_unchecked_bitmap_() const{
 }
 
 bool winp::menu::item_component::update_(const MENUITEMINFOW &info){
-	if (!is_created_)
+	if (!is_created_state_)
 		return true;
 
 	auto parent = get_parent_();

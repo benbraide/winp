@@ -102,14 +102,18 @@ LRESULT winp::thread::surface_manager::draw_(ui::surface &target, const MSG &inf
 	if (IsRectEmpty(&update_region) != FALSE)
 		GetUpdateRect(static_cast<HWND>(target.get_handle_()), &update_region, FALSE);
 
-	if (info.message == WINP_WM_PAINT)//Erase background
+	if (info.message == WINP_WM_PAINT){//Erase background
 		find_dispatcher_(WINP_WM_ERASE_BACKGROUND)->dispatch_(target, MSG{ info.hwnd, WINP_WM_ERASE_BACKGROUND, info.wParam, info.lParam }, !prevent_default, nullptr);
+		if (auto non_window_target = dynamic_cast<non_window::child *>(&target); non_window_target != nullptr && non_window_target->client_handle_ != nullptr)
+			find_dispatcher_(WINP_WM_ERASE_CLIENT_BACKGROUND)->dispatch_(target, MSG{ info.hwnd, WINP_WM_ERASE_CLIENT_BACKGROUND, info.wParam, info.lParam }, !prevent_default, nullptr);
+	}
+	
 	find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default, nullptr);
+	ui::visible_surface *visible_child = nullptr;
 
-	non_window::child *non_window_child;
 	for (auto child : target.children_){
-		if ((non_window_child = dynamic_cast<non_window::child *>(child)) != nullptr && non_window_child->get_handle() != nullptr && non_window_child->is_visible() && !non_window_child->is_transparent())
-			draw_(*non_window_child, MSG{ info.hwnd, WINP_WM_PAINT, reinterpret_cast<WPARAM>(&update_region), info.lParam }, true, update_region);
+		if ((visible_child = dynamic_cast<ui::visible_surface *>(child)) != nullptr && visible_child->is_created_())
+			draw_(*visible_child, MSG{ info.hwnd, WINP_WM_PAINT, reinterpret_cast<WPARAM>(&update_region), info.lParam }, true, update_region);
 	}
 
 	return 0;
@@ -606,6 +610,7 @@ bool winp::thread::surface_manager::initialize_dispatchers_(){
 	dispatchers_[WM_PRINTCLIENT] = dispatchers_[WM_ERASEBKGND];
 
 	dispatchers_[WINP_WM_ERASE_BACKGROUND] = dispatchers_[WM_ERASEBKGND];
+	dispatchers_[WINP_WM_ERASE_CLIENT_BACKGROUND] = dispatchers_[WM_ERASEBKGND];
 	dispatchers_[WINP_WM_PAINT] = dispatchers_[WM_ERASEBKGND];
 
 	dispatchers_[WM_DRAWITEM] = std::make_shared<message::draw_item_dispatcher>();

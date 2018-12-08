@@ -56,6 +56,8 @@ namespace winp::ui{
 
 		virtual bool destroy(const std::function<void(object &, bool)> &callback = nullptr);
 
+		virtual bool is_created(const std::function<void(bool)> &callback = nullptr) const;
+
 		virtual HANDLE get_handle(const std::function<void(HANDLE)> &callback = nullptr) const;
 
 		virtual bool is_ancestor(const tree &target, const std::function<void(bool)> &callback = nullptr) const;
@@ -184,6 +186,8 @@ namespace winp::ui{
 		virtual bool create_();
 
 		virtual bool destroy_();
+
+		virtual bool is_created_() const;
 
 		virtual void add_to_toplevel_(bool update = false);
 

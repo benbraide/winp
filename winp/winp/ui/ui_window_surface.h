@@ -78,6 +78,8 @@ namespace winp::ui{
 
 		virtual bool destroy_() override;
 
+		virtual bool is_created_() const override;
+
 		virtual const wchar_t *get_theme_name_() const override;
 
 		virtual WNDPROC get_default_message_entry_() const override;
