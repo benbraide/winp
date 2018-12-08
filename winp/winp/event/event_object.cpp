@@ -199,22 +199,13 @@ void winp::event::draw::begin_(){
 	if (surface_target == nullptr)
 		return;//Do nothing
 
-	POINT parent_offset;
-	auto current_region = surface_target->get_dimension_();
-
-	for (auto parent = surface_target->get_first_ancestor_of_<ui::surface, ui::window_surface>(); parent != nullptr && parent != target_; parent = parent->get_first_ancestor_of_<ui::surface, ui::window_surface>()){
-		parent_offset = parent->get_position_();
-		OffsetRect(&current_region, parent_offset.x, parent_offset.y);
-	}
-
-	auto non_window_context = dynamic_cast<non_window::child *>(context_);
-	auto position = non_window_context->get_position_();
+	auto offset = surface_target->compute_offset_from_ancestor_of_<ui::window_surface>();
 
 	SelectClipRgn(struct_.hdc, static_cast<HRGN>(context_->get_handle_()));
-	OffsetClipRgn(struct_.hdc, (current_region.left - position.x), (current_region.top - position.y));
+	OffsetClipRgn(struct_.hdc, offset.x, offset.y);
 	IntersectClipRect(struct_.hdc, struct_.rcPaint.left, struct_.rcPaint.top, struct_.rcPaint.right, struct_.rcPaint.bottom);
 
-	SetViewportOrgEx(struct_.hdc, current_region.left, current_region.top, nullptr);
+	SetViewportOrgEx(struct_.hdc, offset.x, offset.y, nullptr);
 	OffsetRect(&struct_.rcPaint, -struct_.rcPaint.left, -struct_.rcPaint.top);//Move to (0, 0)
 }
 

@@ -38,9 +38,17 @@ namespace winp::ui{
 
 		virtual bool is_transparent(const std::function<void(bool)> &callback = nullptr) const;
 
+		virtual bool set_client_transparency(bool is_transparent, const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual bool is_transparent_client(const std::function<void(bool)> &callback = nullptr) const;
+
 		virtual bool set_background_color(const D2D1::ColorF &value, const std::function<void(object &, bool)> &callback = nullptr);
 
 		virtual D2D1::ColorF get_background_color(const std::function<void(const D2D1::ColorF &)> &callback = nullptr) const;
+
+		virtual bool set_client_background_color(const D2D1::ColorF &value, const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual D2D1::ColorF get_client_background_color(const std::function<void(const D2D1::ColorF &)> &callback = nullptr) const;
 
 		static m_colorf convert_from_d2d1_colorf(const D2D1::ColorF &value);
 
@@ -74,10 +82,19 @@ namespace winp::ui{
 
 		virtual bool is_transparent_() const;
 
+		virtual bool set_client_transparency_(bool is_transparent);
+
+		virtual bool is_transparent_client_() const;
+
 		virtual bool set_background_color_(const D2D1::ColorF &value);
 
 		virtual const D2D1::ColorF &get_background_color_() const;
 
+		virtual bool set_client_background_color_(const D2D1::ColorF &value);
+
+		virtual const D2D1::ColorF &get_client_background_color_() const;
+
 		D2D1::ColorF background_color_{ 0 };
+		D2D1::ColorF client_background_color_{ 0 };
 	};
 }

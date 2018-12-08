@@ -124,19 +124,17 @@ namespace winp::ui{
 		}
 
 		template <typename hook_type>
-		hook_type *set_hook(const std::function<void(object &, bool)> &callback = nullptr){
+		hook_type *set_hook(const std::function<void(hook_type &)> &callback = nullptr){
 			if (is_thread_context()){
 				auto result = set_hook_<hook_type>();
-				if (callback != nullptr)
-					callback(*this, result);
+				if (result != nullptr && callback != nullptr)
+					callback(*result);
 				return result;
 			}
 
 			use_context([=]{
-				auto result = set_hook_<hook_type>();
-				if (callback != nullptr)
-					callback(*this, result);
-				return result;
+				if (auto result = set_hook_<hook_type>(); result != nullptr && callback != nullptr)
+					callback(*result);
 			}, thread::queue::send_priority);
 
 			return nullptr;

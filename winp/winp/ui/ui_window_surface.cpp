@@ -267,17 +267,16 @@ bool winp::ui::window_surface::create_(){
 
 	auto styles = (styles_ | get_persistent_styles_());
 	auto extended_styles = (extended_styles_ | get_persistent_extended_styles_());
+	auto offset_from_window_ancestor = compute_offset_from_ancestor_of_<window_surface>();
 
 	thread_.surface_manager_.cache_.creating = this;
-
-	auto offset_from_window_ancestor = ((window_parent == nullptr) ? m_point_type{} : get_offset_from_ancestor_of_<window_surface>(m_point_type{}));
 	auto result = CreateWindowExW(
 		extended_styles,
 		get_class_name_(),
 		get_window_text_(),
 		styles,
-		(position_.x + offset_from_window_ancestor.x),
-		(position_.y + offset_from_window_ancestor.y),
+		offset_from_window_ancestor.x,
+		offset_from_window_ancestor.y,
 		size_.cx,
 		size_.cy,
 		static_cast<HWND>(parent_handle),
@@ -286,8 +285,10 @@ bool winp::ui::window_surface::create_(){
 		static_cast<surface *>(this)
 	);
 
-	if (result != nullptr)
+	if (result != nullptr){
 		post_create_();
+		update_padding_();
+	}
 
 	return (get_handle_() != nullptr);
 }
@@ -352,6 +353,10 @@ winp::ui::surface::m_point_type winp::ui::window_surface::get_client_position_of
 	GetWindowRect(static_cast<HWND>(handle), &window_rect);
 
 	return m_point_type{ (client_offset.x - window_rect.left), (client_offset.y - window_rect.top) };
+}
+
+winp::ui::surface::m_point_type winp::ui::window_surface::compute_child_observable_offset_(const surface &child) const{
+	return child.get_position_();
 }
 
 bool winp::ui::window_surface::set_position_(const m_point_type &value){
@@ -428,6 +433,10 @@ winp::ui::surface::m_rect_type winp::ui::window_surface::get_client_dimension_()
 	return dimension;
 }
 
+bool winp::ui::window_surface::set_padding_(const m_rect_type &value){
+	return false;
+}
+
 winp::ui::surface::m_point_type winp::ui::window_surface::convert_position_from_absolute_value_(const m_point_type &value) const{
 	auto handle = get_handle_();
 	if (handle == nullptr)
@@ -470,6 +479,16 @@ winp::ui::surface::m_rect_type winp::ui::window_surface::convert_dimension_to_ab
 	MapWindowPoints(static_cast<HWND>(handle), HWND_DESKTOP, reinterpret_cast<POINT *>(&r), (sizeof(RECT) / sizeof(POINT)));
 
 	return r;
+}
+
+void winp::ui::window_surface::update_padding_(){
+	auto dimension = get_absolute_dimension_(), client_dimension = convert_dimension_to_absolute_value_(get_client_dimension_());
+	{//Update 
+		padding_.left = (client_dimension.left - dimension.left);
+		padding_.top = (client_dimension.top - dimension.top);
+		padding_.right = (dimension.right - client_dimension.right);
+		padding_.bottom = (dimension.bottom - client_dimension.bottom);
+	}
 }
 
 void winp::ui::window_surface::redraw_(const m_rect_type &region){

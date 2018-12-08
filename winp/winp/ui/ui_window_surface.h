@@ -90,6 +90,8 @@ namespace winp::ui{
 
 		virtual m_point_type get_client_position_offset_() const override;
 
+		virtual m_point_type compute_child_observable_offset_(const surface &child) const override;
+
 		virtual bool set_position_(const m_point_type &value) override;
 
 		virtual m_point_type get_position_() const override;
@@ -104,6 +106,8 @@ namespace winp::ui{
 
 		virtual m_rect_type get_client_dimension_() const override;
 
+		virtual bool set_padding_(const m_rect_type &value) override;
+
 		virtual m_point_type convert_position_from_absolute_value_(const m_point_type &value) const override;
 
 		virtual m_point_type convert_position_to_absolute_value_(const m_point_type &value) const override;
@@ -111,6 +115,8 @@ namespace winp::ui{
 		virtual m_rect_type convert_dimension_from_absolute_value_(const m_rect_type &value) const override;
 
 		virtual m_rect_type convert_dimension_to_absolute_value_(const m_rect_type &value) const override;
+
+		virtual void update_padding_();
 
 		virtual void redraw_(const m_rect_type &region) override;
 

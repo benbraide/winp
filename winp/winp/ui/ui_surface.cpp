@@ -245,6 +245,43 @@ winp::ui::surface::m_rect_type winp::ui::surface::get_absolute_dimension(const s
 	return thread_.queue.execute([this]{ return get_absolute_dimension_(); }, thread::queue::send_priority, id_);
 }
 
+bool winp::ui::surface::set_padding(const m_rect_type &value, const std::function<void(object &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = set_padding_(value);
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
+	thread_.queue.post([=]{
+		auto result = set_padding_(value);
+		if (callback != nullptr)
+			callback(*this, result);
+	}, thread::queue::send_priority, id_);
+
+	return true;
+}
+
+bool winp::ui::surface::set_padding(int left, int top, int right, int bottom, const std::function<void(object &, bool)> &callback){
+	return set_padding(m_rect_type{ left, top, right, bottom }, callback);
+}
+
+winp::ui::surface::m_rect_type winp::ui::surface::get_padding(const std::function<void(const m_rect_type &)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = get_padding_();
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
+	if (callback != nullptr){
+		thread_.queue.post([=]{ callback(get_padding_()); }, thread::queue::send_priority, id_);
+		return m_rect_type{};
+	}
+
+	return thread_.queue.execute([this]{ return get_padding_(); }, thread::queue::send_priority, id_);
+}
+
 winp::ui::surface::m_point_type winp::ui::surface::convert_position_from_absolute_value(const m_point_type &value, const std::function<void(const m_point_type &)> &callback) const{
 	if (thread_.is_thread_context()){
 		auto result = convert_position_from_absolute_value_(value);
@@ -395,7 +432,12 @@ winp::ui::surface::m_size_type winp::ui::surface::get_client_size_() const{
 }
 
 winp::ui::surface::m_point_type winp::ui::surface::get_client_position_offset_() const{
-	return m_point_type{};
+	return m_point_type{ padding_.left, padding_.top };
+}
+
+winp::ui::surface::m_point_type winp::ui::surface::compute_child_observable_offset_(const surface &child) const{
+	auto child_position = child.get_position_(), client_position_offset = get_client_position_offset_();
+	return m_point_type{ (child_position.x + client_position_offset.x), (child_position.y + client_position_offset.y) };
 }
 
 bool winp::ui::surface::set_position_(const m_point_type &value){
@@ -455,8 +497,24 @@ winp::ui::surface::m_rect_type winp::ui::surface::get_absolute_dimension_() cons
 }
 
 winp::ui::surface::m_rect_type winp::ui::surface::get_client_dimension_() const{
-	auto size = get_size_();
-	return m_rect_type{ 0, 0, size.cx, size.cy };
+	auto dimension = get_dimension_();
+	OffsetRect(&dimension, -dimension.left, -dimension.top);//Move to (0, 0)
+
+	return m_rect_type{
+		(dimension.left + padding_.left),
+		(dimension.top + padding_.top),
+		(dimension.right - padding_.right),
+		(dimension.bottom - padding_.bottom)
+	};
+}
+
+bool winp::ui::surface::set_padding_(const m_rect_type &value){
+	padding_ = value;
+	return true;
+}
+
+const winp::ui::surface::m_rect_type &winp::ui::surface::get_padding_() const{
+	return padding_;
 }
 
 winp::ui::surface::m_point_type winp::ui::surface::convert_position_from_absolute_value_(const m_point_type &value) const{

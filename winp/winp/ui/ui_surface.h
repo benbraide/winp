@@ -59,6 +59,12 @@ namespace winp::ui{
 
 		virtual m_rect_type get_absolute_dimension(const std::function<void(const m_rect_type &)> &callback = nullptr) const;
 
+		virtual bool set_padding(const m_rect_type &value, const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual bool set_padding(int left, int top, int right, int bottom, const std::function<void(object &, bool)> &callback = nullptr);
+
+		virtual m_rect_type get_padding(const std::function<void(const m_rect_type &)> &callback = nullptr) const;
+
 		virtual m_point_type convert_position_from_absolute_value(const m_point_type &value, const std::function<void(const m_point_type &)> &callback = nullptr) const;
 
 		virtual m_point_type convert_position_to_absolute_value(const m_point_type &value, const std::function<void(const m_point_type &)> &callback = nullptr) const;
@@ -106,6 +112,24 @@ namespace winp::ui{
 
 		virtual m_point_type get_client_position_offset_() const;
 
+		virtual m_point_type compute_child_observable_offset_(const surface &child) const;
+
+		template <typename target_type>
+		m_point_type compute_child_offset_from_ancestor_of_(const surface &child) const{
+			auto surface_parent = get_first_ancestor_of_<surface>();
+			if (surface_parent == nullptr)
+				return child.get_position_();
+
+			auto observable_offset = compute_child_observable_offset_(child), offset_from_window = surface_parent->compute_child_offset_from_ancestor_of_<target_type>(*this);
+			return m_point_type{ (observable_offset.x + offset_from_window.x), (observable_offset.y + offset_from_window.y) };
+		}
+
+		template <typename target_type>
+		m_point_type compute_offset_from_ancestor_of_() const{
+			auto surface_parent = get_first_ancestor_of_<surface>();
+			return ((surface_parent == nullptr) ? get_position_() : surface_parent->compute_child_offset_from_ancestor_of_<target_type>(*this));
+		}
+
 		virtual bool set_position_(const m_point_type &value);
 
 		virtual bool offset_position_(const m_point_type &value);
@@ -126,6 +150,10 @@ namespace winp::ui{
 
 		virtual m_rect_type get_client_dimension_() const;
 
+		virtual bool set_padding_(const m_rect_type &value);
+
+		virtual const m_rect_type &get_padding_() const;
+
 		virtual m_point_type convert_position_from_absolute_value_(const m_point_type &value) const;
 
 		virtual m_point_type convert_position_to_absolute_value_(const m_point_type &value) const;
@@ -140,17 +168,8 @@ namespace winp::ui{
 
 		virtual utility::hit_target hit_test_(const m_point_type &pt, const m_point_type &pos, const m_size_type &size) const;
 
-		template <typename target_type>
-		m_point_type get_offset_from_ancestor_of_(const m_point_type &ref) const{
-			auto parent = get_surface_parent_();
-			if (parent == nullptr || dynamic_cast<target_type *>(parent) != nullptr)
-				return ref;
-
-			auto parent_position = parent->get_position_();
-			return parent->get_offset_from_ancestor_of_<target_type>(m_point_type{ (parent_position.x + ref.x), (parent_position.y + ref.y) });
-		}
-
 		m_size_type size_{};
 		m_point_type position_{};
+		m_rect_type padding_{};
 	};
 }

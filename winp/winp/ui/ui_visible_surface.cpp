@@ -89,6 +89,39 @@ bool winp::ui::visible_surface::is_transparent(const std::function<void(bool)> &
 	return thread_.queue.execute([this]{ return is_transparent_(); }, thread::queue::send_priority, id_);
 }
 
+bool winp::ui::visible_surface::set_client_transparency(bool is_transparent, const std::function<void(object &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = set_client_transparency_(is_transparent);
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
+	thread_.queue.post([=]{
+		auto result = set_client_transparency_(is_transparent);
+		if (callback != nullptr)
+			callback(*this, result);
+	}, thread::queue::send_priority, id_);
+
+	return true;
+}
+
+bool winp::ui::visible_surface::is_transparent_client(const std::function<void(bool)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto result = is_transparent_client_();
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
+	if (callback != nullptr){
+		thread_.queue.post([=]{ callback(is_transparent_client_()); }, thread::queue::send_priority, id_);
+		return false;
+	}
+
+	return thread_.queue.execute([this]{ return is_transparent_client_(); }, thread::queue::send_priority, id_);
+}
+
 bool winp::ui::visible_surface::set_background_color(const D2D1::ColorF &value, const std::function<void(object &, bool)> &callback){
 	if (thread_.is_thread_context()){
 		auto result = set_background_color_(value);
@@ -108,7 +141,7 @@ bool winp::ui::visible_surface::set_background_color(const D2D1::ColorF &value, 
 
 D2D1::ColorF winp::ui::visible_surface::get_background_color(const std::function<void(const D2D1::ColorF &)> &callback) const{
 	if (thread_.is_thread_context()){
-		auto result = get_background_color_();
+		auto &result = get_background_color_();
 		if (callback != nullptr)
 			callback(result);
 		return result;
@@ -122,6 +155,39 @@ D2D1::ColorF winp::ui::visible_surface::get_background_color(const std::function
 	return *(thread_.queue.execute([this]{ return &get_background_color_(); }, thread::queue::send_priority, id_));
 }
 
+bool winp::ui::visible_surface::set_client_background_color(const D2D1::ColorF &value, const std::function<void(object &, bool)> &callback){
+	if (thread_.is_thread_context()){
+		auto result = set_client_background_color_(value);
+		if (callback != nullptr)
+			callback(*this, result);
+		return result;
+	}
+
+	thread_.queue.post([=]{
+		auto result = set_client_background_color_(value);
+		if (callback != nullptr)
+			callback(*this, result);
+	}, thread::queue::send_priority, id_);
+
+	return true;
+}
+
+D2D1::ColorF winp::ui::visible_surface::get_client_background_color(const std::function<void(const D2D1::ColorF &)> &callback) const{
+	if (thread_.is_thread_context()){
+		auto &result = get_client_background_color_();
+		if (callback != nullptr)
+			callback(result);
+		return result;
+	}
+
+	if (callback != nullptr){
+		thread_.queue.post([=]{ callback(get_client_background_color_()); }, thread::queue::send_priority, id_);
+		return D2D1::ColorF(0);
+	}
+
+	return *(thread_.queue.execute([this]{ return &get_client_background_color_(); }, thread::queue::send_priority, id_));
+}
+
 winp::ui::visible_surface::m_colorf winp::ui::visible_surface::convert_from_d2d1_colorf(const D2D1::ColorF &value){
 	return m_colorf{ value.r, value.g, value.b, value.a };
 }
@@ -132,7 +198,7 @@ D2D1::ColorF winp::ui::visible_surface::convert_to_d2d1_colorf(const m_colorf &v
 
 void winp::ui::visible_surface::init_(){
 	auto sys_color = GetSysColor(COLOR_WINDOW);
-	background_color_ = D2D1::ColorF(
+	client_background_color_ = background_color_ = D2D1::ColorF(
 		(GetRValue(sys_color) / 255.0f),
 		(GetGValue(sys_color) / 255.0f),
 		(GetBValue(sys_color) / 255.0f)
@@ -161,6 +227,14 @@ bool winp::ui::visible_surface::is_transparent_() const{
 	return false;
 }
 
+bool winp::ui::visible_surface::set_client_transparency_(bool is_transparent){
+	return false;
+}
+
+bool winp::ui::visible_surface::is_transparent_client_() const{
+	return false;
+}
+
 bool winp::ui::visible_surface::set_background_color_(const D2D1::ColorF &value){
 	background_color_ = value;
 	redraw_(m_rect_type{});
@@ -169,4 +243,14 @@ bool winp::ui::visible_surface::set_background_color_(const D2D1::ColorF &value)
 
 const D2D1::ColorF &winp::ui::visible_surface::get_background_color_() const{
 	return background_color_;
+}
+
+bool winp::ui::visible_surface::set_client_background_color_(const D2D1::ColorF &value){
+	client_background_color_ = value;
+	redraw_(m_rect_type{});
+	return true;
+}
+
+const D2D1::ColorF &winp::ui::visible_surface::get_client_background_color_() const{
+	return client_background_color_;
 }
