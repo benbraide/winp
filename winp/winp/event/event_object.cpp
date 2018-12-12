@@ -185,7 +185,7 @@ void winp::event::draw::begin_(){
 	if (struct_.hdc == nullptr && dynamic_cast<ui::window_surface *>(context_) == nullptr){
 		switch (info_.message){
 		case WINP_WM_ERASE_BACKGROUND:
-		case WINP_WM_ERASE_CLIENT_BACKGROUND:
+		case WINP_WM_ERASE_NON_CLIENT_BACKGROUND:
 			struct_.hdc = GetDC(info_.hwnd);
 			struct_.rcPaint = *reinterpret_cast<m_rect_type *>(info_.wParam);
 			struct_.fErase = TRUE;
@@ -211,15 +211,15 @@ void winp::event::draw::begin_(){
 
 	auto offset = surface_target->compute_offset_from_ancestor_of_<ui::window_surface>();
 	if (auto non_window_target = dynamic_cast<non_window::child *>(context_); non_window_target != nullptr){
-		if (info_.message == WINP_WM_ERASE_CLIENT_BACKGROUND || (info_.message == WINP_WM_PAINT && non_window_target->client_handle_ != nullptr)){//Clip to client region
-			SelectClipRgn(struct_.hdc, non_window_target->client_handle_);
+		if (info_.message != WINP_WM_ERASE_NON_CLIENT_BACKGROUND){//Clip to client region
+			SelectClipRgn(struct_.hdc, static_cast<HRGN>(non_window_target->get_handle_()));
 			{//Offset by additional padding
 				offset.x += non_window_target->padding_.left;
 				offset.y += non_window_target->padding_.top;
 			}
 		}
-		else//Clip to outer region
-			SelectClipRgn(struct_.hdc, static_cast<HRGN>(context_->get_handle_()));
+		else if (non_window_target->non_client_handle_ != nullptr)//Clip to outer region
+			SelectClipRgn(struct_.hdc, non_window_target->non_client_handle_);
 
 		OffsetClipRgn(struct_.hdc, offset.x, offset.y);
 		IntersectClipRect(struct_.hdc, struct_.rcPaint.left, struct_.rcPaint.top, struct_.rcPaint.right, struct_.rcPaint.bottom);
@@ -651,6 +651,6 @@ winp::event::position::position(ui::object &target, ui::object &context, const c
 winp::event::position::~position() = default;
 
 SIZE winp::event::position::get_offset() const{
-	auto previous_dimension = dynamic_cast<ui::surface *>(context_)->get_absolute_dimension(), *current_dimension = reinterpret_cast<RECT *>(info_.lParam);;
+	auto previous_dimension = dynamic_cast<ui::surface *>(context_)->get_absolute_dimension(), *current_dimension = reinterpret_cast<RECT *>(info_.lParam);
 	return SIZE{ (current_dimension->left - previous_dimension.left), (current_dimension->top - previous_dimension.top) };
 }

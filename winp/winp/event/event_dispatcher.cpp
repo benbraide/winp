@@ -81,7 +81,7 @@ void winp::event::draw_dispatcher::dispatch_(object &e){
 		switch (e.get_info()->message){
 		case WM_ERASEBKGND:
 		case WINP_WM_ERASE_BACKGROUND:
-		case WINP_WM_ERASE_CLIENT_BACKGROUND:
+		case WINP_WM_ERASE_NON_CLIENT_BACKGROUND:
 			handler->handle_background_erase_event_(dynamic_cast<draw &>(e));
 			break;
 		case WM_PAINT:
@@ -92,7 +92,7 @@ void winp::event::draw_dispatcher::dispatch_(object &e){
 			break;
 		}
 	}
-	else if ((e.get_info()->message == WM_ERASEBKGND || e.get_info()->message == WINP_WM_ERASE_BACKGROUND || e.get_info()->message == WINP_WM_ERASE_CLIENT_BACKGROUND) && dynamic_cast<unhandled_handler *>(e.get_context()) == nullptr)//Do default painting
+	else if ((e.get_info()->message == WM_ERASEBKGND || e.get_info()->message == WINP_WM_ERASE_BACKGROUND || e.get_info()->message == WINP_WM_ERASE_NON_CLIENT_BACKGROUND) && dynamic_cast<unhandled_handler *>(e.get_context()) == nullptr)//Do default painting
 		erase_background_(dynamic_cast<draw &>(e));
 	else//Events are not subscribed to
 		dispatcher::dispatch_(e);
@@ -102,8 +102,8 @@ void winp::event::draw_dispatcher::erase_background_(draw &e){
 	auto visible_surface = dynamic_cast<ui::visible_surface *>(e.get_context());
 	if (visible_surface != nullptr && !visible_surface->is_transparent_()){
 		auto drawer = e.get_drawer_();
-		if (drawer != nullptr && e.info_.message == WINP_WM_ERASE_CLIENT_BACKGROUND)
-			drawer->Clear(visible_surface->get_client_background_color_());
+		if (drawer != nullptr && e.info_.message == WINP_WM_ERASE_NON_CLIENT_BACKGROUND)
+			drawer->Clear(dynamic_cast<non_window::child *>(visible_surface)->non_client_background_color_);
 		else if (drawer != nullptr)
 			drawer->Clear(visible_surface->get_background_color_());
 	}

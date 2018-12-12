@@ -147,22 +147,18 @@ void winp::ui::alignment_modifier::do_modify_alignment_(){
 	if (surface_parent == nullptr)
 		return;//Ignore
 
-	POINT position{};
+	auto position = offset_;
 	auto size = surface_target->get_size(), parent_size = surface_parent->get_client_size();
 
-	if ((alignment_ & align_left) != 0u)
-		position.x = 0;
-	else if ((alignment_ & align_center) != 0u)
-		position.x = ((parent_size.cx - size.cx) / 2);
+	if ((alignment_ & align_center) != 0u)
+		position.x += ((parent_size.cx - size.cx) / 2);
 	else if ((alignment_ & align_right) != 0u)
-		position.x = (parent_size.cx - size.cx);
+		position.x += (parent_size.cx - size.cx);
 
-	if ((alignment_ & align_left) != 0u)
-		position.y = 0;
-	else if ((alignment_ & align_center) != 0u)
-		position.y = ((parent_size.cy - size.cy) / 2);
-	else if ((alignment_ & align_right) != 0u)
-		position.y = (parent_size.cy - size.cy);
+	if ((alignment_ & align_vcenter) != 0u)
+		position.y += ((parent_size.cy - size.cy) / 2);
+	else if ((alignment_ & align_bottom) != 0u)
+		position.y += (parent_size.cy - size.cy);
 
 	surface_target->set_position(position);
 }

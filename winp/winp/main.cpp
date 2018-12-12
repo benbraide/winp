@@ -78,12 +78,15 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_sh
 
 	nwc.set_position(POINT{ 10, 10 });
 	nwc.set_size(SIZE{ 450, 270 });
-	nwc.set_background_color(D2D1::ColorF(D2D1::ColorF::SkyBlue));
+	nwc.set_non_client_background_color(D2D1::ColorF(D2D1::ColorF::SkyBlue));
 	nwc.set_client_background_color(D2D1::ColorF(D2D1::ColorF::Red));
 	nwc.set_client_border_type(winp::non_window::child::border_type::ellipse);
-	nwc.set_padding(10, 30, 10, 20);
+	nwc.set_padding(10, 60, 10, 20);
 	nwc.create();
-	nwc.set_hook<winp::ui::alignment_modifier>()->set_alignment_modifier_alignment(winp::ui::alignment_modifier::align_bottom | winp::ui::alignment_modifier::align_right);
+
+	auto hook = nwc.set_hook<winp::ui::alignment_modifier>();
+	hook->set_alignment_modifier_alignment(winp::ui::alignment_modifier::align_bottom | winp::ui::alignment_modifier::align_right);
+	hook->set_alignment_modifier_offset(-20, -10);
 
 	winp::non_window::child nwc2(nwc);
 	//nwc2.set_position(POINT{ 50, 50 });

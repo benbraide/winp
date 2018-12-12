@@ -41,12 +41,12 @@ namespace winp::ui{
 
 		virtual ~io_surface();
 
-		mouse_event_info mouse_event{ *this };;
-		key_event_info key_event{ *this };;
+		mouse_event_info mouse_event{ *this };
+		key_event_info key_event{ *this };
 
-		event::manager<io_surface, event::cursor> set_cursor_event{ *this };;
-		event::manager<io_surface, event::object> set_focus_event{ *this };;
-		event::manager<io_surface, event::object> kill_focus_event{ *this };;
+		event::manager<io_surface, event::cursor> set_cursor_event{ *this };
+		event::manager<io_surface, event::object> set_focus_event{ *this };
+		event::manager<io_surface, event::object> kill_focus_event{ *this };
 
 	protected:
 		friend class message::mouse_dispatcher;
