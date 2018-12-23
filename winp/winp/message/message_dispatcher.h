@@ -31,11 +31,11 @@ namespace winp::message{
 
 		dispatcher(bool);
 
-		virtual LRESULT dispatch_(ui::object &target, const MSG &info, bool call_default, unsigned int *states);
+		virtual LRESULT dispatch_(ui::object &target, const MSG &info, bool call_default, unsigned int *states, RECT *draw_clip = nullptr);
 
-		virtual LRESULT dispatch_(ui::object &target, ui::object &context, const MSG &info, bool call_default, unsigned int *states);
+		virtual LRESULT dispatch_(ui::object &target, ui::object &context, const MSG &info, bool call_default, unsigned int *states, RECT *draw_clip = nullptr);
 
-		virtual LRESULT dispatch_(event::object &e, bool call_default, unsigned int *states);
+		virtual LRESULT dispatch_(event::object &e, bool call_default, unsigned int *states, RECT *draw_clip = nullptr);
 
 		virtual void pre_dispatch_(event::object &e, bool &call_default);
 

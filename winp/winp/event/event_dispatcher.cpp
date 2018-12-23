@@ -92,8 +92,21 @@ void winp::event::draw_dispatcher::dispatch_(object &e){
 			break;
 		}
 	}
-	else if ((e.get_info()->message == WM_ERASEBKGND || e.get_info()->message == WINP_WM_ERASE_BACKGROUND || e.get_info()->message == WINP_WM_ERASE_NON_CLIENT_BACKGROUND) && dynamic_cast<unhandled_handler *>(e.get_context()) == nullptr)//Do default painting
-		erase_background_(dynamic_cast<draw &>(e));
+	else if (dynamic_cast<unhandled_handler *>(e.get_context()) == nullptr){
+		switch (e.get_info()->message){
+		case WM_ERASEBKGND:
+		case WINP_WM_ERASE_BACKGROUND:
+		case WINP_WM_ERASE_NON_CLIENT_BACKGROUND:
+			erase_background_(dynamic_cast<draw &>(e));
+			break;
+		case WM_PAINT:
+		case WM_PRINTCLIENT:
+			dynamic_cast<draw &>(e).get_device_();//Trigger paint begin
+			break;
+		default:
+			break;
+		}
+	}
 	else//Events are not subscribed to
 		dispatcher::dispatch_(e);
 }
@@ -319,15 +332,12 @@ SIZE winp::event::draw_item_dispatcher::measure_item_(ui::object &item, HWND han
 	auto control_target = dynamic_cast<control::object *>(&item);
 
 	SIZE result{};
-	if (control_target != nullptr){
-		auto size = control_target->compute_size_();
-		auto additional_size = control_target->compute_additional_size_();
-		result = SIZE{ (size.cx + additional_size.cx), (size.cy + additional_size.cy) };
-	}
-	else if (menu_item_target != nullptr){
+	if (menu_item_target != nullptr){
 		auto label = menu_item_target->get_label_();
 		result = control::object::compute_size(handle, device, menu_item_target->get_font_(), ((label == nullptr) ? L"" : *label));
 	}
+	else if (control_target != nullptr)
+		result = control_target->get_computed_size_();
 
 	if (menu_item_target != nullptr){
 		if (menu_item_target->is_popup_item_()){

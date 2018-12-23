@@ -1,8 +1,19 @@
 #include "../app/app_object.h"
 
 void winp::event::unhandled_handler::handle_unhandled_event_(object &e){
-	if (e.get_info()->message == WM_ERASEBKGND || e.get_info()->message == WINP_WM_ERASE_BACKGROUND || e.get_info()->message == WINP_WM_ERASE_NON_CLIENT_BACKGROUND)
+	switch (e.get_info()->message){
+	case WM_ERASEBKGND:
+	case WINP_WM_ERASE_BACKGROUND:
+	case WINP_WM_ERASE_NON_CLIENT_BACKGROUND:
 		draw_dispatcher::erase_background_(dynamic_cast<draw &>(e));
+		break;
+	case WM_PAINT:
+	case WM_PRINTCLIENT:
+		dynamic_cast<draw &>(e).get_device_();//Trigger paint begin
+		break;
+	default:
+		break;
+	}
 }
 
 bool winp::event::tree_handler::handle_parent_change_event_(tree &e){
@@ -43,7 +54,9 @@ void winp::event::draw_handler::handle_background_erase_event_(draw &e){
 	draw_dispatcher::erase_background_(e);
 }
 
-void winp::event::draw_handler::handle_paint_event_(draw &e){}
+void winp::event::draw_handler::handle_paint_event_(draw &e){
+	e.get_device_();//Trigger paint begin
+}
 
 void winp::event::draw_item_handler::handle_draw_item_event_(draw_item &e){}
 

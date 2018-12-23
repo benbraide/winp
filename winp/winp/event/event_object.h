@@ -148,7 +148,9 @@ namespace winp::event{
 
 		callback_type default_handler_;
 		LRESULT result_;
+
 		info_type info_;
+		RECT actual_clip_{};
 	};
 
 	class tree : public object{

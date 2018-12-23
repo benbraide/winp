@@ -265,7 +265,7 @@ bool winp::ui::window_surface::create_(){
 	if (parent_handle == nullptr && window_parent != nullptr)
 		return false;//Parent not created
 
-	auto styles = (styles_ | get_persistent_styles_());
+	auto styles = (styles_ | get_persistent_styles_() | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
 	auto extended_styles = (extended_styles_ | get_persistent_extended_styles_());
 	auto offset_from_window_ancestor = compute_offset_from_ancestor_of_<window_surface>();
 

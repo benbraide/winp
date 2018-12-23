@@ -1,6 +1,7 @@
 #include "app/app_object.h"
 
 #include "window/frame_window.h"
+#include "control/button_control.h"
 
 int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_show){
 	winp::window::frame ws;
@@ -52,6 +53,11 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_sh
 			}, 0);
 		});
 	});
+
+	winp::control::button btn(ws);
+	btn.set_position(10, 10);
+	btn.set_text(L"Button");
+	btn.create();
 
 	winp::non_window::child nwc(ws);
 	nwc.draw_event += [](winp::event::draw &e){

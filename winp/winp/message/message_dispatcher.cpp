@@ -7,16 +7,16 @@ winp::message::dispatcher::dispatcher()
 
 winp::message::dispatcher::dispatcher(bool){}
 
-LRESULT winp::message::dispatcher::dispatch_(ui::object &target, const MSG &info, bool call_default, unsigned int *states){
-	return dispatch_(target, target, info, call_default, states);
+LRESULT winp::message::dispatcher::dispatch_(ui::object &target, const MSG &info, bool call_default, unsigned int *states, RECT *draw_clip){
+	return dispatch_(target, target, info, call_default, states, draw_clip);
 }
 
-LRESULT winp::message::dispatcher::dispatch_(ui::object &target, ui::object &context, const MSG &info, bool call_default, unsigned int *states){
+LRESULT winp::message::dispatcher::dispatch_(ui::object &target, ui::object &context, const MSG &info, bool call_default, unsigned int *states, RECT *draw_clip){
 	auto e = create_event_(target, context, info, call_default);
-	return ((e == nullptr) ? 0 : dispatch_(*e, call_default, states));
+	return ((e == nullptr) ? 0 : dispatch_(*e, call_default, states, draw_clip));
 }
 
-LRESULT winp::message::dispatcher::dispatch_(event::object &e, bool call_default, unsigned int *states){
+LRESULT winp::message::dispatcher::dispatch_(event::object &e, bool call_default, unsigned int *states, RECT *draw_clip){
 	e.state_ &= ~event::object::state_type::default_called;
 	pre_dispatch_(e, call_default);
 
@@ -27,6 +27,11 @@ LRESULT winp::message::dispatcher::dispatch_(event::object &e, bool call_default
 
 	if (states != nullptr)//Update states
 		*states = e.state_;
+
+	if (draw_clip != nullptr){//Get clip
+		if (auto draw_event = dynamic_cast<event::draw *>(&e); draw_event != nullptr)
+			*draw_clip = draw_event->actual_clip_;
+	}
 
 	return e.get_result_();
 }

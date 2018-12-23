@@ -26,9 +26,17 @@ namespace winp::control{
 		friend class event::draw_item_dispatcher;
 		friend class menu::object;
 
+		virtual const wchar_t *get_theme_name_() const override;
+
 		virtual void add_to_toplevel_(bool update = false) override;
 
 		virtual void post_create_() override;
+
+		virtual bool set_padding_(const m_rect_type &value) override;
+
+		virtual HINSTANCE get_instance_() const override;
+
+		virtual const wchar_t *get_window_text_() const override;
 
 		virtual DWORD get_filtered_styles_() const override;
 
@@ -40,16 +48,21 @@ namespace winp::control{
 
 		virtual HFONT get_font_() const;
 
+		virtual void font_changed_(HFONT old_font);
+
 		virtual bool set_text_(const std::wstring &value);
 
-		virtual std::wstring get_text_() const;
+		virtual const std::wstring &get_text_() const;
 
 		virtual void update_size_();
 
+		virtual m_size_type get_computed_size_() const;
+
 		virtual m_size_type compute_size_() const;
 
-		virtual m_size_type compute_additional_size_() const;
+		virtual m_size_type compute_additional_size_(const m_size_type &size) const;
 
+		std::wstring text_;
 		HFONT font_ = nullptr;
 	};
 }

@@ -99,20 +99,20 @@ LRESULT winp::thread::surface_manager::destroy_window_(ui::surface &target, cons
 }
 
 LRESULT winp::thread::surface_manager::draw_(ui::surface &target, const MSG &info, bool prevent_default, m_rect_type update_region){
-	if (IsRectEmpty(&update_region) != FALSE)
-		GetUpdateRect(static_cast<HWND>(target.get_handle_()), &update_region, FALSE);
-
 	if (info.message == WINP_WM_PAINT){//Erase background
 		if (auto non_window_target = dynamic_cast<non_window::child *>(&target); non_window_target != nullptr && non_window_target->non_client_handle_ != nullptr)
 			find_dispatcher_(WINP_WM_ERASE_NON_CLIENT_BACKGROUND)->dispatch_(target, MSG{ info.hwnd, WINP_WM_ERASE_NON_CLIENT_BACKGROUND, info.wParam, info.lParam }, !prevent_default, nullptr);
 		find_dispatcher_(WINP_WM_ERASE_BACKGROUND)->dispatch_(target, MSG{ info.hwnd, WINP_WM_ERASE_BACKGROUND, info.wParam, info.lParam }, !prevent_default, nullptr);
 	}
 	
-	find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default, nullptr);
-	ui::visible_surface *visible_child = nullptr;
+	if (dynamic_cast<ui::window_surface *>(&target) == nullptr)
+		find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default, nullptr);
+	else//Get clip
+		find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default, nullptr, &update_region);
 
+	ui::visible_surface *visible_child = nullptr;
 	for (auto child : target.children_){
-		if ((visible_child = dynamic_cast<ui::visible_surface *>(child)) != nullptr && visible_child->is_created_())
+		if (dynamic_cast<ui::window_surface *>(child) == nullptr && (visible_child = dynamic_cast<ui::visible_surface *>(child)) != nullptr && visible_child->is_created_())
 			draw_(*visible_child, MSG{ info.hwnd, WINP_WM_PAINT, reinterpret_cast<WPARAM>(&update_region), info.lParam }, true, update_region);
 	}
 

@@ -42,10 +42,8 @@ void winp::event::object::prevent_default(){
 }
 
 void winp::event::object::do_default(){
-	if (thread_.is_thread_context() && (state_ & state_type::default_prevented) == 0u){
-		state_ |= state_type::default_prevented;
+	if (thread_.is_thread_context())
 		do_default_();
-	}
 }
 
 void winp::event::object::stop_propagation(){
@@ -73,9 +71,10 @@ bool winp::event::object::bubble_(){
 }
 
 void winp::event::object::do_default_(){
-	if (default_handler_ != nullptr && !default_prevented_()){
-		default_handler_(*this);
-		state_ |= state_type::default_prevented;
+	if (!default_prevented_() && !default_done_()){
+		state_ |= state_type::default_done;
+		if (default_handler_ != nullptr)
+			default_handler_(*this);
 	}
 }
 
@@ -167,17 +166,17 @@ void winp::event::draw::begin_(){
 	switch (info_.message){
 	case WM_PAINT:
 		BeginPaint(info_.hwnd, &struct_);
-		return;
+		break;
 	case WM_PRINTCLIENT:
 		struct_.hdc = reinterpret_cast<HDC>(info_.wParam);
 		GetClipBox(struct_.hdc, &struct_.rcPaint);
 		struct_.fErase = (((info_.lParam & PRF_ERASEBKGND) == PRF_ERASEBKGND) ? TRUE : FALSE);
-		return;
+		break;
 	case WM_ERASEBKGND:
 		struct_.hdc = reinterpret_cast<HDC>(info_.wParam);
 		GetClipBox(struct_.hdc, &struct_.rcPaint);
 		struct_.fErase = TRUE;
-		return;
+		break;
 	default:
 		break;
 	}
@@ -205,28 +204,39 @@ void winp::event::draw::begin_(){
 	else if (struct_.hdc == nullptr)
 		return;//Error
 
+	actual_clip_ = struct_.rcPaint;
 	auto surface_target = dynamic_cast<ui::surface *>(context_);
-	if (surface_target == nullptr)
+
+	if (surface_target == nullptr || dynamic_cast<ui::window_surface *>(context_) != nullptr)
 		return;//Do nothing
 
 	auto offset = surface_target->compute_offset_from_ancestor_of_<ui::window_surface>();
-	if (auto non_window_target = dynamic_cast<non_window::child *>(context_); non_window_target != nullptr){
-		if (info_.message != WINP_WM_ERASE_NON_CLIENT_BACKGROUND){//Clip to client region
-			SelectClipRgn(struct_.hdc, static_cast<HRGN>(non_window_target->get_handle_()));
-			{//Offset by additional padding
-				offset.x += non_window_target->padding_.left;
-				offset.y += non_window_target->padding_.top;
-			}
-		}
-		else if (non_window_target->non_client_handle_ != nullptr)//Clip to outer region
-			SelectClipRgn(struct_.hdc, non_window_target->non_client_handle_);
+	RECT dimension{};
 
-		OffsetClipRgn(struct_.hdc, offset.x, offset.y);
-		IntersectClipRect(struct_.hdc, struct_.rcPaint.left, struct_.rcPaint.top, struct_.rcPaint.right, struct_.rcPaint.bottom);
+	auto non_window_target = dynamic_cast<non_window::child *>(context_);
+	if (non_window_target != nullptr && info_.message != WINP_WM_ERASE_NON_CLIENT_BACKGROUND){//Clip to client region
+		SelectClipRgn(struct_.hdc, static_cast<HRGN>(non_window_target->get_handle_()));
+		{//Offset by additional padding
+			offset.x += non_window_target->padding_.left;
+			offset.y += non_window_target->padding_.top;
+		}
+
+		dimension = surface_target->get_client_dimension_();
 	}
-	
+	else if (non_window_target != nullptr && non_window_target->non_client_handle_ != nullptr){//Clip to outer region
+		SelectClipRgn(struct_.hdc, non_window_target->non_client_handle_);
+		dimension = surface_target->get_dimension_();
+	}
+
+	OffsetRect(&dimension, (offset.x - dimension.left), (offset.y - dimension.top));//Move relative to offset
+	OffsetClipRgn(struct_.hdc, offset.x, offset.y);
+	IntersectClipRect(struct_.hdc, struct_.rcPaint.left, struct_.rcPaint.top, struct_.rcPaint.right, struct_.rcPaint.bottom);
+
 	SetViewportOrgEx(struct_.hdc, offset.x, offset.y, nullptr);
-	OffsetRect(&struct_.rcPaint, -struct_.rcPaint.left, -struct_.rcPaint.top);//Move to (0, 0)
+	IntersectRect(&struct_.rcPaint, &struct_.rcPaint, &dimension);
+
+	OffsetRect(&dimension, -offset.x, -offset.y);
+	struct_.rcPaint = dimension;
 }
 
 ID2D1RenderTarget *winp::event::draw::get_drawer_(){
