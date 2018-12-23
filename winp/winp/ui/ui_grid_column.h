@@ -47,7 +47,7 @@ namespace winp::ui::grid{
 
 		virtual ~proportional_column();
 
-		virtual bool set_proportion(float value, const std::function<void(ui::object &, bool)> &callback = nullptr);
+		virtual bool set_proportion(float value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual float get_proportion(const std::function<void(float)> &callback = nullptr) const;
 

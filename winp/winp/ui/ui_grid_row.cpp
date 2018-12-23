@@ -88,37 +88,16 @@ winp::ui::grid::proportional_row::proportional_row(grid::row &parent)
 
 winp::ui::grid::proportional_row::~proportional_row() = default;
 
-bool winp::ui::grid::proportional_row::set_proportion(float value, const std::function<void(ui::object &, bool)> &callback){
-	if (thread_.is_thread_context()){
-		auto result = set_proportion_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		auto result = set_proportion_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+bool winp::ui::grid::proportional_row::set_proportion(float value, const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, set_proportion_(value));
+	});
 }
 
 float winp::ui::grid::proportional_row::get_proportion(const std::function<void(float)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = get_proportion_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(get_proportion_()); }, thread::queue::send_priority, id_);
-		return false;
-	}
-
-	return thread_.queue.execute([this]{ return get_proportion_(); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, get_proportion_());
+	}, callback != nullptr);
 }
 
 int winp::ui::grid::proportional_row::compute_fixed_height_(int grid_height) const{
