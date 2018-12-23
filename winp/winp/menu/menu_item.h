@@ -21,23 +21,23 @@ namespace winp::menu{
 
 		virtual ui::surface *get_popup(const std::function<void(ui::surface *)> &callback = nullptr) const;
 
-		virtual bool set_label(const std::wstring &value, const std::function<void(item_component &, bool)> &callback = nullptr);
+		virtual bool set_label(const std::wstring &value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual const std::wstring *get_label(const std::function<void(const std::wstring &)> &callback = nullptr) const;
 
-		virtual bool set_shortcut(const std::wstring &value, const std::function<void(item_component &, bool)> &callback = nullptr);
+		virtual bool set_shortcut(const std::wstring &value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual const std::wstring *get_shortcut(const std::function<void(const std::wstring &)> &callback = nullptr) const;
 
-		virtual bool make_default(const std::function<void(item_component &, bool)> &callback = nullptr);
+		virtual bool make_default(const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual bool is_default(const std::function<void(bool)> &callback = nullptr) const;
 
-		virtual bool set_bitmap(HBITMAP value, const std::function<void(item_component &, bool)> &callback = nullptr);
+		virtual bool set_bitmap(HBITMAP value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual HBITMAP get_bitmap(const std::function<void(HBITMAP)> &callback = nullptr) const;
 
-		virtual bool select(const std::function<void(item_component &, bool)> &callback = nullptr);
+		virtual bool select(const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		event::manager<item, event::object> init_event{ *this };
 		event::manager<item, event::object> select_event{ *this };

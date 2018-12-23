@@ -24,21 +24,21 @@ namespace winp::ui{
 
 		virtual ~visible_surface();
 
-		virtual bool show(const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool show(const std::function<void(thread::item &, bool)> &callback = nullptr);
 
-		virtual bool show(int how, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool show(int how, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
-		virtual bool hide(const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool hide(const std::function<void(thread::item &, bool)> &callback = nullptr);
 
-		virtual bool set_visibility(bool is_visible, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_visibility(bool is_visible, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual bool is_visible(const std::function<void(bool)> &callback = nullptr) const;
 
-		virtual bool set_transparency(bool is_transparent, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_transparency(bool is_transparent, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual bool is_transparent(const std::function<void(bool)> &callback = nullptr) const;
 
-		virtual bool set_background_color(const D2D1::ColorF &value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_background_color(const D2D1::ColorF &value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual D2D1::ColorF get_background_color(const std::function<void(const D2D1::ColorF &)> &callback = nullptr) const;
 

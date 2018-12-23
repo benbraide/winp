@@ -11,11 +11,11 @@ namespace winp::window{
 
 		virtual ~frame();
 
-		virtual bool set_caption(const std::wstring &value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_caption(const std::wstring &value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual std::wstring get_caption(const std::function<void(const std::wstring &)> &callback = nullptr) const;
 
-		virtual menu::wrapper_collection *get_system_menu(const std::function<void(menu::wrapper_collection &)> &callback = nullptr);
+		virtual menu::wrapper_collection &get_system_menu(const std::function<void(menu::wrapper_collection &)> &callback = nullptr);
 
 		event::manager<frame, event::object> close_event{ *this };
 		event::manager<frame, event::object> maximized_event{ *this };
@@ -33,8 +33,6 @@ namespace winp::window{
 		virtual bool set_caption_(const std::wstring &value);
 
 		virtual const std::wstring &get_caption_() const;
-
-		virtual menu::wrapper_collection *get_system_menu_();
 
 		std::wstring caption_;
 		menu::wrapper_collection system_menu_;

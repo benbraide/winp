@@ -18,21 +18,10 @@ winp::menu::wrapper::~wrapper(){
 	destruct();
 }
 
-bool winp::menu::wrapper::init(HMENU value, const std::function<void(wrapper &, bool)> &callback){
-	if (thread_.is_thread_context()){
-		auto result = init_(value);
-		if (callback)
-			callback(*this, result);
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		auto result = init_(value);
-		if (callback)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+bool winp::menu::wrapper::init(HMENU value, const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, init_(value));
+	});
 }
 
 bool winp::menu::wrapper::create_(){

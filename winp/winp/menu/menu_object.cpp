@@ -20,19 +20,9 @@ winp::menu::object::~object(){
 }
 
 bool winp::menu::object::is_popup(const std::function<void(bool)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = is_popup_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(is_popup_()); }, thread::queue::send_priority, id_);
-		return false;
-	}
-
-	return thread_.queue.execute([this]{ return is_popup_(); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, is_popup_());
+	}, callback != nullptr);
 }
 
 void winp::menu::object::event_handlers_count_changed_(event::manager_base &e, std::size_t previous_count, std::size_t current_count){

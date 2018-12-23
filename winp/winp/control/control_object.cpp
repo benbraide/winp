@@ -11,70 +11,28 @@ winp::control::object::object(thread::object &thread)
 
 winp::control::object::~object() = default;
 
-bool winp::control::object::set_font(HFONT value, const std::function<void(object &, bool)> &callback){
-	if (thread_.is_thread_context()){
-		auto result = set_font_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		auto result = set_font_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+bool winp::control::object::set_font(HFONT value, const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, set_font_(value));
+	});
 }
 
 HFONT winp::control::object::get_font(const std::function<void(HFONT)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = get_font_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(get_font_()); }, thread::queue::send_priority, id_);
-		return nullptr;
-	}
-
-	return thread_.queue.execute([this]{ return get_font_(); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, get_font_());
+	}, callback != nullptr);
 }
 
-bool winp::control::object::set_text(const std::wstring &value, const std::function<void(object &, bool)> &callback){
-	if (thread_.is_thread_context()){
-		auto result = set_text_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		auto result = set_text_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+bool winp::control::object::set_text(const std::wstring &value, const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, set_text_(value));
+	});
 }
 
 std::wstring winp::control::object::get_text(const std::function<void(const std::wstring &)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto &result = get_text_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(get_text_()); }, thread::queue::send_priority, id_);
-		return L"";
-	}
-
-	return thread_.queue.execute([this]{ return get_text_(); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, get_text_());
+	}, callback != nullptr);
 }
 
 winp::ui::surface::m_size_type winp::control::object::compute_size(HWND handle, HDC device, HFONT font, const std::wstring &text){

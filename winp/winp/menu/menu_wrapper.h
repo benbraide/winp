@@ -22,7 +22,7 @@ namespace winp::menu{
 
 		virtual ~wrapper();
 
-		bool init(HMENU value, const std::function<void(wrapper &, bool)> &callback = nullptr);
+		bool init(HMENU value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 	protected:
 		friend class thread::surface_manager;

@@ -21,13 +21,13 @@ namespace winp::ui{
 
 		virtual ~surface();
 
-		virtual bool set_size(const m_size_type &value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_size(const m_size_type &value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
-		virtual bool set_size(int width, int height, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_size(int width, int height, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
-		virtual bool offset_size(const m_size_type &value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool offset_size(const m_size_type &value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
-		virtual bool offset_size(int width, int height, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool offset_size(int width, int height, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual m_size_type get_size(const std::function<void(const m_size_type &)> &callback = nullptr) const;
 
@@ -35,33 +35,33 @@ namespace winp::ui{
 
 		virtual m_point_type get_client_position_offset(const std::function<void(const m_point_type &)> &callback = nullptr) const;
 
-		virtual bool set_position(const m_point_type &value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_position(const m_point_type &value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
-		virtual bool set_position(int x, int y, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_position(int x, int y, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
-		virtual bool offset_position(const m_point_type &value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool offset_position(const m_point_type &value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
-		virtual bool offset_position(int x, int y, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool offset_position(int x, int y, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual m_point_type get_position(const std::function<void(const m_point_type &)> &callback = nullptr) const;
 
-		virtual bool set_absolute_position(const m_point_type &value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_absolute_position(const m_point_type &value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
-		virtual bool set_absolute_position(int x, int y, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_absolute_position(int x, int y, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual m_point_type get_absolute_position(const std::function<void(const m_point_type &)> &callback = nullptr) const;
 
-		virtual bool set_dimension(const m_point_type &offset, const m_size_type &size, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_dimension(const m_point_type &offset, const m_size_type &size, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
-		virtual bool set_dimension(int x, int y, int width, int height, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_dimension(int x, int y, int width, int height, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual m_rect_type get_dimension(const std::function<void(const m_rect_type &)> &callback = nullptr) const;
 
 		virtual m_rect_type get_absolute_dimension(const std::function<void(const m_rect_type &)> &callback = nullptr) const;
 
-		virtual bool set_padding(const m_rect_type &value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_padding(const m_rect_type &value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
-		virtual bool set_padding(int left, int top, int right, int bottom, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_padding(int left, int top, int right, int bottom, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual m_rect_type get_padding(const std::function<void(const m_rect_type &)> &callback = nullptr) const;
 

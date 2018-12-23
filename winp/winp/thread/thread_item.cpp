@@ -23,21 +23,16 @@ winp::thread::object &winp::thread::item::get_thread(){
 }
 
 void winp::thread::item::destruct(){
-	{//Scoped
-		std::lock_guard<std::mutex> lock(app::object::lock_);
-		if (!destructed_)
+	execute_using_context([this]{
+		if (!destructed_){
 			destructed_ = true;
-		else//Already called
-			return;
-	}
-
-	if (!thread_.is_thread_context()){
-		thread_.queue.execute([=]{
 			destruct_();
-		}, thread::queue::send_priority, id_);
-	}
-	else//Inside thread context
-		destruct_();
+		}
+	});
+}
+
+void winp::thread::item::post_task(const queue::callback_type &task, int priority) const{
+	thread_.queue.post(task, priority, id_);
 }
 
 void winp::thread::item::use_context(const queue::callback_type &task, int priority) const{

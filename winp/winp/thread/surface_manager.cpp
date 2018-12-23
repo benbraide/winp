@@ -54,7 +54,7 @@ winp::ui::surface *winp::thread::surface_manager::find_item_(UINT id) const{
 
 winp::menu::item_component *winp::thread::surface_manager::find_system_menu_item_(ui::surface &target, UINT id) const{
 	if (auto frame_target = dynamic_cast<window::frame *>(&target); frame_target != nullptr)
-		return frame_target->get_system_menu_()->find_component_(id, nullptr);
+		return frame_target->system_menu_.find_component_(id, nullptr);
 	return nullptr;
 }
 

@@ -21,314 +21,124 @@ winp::non_window::child::~child(){
 	destruct();
 }
 
-bool winp::non_window::child::set_non_client_transparency(bool is_transparent, const std::function<void(object &, bool)> &callback){
-	if (thread_.is_thread_context()){
-		auto result = set_non_client_transparency_(is_transparent);
-		if (callback != nullptr)
-			callback(*this, result);
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		auto result = set_non_client_transparency_(is_transparent);
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+bool winp::non_window::child::set_non_client_transparency(bool is_transparent, const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, set_non_client_transparency_(is_transparent));
+	});
 }
 
 bool winp::non_window::child::is_transparent_non_client(const std::function<void(bool)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = is_transparent_non_client_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(is_transparent_non_client_()); }, thread::queue::send_priority, id_);
-		return false;
-	}
-
-	return thread_.queue.execute([this]{ return is_transparent_non_client_(); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, is_transparent_non_client_());
+	}, callback != nullptr);
 }
 
-bool winp::non_window::child::set_client_transparency(bool is_transparent, const std::function<void(object &, bool)> &callback){
-	if (thread_.is_thread_context()){
-		auto result = set_client_transparency_(is_transparent);
-		if (callback != nullptr)
-			callback(*this, result);
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		auto result = set_client_transparency_(is_transparent);
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+bool winp::non_window::child::set_client_transparency(bool is_transparent, const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, set_client_transparency_(is_transparent));
+	});
 }
 
 bool winp::non_window::child::is_transparent_client(const std::function<void(bool)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = is_transparent_client_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(is_transparent_client_()); }, thread::queue::send_priority, id_);
-		return false;
-	}
-
-	return thread_.queue.execute([this]{ return is_transparent_client_(); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, is_transparent_client_());
+	}, callback != nullptr);
 }
 
-bool winp::non_window::child::set_non_client_background_color(const D2D1::ColorF &value, const std::function<void(object &, bool)> &callback){
-	if (thread_.is_thread_context()){
-		auto result = set_non_client_background_color_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		auto result = set_non_client_background_color_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+bool winp::non_window::child::set_non_client_background_color(const D2D1::ColorF &value, const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, set_non_client_background_color_(value));
+	});
 }
 
 D2D1::ColorF winp::non_window::child::get_non_client_background_color(const std::function<void(const D2D1::ColorF &)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto &result = get_non_client_background_color_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(get_non_client_background_color_()); }, thread::queue::send_priority, id_);
-		return D2D1::ColorF(0);
-	}
-
-	return *(thread_.queue.execute([this]{ return &get_non_client_background_color_(); }, thread::queue::send_priority, id_));
+	return convert_to_d2d1_colorf(execute_or_post_([=]{
+		return convert_from_d2d1_colorf(pass_value_to_callback_(callback, get_non_client_background_color_()));
+	}, callback != nullptr));
 }
 
-bool winp::non_window::child::set_client_background_color(const D2D1::ColorF &value, const std::function<void(object &, bool)> &callback){
-	if (thread_.is_thread_context()){
-		auto result = set_client_background_color_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		auto result = set_client_background_color_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+bool winp::non_window::child::set_client_background_color(const D2D1::ColorF &value, const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, set_client_background_color_(value));
+	});
 }
 
 D2D1::ColorF winp::non_window::child::get_client_background_color(const std::function<void(const D2D1::ColorF &)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto &result = get_client_background_color_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(get_client_background_color_()); }, thread::queue::send_priority, id_);
-		return D2D1::ColorF(0);
-	}
-
-	return *(thread_.queue.execute([this]{ return &get_client_background_color_(); }, thread::queue::send_priority, id_));
+	return convert_to_d2d1_colorf(execute_or_post_([=]{
+		return convert_from_d2d1_colorf(pass_value_to_callback_(callback, get_client_background_color_()));
+	}, callback != nullptr));
 }
 
-bool winp::non_window::child::set_border_type(border_type value, const std::function<void(object &, bool)> &callback){
-	if (thread_.is_thread_context()){
-		auto result = set_border_type_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		auto result = set_border_type_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+bool winp::non_window::child::set_border_type(border_type value, const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, set_border_type_(value));
+	});
 }
 
-bool winp::non_window::child::set_non_client_border_type(border_type value, const std::function<void(object &, bool)> &callback){
-	if (thread_.is_thread_context()){
-		auto result = set_non_client_border_type_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		auto result = set_non_client_border_type_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+bool winp::non_window::child::set_non_client_border_type(border_type value, const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, set_non_client_border_type_(value));
+	});
 }
 
 winp::non_window::child::border_type winp::non_window::child::get_non_client_border_type(const std::function<void(border_type)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = get_non_client_border_type_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(get_non_client_border_type_()); }, thread::queue::send_priority, id_);
-		return border_type::nil;
-	}
-
-	return thread_.queue.execute([this]{ return get_non_client_border_type_(); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, get_non_client_border_type_());
+	}, callback != nullptr);
 }
 
-bool winp::non_window::child::set_client_border_type(border_type value, const std::function<void(object &, bool)> &callback){
-	if (thread_.is_thread_context()){
-		auto result = set_client_border_type_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		auto result = set_client_border_type_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+bool winp::non_window::child::set_client_border_type(border_type value, const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, set_client_border_type_(value));
+	});
 }
 
 winp::non_window::child::border_type winp::non_window::child::get_client_border_type(const std::function<void(border_type)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = get_client_border_type_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(get_client_border_type_()); }, thread::queue::send_priority, id_);
-		return border_type::nil;
-	}
-
-	return thread_.queue.execute([this]{ return get_client_border_type_(); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, get_client_border_type_());
+	}, callback != nullptr);
 }
 
-bool winp::non_window::child::set_border_curve_size(const m_size_type &value, const std::function<void(object &, bool)> &callback){
-	if (thread_.is_thread_context()){
-		auto result = set_border_curve_size_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		auto result = set_border_curve_size_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+bool winp::non_window::child::set_border_curve_size(const m_size_type &value, const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, set_border_curve_size_(value));
+	});
 }
 
-bool winp::non_window::child::set_border_curve_size(int width, int height, const std::function<void(object &, bool)> &callback){
+bool winp::non_window::child::set_border_curve_size(int width, int height, const std::function<void(thread::item &, bool)> &callback){
 	return set_border_curve_size(m_size_type{ width, height }, callback);
 }
 
-bool winp::non_window::child::set_non_client_border_curve_size(const m_size_type &value, const std::function<void(object &, bool)> &callback){
-	if (thread_.is_thread_context()){
-		auto result = set_non_client_border_curve_size_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		auto result = set_non_client_border_curve_size_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+bool winp::non_window::child::set_non_client_border_curve_size(const m_size_type &value, const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, set_non_client_border_curve_size_(value));
+	});
 }
 
-bool winp::non_window::child::set_non_client_border_curve_size(int width, int height, const std::function<void(object &, bool)> &callback){
+bool winp::non_window::child::set_non_client_border_curve_size(int width, int height, const std::function<void(thread::item &, bool)> &callback){
 	return set_non_client_border_curve_size(m_size_type{ width, height }, callback);
 }
 
 winp::ui::surface::m_size_type winp::non_window::child::get_non_client_border_curve_size(const std::function<void(const m_size_type &)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = get_non_client_border_curve_size_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(get_non_client_border_curve_size_()); }, thread::queue::send_priority, id_);
-		return m_size_type{};
-	}
-
-	return thread_.queue.execute([this]{ return get_non_client_border_curve_size_(); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, get_non_client_border_curve_size_());
+	}, callback != nullptr);
 }
 
-bool winp::non_window::child::set_client_border_curve_size(const m_size_type &value, const std::function<void(object &, bool)> &callback){
-	if (thread_.is_thread_context()){
-		auto result = set_client_border_curve_size_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		auto result = set_client_border_curve_size_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+bool winp::non_window::child::set_client_border_curve_size(const m_size_type &value, const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, set_client_border_curve_size_(value));
+	});
 }
 
-bool winp::non_window::child::set_client_border_curve_size(int width, int height, const std::function<void(object &, bool)> &callback){
+bool winp::non_window::child::set_client_border_curve_size(int width, int height, const std::function<void(thread::item &, bool)> &callback){
 	return set_client_border_curve_size(m_size_type{ width, height }, callback);
 }
 
 winp::ui::surface::m_size_type winp::non_window::child::get_client_border_curve_size(const std::function<void(const m_size_type &)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = get_client_border_curve_size_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(get_client_border_curve_size_()); }, thread::queue::send_priority, id_);
-		return m_size_type{};
-	}
-
-	return thread_.queue.execute([this]{ return get_client_border_curve_size_(); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, get_client_border_curve_size_());
+	}, callback != nullptr);
 }
 
 void winp::non_window::child::destruct_(){

@@ -26,12 +26,28 @@ namespace winp::thread{
 			if (is_inside_thread_context_())
 				return call_<return_type>(task, id, std::bool_constant<std::is_void_v<return_type>>());
 
-			auto promise = std::promise<return_type>();
+			std::promise<return_type> promise;
 			add_([&]{
 				if (is_black_listed_(id))
 					set_null_promise_value_<return_type>(promise, std::bool_constant<std::is_void_v<return_type>>());
 				else
 					set_promise_value_(promise, task, std::bool_constant<std::is_void_v<return_type>>());
+			}, priority);
+
+			return promise.get_future().get();
+		}
+
+		template <typename function_type, typename return_type>
+		auto execute_with_default_value(const function_type &task, const return_type &default_value, int priority = 0, unsigned __int64 id = 0u){
+			if (is_inside_thread_context_())
+				return call_<return_type>(task, id, std::bool_constant<std::is_void_v<return_type>>());
+
+			std::promise<return_type> promise;
+			add_([&]{
+				if (is_black_listed_(id))
+					promise.set_value(default_value);
+				else
+					promise.set_value(task());
 			}, priority);
 
 			return promise.get_future().get();

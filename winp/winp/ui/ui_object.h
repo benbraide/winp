@@ -52,9 +52,9 @@ namespace winp::ui{
 
 		virtual ~object();
 
-		virtual bool create(const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool create(const std::function<void(thread::item &, bool)> &callback = nullptr);
 
-		virtual bool destroy(const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool destroy(const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual bool is_created(const std::function<void(bool)> &callback = nullptr) const;
 
@@ -62,7 +62,7 @@ namespace winp::ui{
 
 		virtual bool is_ancestor(const tree &target, const std::function<void(bool)> &callback = nullptr) const;
 
-		virtual std::size_t set_parent(tree *value, const std::function<void(object &, bool, std::size_t)> &callback = nullptr);
+		virtual std::size_t set_parent(tree *value, const std::function<void(thread::item &, std::size_t)> &callback = nullptr);
 
 		virtual tree *get_parent(const std::function<void(tree *)> &callback = nullptr) const;
 
@@ -83,15 +83,15 @@ namespace winp::ui{
 			return execute_using_context([this]{ return get_first_ancestor_of_<target_type, before_type>(); }, thread::queue::send_priority);
 		}
 
-		virtual std::size_t set_index(std::size_t value, const std::function<void(object &, bool, std::size_t)> &callback = nullptr);
+		virtual std::size_t set_index(std::size_t value, const std::function<void(thread::item &, std::size_t)> &callback = nullptr);
 
 		virtual std::size_t get_index(const std::function<void(std::size_t)> &callback = nullptr) const;
 
-		virtual bool set_previous_sibling(object *target, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_previous_sibling(object *target, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual object *get_previous_sibling(const std::function<void(object *)> &callback = nullptr) const;
 
-		virtual bool set_next_sibling(object *target, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_next_sibling(object *target, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual object *get_next_sibling(const std::function<void(object *)> &callback = nullptr) const;
 
@@ -142,7 +142,7 @@ namespace winp::ui{
 			return nullptr;
 		}
 
-		virtual bool remove_hook(unsigned int code, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool remove_hook(unsigned int code, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual bool has_hook(unsigned int code, const std::function<void(bool)> &callback = nullptr) const;
 

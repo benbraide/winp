@@ -12,11 +12,11 @@ namespace winp::control{
 
 		virtual ~object();
 
-		virtual bool set_font(HFONT value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_font(HFONT value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual HFONT get_font(const std::function<void(HFONT)> &callback = nullptr) const;
 
-		virtual bool set_text(const std::wstring &value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_text(const std::wstring &value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual std::wstring get_text(const std::function<void(const std::wstring &)> &callback = nullptr) const;
 

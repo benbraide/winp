@@ -17,19 +17,19 @@ namespace winp::menu{
 
 		virtual bool is_radio(const std::function<void(bool)> &callback = nullptr) const;
 
-		virtual bool check(const std::function<void(item_component &, bool)> &callback = nullptr);
+		virtual bool check(const std::function<void(thread::item &, bool)> &callback = nullptr);
 
-		virtual bool uncheck(const std::function<void(item_component &, bool)> &callback = nullptr);
+		virtual bool uncheck(const std::function<void(thread::item &, bool)> &callback = nullptr);
 
-		virtual bool toggle_check(const std::function<void(item_component &, bool)> &callback = nullptr);
+		virtual bool toggle_check(const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual bool is_checked(const std::function<void(bool)> &callback = nullptr) const;
 
-		virtual bool set_checked_bitmap(HBITMAP value, const std::function<void(item_component &, bool)> &callback = nullptr);
+		virtual bool set_checked_bitmap(HBITMAP value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual HBITMAP get_checked_bitmap(const std::function<void(HBITMAP)> &callback = nullptr) const;
 
-		virtual bool set_unchecked_bitmap(HBITMAP value, const std::function<void(item_component &, bool)> &callback = nullptr);
+		virtual bool set_unchecked_bitmap(HBITMAP value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual HBITMAP get_unchecked_bitmap(const std::function<void(HBITMAP)> &callback = nullptr) const;
 

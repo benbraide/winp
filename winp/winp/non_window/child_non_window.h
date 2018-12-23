@@ -26,45 +26,45 @@ namespace winp::non_window{
 
 		virtual ~child();
 
-		virtual bool set_non_client_transparency(bool is_transparent, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_non_client_transparency(bool is_transparent, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual bool is_transparent_non_client(const std::function<void(bool)> &callback = nullptr) const;
 
-		virtual bool set_client_transparency(bool is_transparent, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_client_transparency(bool is_transparent, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual bool is_transparent_client(const std::function<void(bool)> &callback = nullptr) const;
 
-		virtual bool set_non_client_background_color(const D2D1::ColorF &value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_non_client_background_color(const D2D1::ColorF &value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual D2D1::ColorF get_non_client_background_color(const std::function<void(const D2D1::ColorF &)> &callback = nullptr) const;
 
-		virtual bool set_client_background_color(const D2D1::ColorF &value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_client_background_color(const D2D1::ColorF &value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual D2D1::ColorF get_client_background_color(const std::function<void(const D2D1::ColorF &)> &callback = nullptr) const;
 
-		virtual bool set_border_type(border_type value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_border_type(border_type value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
-		virtual bool set_non_client_border_type(border_type value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_non_client_border_type(border_type value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual border_type get_non_client_border_type(const std::function<void(border_type)> &callback = nullptr) const;
 
-		virtual bool set_client_border_type(border_type value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_client_border_type(border_type value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual border_type get_client_border_type(const std::function<void(border_type)> &callback = nullptr) const;
 
-		virtual bool set_border_curve_size(const m_size_type &value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_border_curve_size(const m_size_type &value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
-		virtual bool set_border_curve_size(int width, int height, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_border_curve_size(int width, int height, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
-		virtual bool set_non_client_border_curve_size(const m_size_type &value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_non_client_border_curve_size(const m_size_type &value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
-		virtual bool set_non_client_border_curve_size(int width, int height, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_non_client_border_curve_size(int width, int height, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual m_size_type get_non_client_border_curve_size(const std::function<void(const m_size_type &)> &callback = nullptr) const;
 
-		virtual bool set_client_border_curve_size(const m_size_type &value, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_client_border_curve_size(const m_size_type &value, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
-		virtual bool set_client_border_curve_size(int width, int height, const std::function<void(object &, bool)> &callback = nullptr);
+		virtual bool set_client_border_curve_size(int width, int height, const std::function<void(thread::item &, bool)> &callback = nullptr);
 
 		virtual m_size_type get_client_border_curve_size(const std::function<void(const m_size_type &)> &callback = nullptr) const;
 

@@ -29,10 +29,28 @@ namespace winp::thread{
 
 		virtual void destruct();
 
+		virtual void post_task(const queue::callback_type &task, int priority = queue::send_priority) const;
+
 		virtual void use_context(const queue::callback_type &task, int priority = queue::send_priority) const;
 
 		template <typename function_type>
 		auto execute_using_context(const function_type &task, int priority = queue::send_priority) const{
+			return get_queue_().execute(task, priority, id_);
+		}
+
+		template <typename function_type, typename return_type>
+		auto execute_with_default_value_using_context(const function_type &task, const return_type &default_value, int priority = queue::send_priority) const{
+			return get_queue_().execute_with_default_value(task, default_value, priority, id_);
+		}
+
+		template <typename function_type>
+		auto execute_or_post_task(const function_type &task, int priority = queue::send_priority) const{
+			using return_type = decltype(task());
+			if (!is_thread_context()){
+				get_queue_().post(task, priority, id_);
+				return return_type();
+			}
+
 			return get_queue_().execute(task, priority, id_);
 		}
 
@@ -50,6 +68,41 @@ namespace winp::thread{
 		virtual void event_handlers_count_changed_(event::manager_base &e, std::size_t previous_count, std::size_t current_count);
 
 		virtual queue &get_queue_() const;
+
+		template <typename value_type>
+		value_type pass_value_to_callback_(const std::function<void(item &, std::conditional_t<std::is_scalar_v<value_type>, value_type, const value_type &>)> &callback, const value_type &value){
+			if (callback != nullptr)
+				callback(*this, value);
+			return value;
+		}
+
+		template <typename value_type>
+		value_type pass_value_to_callback_(const std::function<void(std::conditional_t<std::is_scalar_v<value_type>, value_type, const value_type &>)> &callback, const value_type &value) const{
+			if (callback != nullptr)
+				callback(value);
+			return value;
+		}
+
+		template <typename function_type>
+		auto execute_or_post_(const function_type &task, bool post) const{
+			using return_type = decltype(task());
+			if (post && !is_thread_context()){
+				post_task(task);
+				return return_type();
+			}
+
+			return execute_using_context(task);
+		}
+
+		template <typename function_type, typename return_type>
+		auto execute_or_post_(const function_type &task, bool post, const return_type &default_value) const{
+			if (post && !is_thread_context()){
+				post_task(task);
+				return default_value;
+			}
+
+			return execute_with_default_value_using_context(task, default_value);
+		}
 
 		object &thread_;
 		unsigned __int64 id_;

@@ -20,88 +20,42 @@ winp::menu::item::item(ui::tree &parent, bool)
 winp::menu::item::~item() = default;
 
 winp::ui::surface *winp::menu::item::get_popup(const std::function<void(ui::surface *)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = get_popup_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(get_popup_()); }, thread::queue::send_priority, id_);
-		return nullptr;
-	}
-
-	return thread_.queue.execute([this]{ return get_popup_(); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, get_popup_());
+	}, callback != nullptr);
 }
 
-bool winp::menu::item::set_label(const std::wstring &value, const std::function<void(item_component &, bool)> &callback){
-	if (thread_.is_thread_context()){
-		auto result = set_label_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		auto result = set_label_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+bool winp::menu::item::set_label(const std::wstring &value, const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, set_label_(value));
+	});
 }
 
 const std::wstring *winp::menu::item::get_label(const std::function<void(const std::wstring &)> &callback) const{
-	if (thread_.is_thread_context()){
+	return execute_or_post_([=]{
 		auto result = get_label_();
 		if (callback != nullptr)
 			callback(*result);
 		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(*get_label_()); }, thread::queue::send_priority, id_);
-		return nullptr;
-	}
-
-	return thread_.queue.execute([this]{ return get_label_(); }, thread::queue::send_priority, id_);
+	}, callback != nullptr);
 }
 
-bool winp::menu::item::set_shortcut(const std::wstring &value, const std::function<void(item_component &, bool)> &callback){
-	if (thread_.is_thread_context()){
-		auto result = set_shortcut_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		auto result = set_shortcut_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+bool winp::menu::item::set_shortcut(const std::wstring &value, const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, set_shortcut_(value));
+	});
 }
 
 const std::wstring *winp::menu::item::get_shortcut(const std::function<void(const std::wstring &)> &callback) const{
-	if (thread_.is_thread_context()){
+	return execute_or_post_([=]{
 		auto result = get_shortcut_();
 		if (callback != nullptr)
 			callback(*result);
 		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(*get_shortcut_()); }, thread::queue::send_priority, id_);
-		return nullptr;
-	}
-
-	return thread_.queue.execute([this]{ return get_shortcut_(); }, thread::queue::send_priority, id_);
+	}, callback != nullptr);
 }
 
-bool winp::menu::item::make_default(const std::function<void(item_component &, bool)> &callback){
+bool winp::menu::item::make_default(const std::function<void(thread::item &, bool)> &callback){
 	return set_state(MFS_DEFAULT, callback);
 }
 
@@ -109,59 +63,23 @@ bool winp::menu::item::is_default(const std::function<void(bool)> &callback) con
 	return has_state(MFS_DEFAULT, callback);
 }
 
-bool winp::menu::item::set_bitmap(HBITMAP value, const std::function<void(item_component &, bool)> &callback){
-	if (thread_.is_thread_context()){
-		auto result = set_bitmap_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		auto result = set_bitmap_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+bool winp::menu::item::set_bitmap(HBITMAP value, const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, set_bitmap_(value));
+	});
 }
 
 HBITMAP winp::menu::item::get_bitmap(const std::function<void(HBITMAP)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = get_bitmap_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(get_bitmap_()); }, thread::queue::send_priority, id_);
-		return nullptr;
-	}
-
-	return thread_.queue.execute([this]{ return get_bitmap_(); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, get_bitmap_());
+	}, callback != nullptr);
 }
 
-bool winp::menu::item::select(const std::function<void(item_component &, bool)> &callback){
-	if (thread_.is_thread_context()){
+bool winp::menu::item::select(const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
 		unsigned int states = 0;
-		auto result = select_(nullptr, nullptr, true, states);
-
-		if (callback != nullptr)
-			callback(*this, result);
-
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		unsigned int states = 0;
-		auto result = select_(nullptr, nullptr, true, states);
-
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+		return pass_value_to_callback_(callback, select_(nullptr, nullptr, true, states));
+	});
 }
 
 bool winp::menu::item::handle_child_insert_event_(event::tree &e){

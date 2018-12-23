@@ -15,51 +15,21 @@ winp::menu::group::~group(){
 }
 
 std::size_t winp::menu::group::get_absolute_index(const std::function<void(std::size_t)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = get_absolute_index_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(get_absolute_index_()); }, thread::queue::send_priority, id_);
-		return static_cast<std::size_t>(-1);
-	}
-
-	return thread_.queue.execute([this]{ return get_absolute_index_(); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, get_absolute_index_());
+	}, callback != nullptr);
 }
 
 winp::menu::item_component *winp::menu::group::find_component(UINT id, const std::function<void(menu::item_component *)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = find_component_(id, nullptr);
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(find_component_(id, nullptr)); }, thread::queue::send_priority, id_);
-		return nullptr;
-	}
-
-	return thread_.queue.execute([=]{ return find_component_(id, nullptr); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, find_component_(id, nullptr));
+	}, callback != nullptr);
 }
 
 winp::menu::item_component *winp::menu::group::get_component_at_absolute_index(std::size_t index, const std::function<void(menu::item_component *)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = get_component_at_absolute_index_(index);
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(get_component_at_absolute_index_(index)); }, thread::queue::send_priority, id_);
-		return nullptr;
-	}
-
-	return thread_.queue.execute([=]{ return get_component_at_absolute_index_(index); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, get_component_at_absolute_index_(index));
+	}, callback != nullptr);
 }
 
 void winp::menu::group::destruct_(){

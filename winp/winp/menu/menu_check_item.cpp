@@ -11,155 +11,58 @@ winp::menu::check_item::check_item(ui::tree &parent)
 winp::menu::check_item::~check_item() = default;
 
 bool winp::menu::check_item::is_radio(const std::function<void(bool)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = is_radio_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(is_radio_()); }, thread::queue::send_priority, id_);
-		return false;
-	}
-
-	return thread_.queue.execute([this]{ return is_radio_(); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, is_radio_());
+	}, callback != nullptr);
 }
 
-bool winp::menu::check_item::check(const std::function<void(item_component &, bool)> &callback){
-	if (thread_.is_thread_context()){
+bool winp::menu::check_item::check(const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
 		unsigned int states = 0;
-		auto result = check_(nullptr, nullptr, true, states);
-
-		if (callback != nullptr)
-			callback(*this, result);
-
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		unsigned int states = 0;
-		auto result = check_(nullptr, nullptr, true, states);
-
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+		return pass_value_to_callback_(callback, check_(nullptr, nullptr, true, states));
+	});
 }
 
-bool winp::menu::check_item::uncheck(const std::function<void(item_component &, bool)> &callback){
-	if (thread_.is_thread_context()){
+bool winp::menu::check_item::uncheck(const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
 		unsigned int states = 0;
-		auto result = uncheck_(nullptr, nullptr, true, states, false);
-
-		if (callback != nullptr)
-			callback(*this, result);
-
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		unsigned int states = 0;
-		auto result = uncheck_(nullptr, nullptr, true, states, false);
-
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+		return pass_value_to_callback_(callback, uncheck_(nullptr, nullptr, true, states, false));
+	});
 }
 
-bool winp::menu::check_item::toggle_check(const std::function<void(item_component &, bool)> &callback){
-	if (thread_.is_thread_context()){
+bool winp::menu::check_item::toggle_check(const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
 		unsigned int states = 0;
-		auto result = toggle_check_(nullptr, nullptr, true, states);
-
-		if (callback != nullptr)
-			callback(*this, result);
-
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		unsigned int states = 0;
-		auto result = toggle_check_(nullptr, nullptr, true, states);
-
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+		return pass_value_to_callback_(callback, toggle_check_(nullptr, nullptr, true, states));
+	});
 }
 
 bool winp::menu::check_item::is_checked(const std::function<void(bool)> &callback) const{
 	return has_state(MFS_CHECKED, callback);
 }
 
-bool winp::menu::check_item::set_checked_bitmap(HBITMAP value, const std::function<void(item_component &, bool)> &callback){
-	if (thread_.is_thread_context()){
-		auto result = set_checked_bitmap_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		auto result = set_checked_bitmap_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+bool winp::menu::check_item::set_checked_bitmap(HBITMAP value, const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, set_checked_bitmap_(value));
+	});
 }
 
 HBITMAP winp::menu::check_item::get_checked_bitmap(const std::function<void(HBITMAP)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = get_checked_bitmap_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(get_checked_bitmap_()); }, thread::queue::send_priority, id_);
-		return nullptr;
-	}
-
-	return thread_.queue.execute([this]{ return get_checked_bitmap_(); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, get_checked_bitmap_());
+	}, callback != nullptr);
 }
 
-bool winp::menu::check_item::set_unchecked_bitmap(HBITMAP value, const std::function<void(item_component &, bool)> &callback){
-	if (thread_.is_thread_context()){
-		auto result = set_unchecked_bitmap_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		auto result = set_unchecked_bitmap_(value);
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+bool winp::menu::check_item::set_unchecked_bitmap(HBITMAP value, const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, set_unchecked_bitmap_(value));
+	});
 }
 
 HBITMAP winp::menu::check_item::get_unchecked_bitmap(const std::function<void(HBITMAP)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = get_unchecked_bitmap_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(get_unchecked_bitmap_()); }, thread::queue::send_priority, id_);
-		return nullptr;
-	}
-
-	return thread_.queue.execute([this]{ return get_unchecked_bitmap_(); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, get_unchecked_bitmap_());
+	}, callback != nullptr);
 }
 
 bool winp::menu::check_item::handle_child_insert_event_(event::tree &e){

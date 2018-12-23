@@ -14,218 +14,82 @@ winp::ui::object::~object(){
 	destruct();
 }
 
-bool winp::ui::object::create(const std::function<void(object &, bool)> &callback){
-	if (thread_.is_thread_context()){
-		auto result = create_();
-		if (callback != nullptr)
-			callback(*this, result);
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		auto result = create_();
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+bool winp::ui::object::create(const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, create_());
+	});
 }
 
-bool winp::ui::object::destroy(const std::function<void(object &, bool)> &callback){
-	if (thread_.is_thread_context()){
-		auto result = destroy_();
-		if (callback != nullptr)
-			callback(*this, result);
-		return result;
-	}
-
-	thread_.queue.post([=]{
-		auto result = destroy_();
-		if (callback != nullptr)
-			callback(*this, result);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+bool winp::ui::object::destroy(const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, destroy_());
+	});
 }
 
 bool winp::ui::object::is_created(const std::function<void(bool)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = is_created_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(is_created_()); }, thread::queue::send_priority, id_);
-		return false;
-	}
-
-	return thread_.queue.execute([this]{ return is_created_(); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, is_created_());
+	}, callback != nullptr);
 }
 
 HANDLE winp::ui::object::get_handle(const std::function<void(HANDLE)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = get_handle_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(get_handle_()); }, thread::queue::send_priority, id_);
-		return nullptr;
-	}
-
-	return thread_.queue.execute([this]{ return get_handle_(); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, get_handle_());
+	}, callback != nullptr);
 }
 
 bool winp::ui::object::is_ancestor(const tree &target, const std::function<void(bool)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = is_ancestor_(target);
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([this, callback, ptarget = &target]{ callback(is_ancestor_(*ptarget)); }, thread::queue::send_priority, id_);
-		return false;
-	}
-
-	return thread_.queue.execute([&]{ return is_ancestor_(target); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, is_ancestor_(target));
+	}, callback != nullptr);
 }
 
-std::size_t winp::ui::object::set_parent(tree *value, const std::function<void(object &, bool, std::size_t)> &callback){
-	if (thread_.is_thread_context()){
-		auto index = change_parent_(value, get_index());
-		if (callback != nullptr)
-			callback(*this, (index != static_cast<std::size_t>(-1)), index);
-		return index;
-	}
-
-	thread_.queue.post([=]{
-		auto index = change_parent_(value, get_index());
-		if (callback != nullptr)
-			callback(*this, (index != static_cast<std::size_t>(-1)), index);
-	}, thread::queue::send_priority, id_);
-
-	return static_cast<std::size_t>(-1);
+std::size_t winp::ui::object::set_parent(tree *value, const std::function<void(thread::item &, std::size_t)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, change_parent_(value));
+	});
 }
 
 winp::ui::tree *winp::ui::object::get_parent(const std::function<void(tree *)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = get_parent_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(get_parent_()); }, thread::queue::send_priority, id_);
-		return nullptr;
-	}
-
-	return thread_.queue.execute([this]{ return get_parent_(); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, get_parent_());
+	}, callback != nullptr);
 }
 
-std::size_t winp::ui::object::set_index(std::size_t value, const std::function<void(object &, bool, std::size_t)> &callback){
-	if (thread_.is_thread_context()){
-		auto index = change_index_(value);
-		if (callback != nullptr)
-			callback(*this, (index != static_cast<std::size_t>(-1)), index);
-		return index;
-	}
-
-	thread_.queue.post([=]{
-		auto index = change_index_(value);
-		if (callback != nullptr)
-			callback(*this, (index != static_cast<std::size_t>(-1)), index);
-	}, thread::queue::send_priority, id_);
-
-	return static_cast<std::size_t>(-1);
+std::size_t winp::ui::object::set_index(std::size_t value, const std::function<void(thread::item &, std::size_t)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, change_index_(value));
+	});
 }
 
 std::size_t winp::ui::object::get_index(const std::function<void(std::size_t)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = get_index_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(get_index_()); }, thread::queue::send_priority, id_);
-		return static_cast<std::size_t>(-1);
-	}
-
-	return thread_.queue.execute([this]{ return get_index_(); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, get_index_());
+	}, callback != nullptr);
 }
 
-bool winp::ui::object::set_previous_sibling(object *target, const std::function<void(object &, bool)> &callback){
-	if (thread_.is_thread_context()){
-		auto value = set_previous_sibling_(target);
-		if (callback != nullptr)
-			callback(*this, value);
-		return value;
-	}
-
-	thread_.queue.post([=]{
-		auto value = set_previous_sibling_(target);
-		if (callback != nullptr)
-			callback(*this, value);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+bool winp::ui::object::set_previous_sibling(object *target, const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, set_previous_sibling_(target));
+	});
 }
 
 winp::ui::object *winp::ui::object::get_previous_sibling(const std::function<void(object *)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = get_previous_sibling_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(get_previous_sibling_()); }, thread::queue::send_priority, id_);
-		return nullptr;
-	}
-
-	return thread_.queue.execute([this]{ return get_previous_sibling_(); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, get_previous_sibling_());
+	}, callback != nullptr);
 }
 
-bool winp::ui::object::set_next_sibling(object *target, const std::function<void(object &, bool)> &callback){
-	if (thread_.is_thread_context()){
-		auto value = set_next_sibling_(target);
-		if (callback != nullptr)
-			callback(*this, value);
-		return value;
-	}
-
-	thread_.queue.post([=]{
-		auto value = set_next_sibling_(target);
-		if (callback != nullptr)
-			callback(*this, value);
-	}, thread::queue::send_priority, id_);
-
-	return true;
+bool winp::ui::object::set_next_sibling(object *target, const std::function<void(thread::item &, bool)> &callback){
+	return execute_or_post_task([=]{
+		return pass_value_to_callback_(callback, set_next_sibling_(target));
+	});
 }
 
 winp::ui::object *winp::ui::object::get_next_sibling(const std::function<void(object *)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = get_next_sibling_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(get_next_sibling_()); }, thread::queue::send_priority, id_);
-		return nullptr;
-	}
-
-	return thread_.queue.execute([this]{ return get_next_sibling_(); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, get_next_sibling_());
+	}, callback != nullptr);
 }
 
 winp::utility::dynamic_list<winp::ui::tree, winp::ui::object> winp::ui::object::get_ancestors() const{
@@ -237,19 +101,9 @@ winp::utility::dynamic_list<winp::ui::object, winp::ui::object> winp::ui::object
 }
 
 const wchar_t *winp::ui::object::get_theme_name(const std::function<void(const wchar_t *)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = get_theme_name_();
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(get_theme_name_()); }, thread::queue::send_priority, id_);
-		return nullptr;
-	}
-
-	return thread_.queue.execute([this]{ return get_theme_name_(); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, get_theme_name_());
+	}, callback != nullptr);
 }
 
 LRESULT winp::ui::object::send_message(UINT msg, const std::function<void(LRESULT)> &callback){
@@ -260,7 +114,7 @@ bool winp::ui::object::post_message(UINT msg, const std::function<void(bool)> &c
 	return do_post_message_(msg, 0, 0, callback);
 }
 
-bool winp::ui::object::remove_hook(unsigned int code, const std::function<void(object &, bool)> &callback){
+bool winp::ui::object::remove_hook(unsigned int code, const std::function<void(thread::item &, bool)> &callback){
 	if (thread_.is_thread_context()){
 		auto result = remove_hook_(code);
 		if (callback != nullptr)
@@ -278,19 +132,9 @@ bool winp::ui::object::remove_hook(unsigned int code, const std::function<void(o
 }
 
 bool winp::ui::object::has_hook(unsigned int code, const std::function<void(bool)> &callback) const{
-	if (thread_.is_thread_context()){
-		auto result = has_hook_(code);
-		if (callback != nullptr)
-			callback(result);
-		return result;
-	}
-
-	if (callback != nullptr){
-		thread_.queue.post([=]{ callback(has_hook_(code)); }, thread::queue::send_priority, id_);
-		return false;
-	}
-
-	return thread_.queue.execute([=]{ return has_hook_(code); }, thread::queue::send_priority, id_);
+	return execute_or_post_([=]{
+		return pass_value_to_callback_(callback, has_hook_(code));
+	}, callback != nullptr);
 }
 
 void winp::ui::object::init_(){
