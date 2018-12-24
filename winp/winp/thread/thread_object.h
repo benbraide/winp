@@ -12,10 +12,6 @@ namespace winp::app{
 	class object;
 }
 
-namespace winp::event{
-	class draw;
-}
-
 namespace winp::message{
 	class object;
 }
@@ -65,6 +61,8 @@ namespace winp::thread{
 		friend class app::object;
 
 		friend class event::draw;
+		friend class event::draw_item_dispatcher;
+
 		friend class message::object;
 		friend class message::dispatcher;
 

@@ -19,7 +19,13 @@ namespace winp::control{
 		virtual ~button();
 
 	protected:
+		virtual DWORD get_persistent_styles_() const override;
+
+		virtual DWORD get_filtered_styles_() const override;
+
 		virtual const wchar_t *get_class_name_() const override;
+
+		virtual void padding_changed_() override;
 
 		virtual m_size_type compute_additional_size_(const m_size_type &size) const override;
 

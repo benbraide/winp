@@ -1,6 +1,7 @@
 #include "../window/frame_window.h"
 #include "../message/message_dispatcher.h"
 #include "../app/app_object.h"
+#include "../control/button_control.h"
 
 winp::thread::surface_manager::surface_manager() = default;
 
@@ -122,8 +123,12 @@ LRESULT winp::thread::surface_manager::draw_(ui::surface &target, const MSG &inf
 LRESULT winp::thread::surface_manager::mouse_nc_leave_(ui::window_surface &target, const MSG &info, DWORD mouse_position, bool prevent_default){
 	mouse_info_.tracking_mouse = false;
 
-	if (target.hit_test_(m_point_type{ GET_X_LPARAM(mouse_position), GET_Y_LPARAM(mouse_position) }, true) != HTCLIENT)
+	if (target.hit_test_(m_point_type{ GET_X_LPARAM(mouse_position), GET_Y_LPARAM(mouse_position) }, true) == HTNOWHERE){
+		if (dynamic_cast<control::button *>(&target) != nullptr && target.has_styles_(BS_OWNERDRAW, false, true))
+			update_owner_drawn_item_(target, ODT_BUTTON, 0u);//Remove highlight from button
+
 		find_dispatcher_(info.message)->dispatch_(target, info, false, nullptr);//Left window
+	}
 
 	return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), info.hwnd, info.message, info.wParam, info.lParam));
 }
@@ -131,8 +136,12 @@ LRESULT winp::thread::surface_manager::mouse_nc_leave_(ui::window_surface &targe
 LRESULT winp::thread::surface_manager::mouse_leave_(ui::window_surface &target, const MSG &info, DWORD mouse_position, bool prevent_default){
 	mouse_info_.tracking_mouse = false;
 
-	if (target.hit_test_(m_point_type{ GET_X_LPARAM(mouse_position), GET_Y_LPARAM(mouse_position) }, true) != HTCLIENT)
+	if (target.hit_test_(m_point_type{ GET_X_LPARAM(mouse_position), GET_Y_LPARAM(mouse_position) }, true) == HTNOWHERE){
+		if (dynamic_cast<control::button *>(&target) != nullptr && target.has_styles_(BS_OWNERDRAW, false, true))
+			update_owner_drawn_item_(target, ODT_BUTTON, 0u);//Remove highlight from button
+
 		return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default, nullptr);//Left window
+	}
 	
 	return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), info.hwnd, info.message, info.wParam, info.lParam));
 }
@@ -151,7 +160,8 @@ LRESULT winp::thread::surface_manager::mouse_move_(ui::window_surface &target, c
 
 	if (mouse_info_.mouse_target != &target){//Mouse enter
 		find_dispatcher_(WINP_WM_MOUSEENTER)->dispatch_(target, MSG{ info.hwnd, WINP_WM_MOUSEENTER, info.wParam, info.lParam }, false, nullptr);
-		mouse_info_.mouse_target = &target;
+		if (dynamic_cast<control::button *>(mouse_info_.mouse_target = &target) != nullptr && target.has_styles_(BS_OWNERDRAW, false, true))
+			update_owner_drawn_item_(target, ODT_BUTTON, ODS_HOTLIGHT);//Highlight button
 	}
 
 	unsigned int states = 0;
@@ -431,15 +441,39 @@ LRESULT winp::thread::surface_manager::context_menu_(ui::window_surface &target,
 	return (prevent_default ? 0 : CallWindowProcW(target.get_default_message_entry_(), info.hwnd, info.message, info.wParam, info.lParam));//Rejected
 }
 
+LRESULT winp::thread::surface_manager::update_owner_drawn_item_(ui::window_surface &target, UINT type, UINT states, UINT action){
+	DRAWITEMSTRUCT draw_info{};
+	{//Fill info
+		draw_info.CtlType = type;
+		draw_info.itemAction = action;
+		draw_info.itemState = states;
+		draw_info.hwndItem = static_cast<HWND>(target.get_handle_());
+		draw_info.hDC = GetDC(draw_info.hwndItem);
+		draw_info.rcItem = target.get_dimension_();
+	}
+
+	OffsetRect(&draw_info.rcItem, -draw_info.rcItem.left, -draw_info.rcItem.top);//Move to (0, 0)
+	draw_item_(target, MSG{ draw_info.hwndItem, WM_DRAWITEM, 0, reinterpret_cast<LPARAM>(&draw_info) }, true);
+	ReleaseDC(draw_info.hwndItem, draw_info.hDC);
+
+	return 0;
+}
+
 LRESULT winp::thread::surface_manager::draw_item_(ui::surface &target, const MSG &info, bool prevent_default){
 	auto pinfo = reinterpret_cast<DRAWITEMSTRUCT *>(info.lParam);
 	auto dispatcher = find_dispatcher_(info.message);
+	unsigned int states = 0;
 
-	if (info.wParam != 0){
+	if (IsWindow(pinfo->hwndItem)){//Control target
+		auto target_item = find_object_(pinfo->hwndItem);
+		if (target_item == nullptr)//Control not found
+			return find_dispatcher_(info.message)->dispatch_(target, info, !prevent_default, nullptr);
 
+		find_dispatcher_(info.message)->dispatch_(*target_item, info, false, &states);
+		if ((states & event::object::state_type::default_prevented) == 0u)//Default not prevented
+			event::draw_item_dispatcher::draw_item_(*target_item, *pinfo, info.hwnd, nullptr);
 	}
 	else if (auto target_item = dynamic_cast<menu::item_component *>(find_item_(pinfo->itemID)); target_item != nullptr){//Menu target
-		unsigned int states = 0;
 		dispatcher->dispatch_(*target_item, info, false, &states);
 
 		if ((states & event::object::state_type::propagation_stopped) == 0u){//Propagation not stopped

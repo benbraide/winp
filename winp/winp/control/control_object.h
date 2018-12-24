@@ -54,6 +54,8 @@ namespace winp::control{
 
 		virtual const std::wstring &get_text_() const;
 
+		virtual void padding_changed_();
+
 		virtual void update_size_();
 
 		virtual m_size_type get_computed_size_() const;
@@ -61,6 +63,8 @@ namespace winp::control{
 		virtual m_size_type compute_size_() const;
 
 		virtual m_size_type compute_additional_size_(const m_size_type &size) const;
+
+		virtual bool is_uniform_padding_() const;
 
 		std::wstring text_;
 		HFONT font_ = nullptr;

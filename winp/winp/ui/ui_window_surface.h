@@ -156,6 +156,8 @@ namespace winp::ui{
 
 		virtual bool is_minimized_() const;
 
+		virtual bool update_styles_(bool is_extended);
+
 		virtual bool set_styles_(DWORD value, bool is_extended);
 
 		virtual bool add_styles_(DWORD value, bool is_extended);
@@ -173,6 +175,8 @@ namespace winp::ui{
 		virtual DWORD get_filtered_styles_() const;
 
 		virtual DWORD get_filtered_extended_styles_() const;
+
+		virtual DWORD compute_styles_(DWORD value, bool is_extended) const;
 
 		virtual HINSTANCE get_instance_() const;
 

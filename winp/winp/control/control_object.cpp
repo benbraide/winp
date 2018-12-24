@@ -68,12 +68,13 @@ void winp::control::object::post_create_(){
 }
 
 bool winp::control::object::set_padding_(const m_rect_type &value){
-	if (ui::window_surface::set_padding_(value)){
-		update_size_();
-		return true;
-	}
+	if (!ui::io_surface::set_padding_(value))
+		return false;
 
-	return false;
+	padding_changed_();
+	update_size_();
+
+	return true;
 }
 
 HINSTANCE winp::control::object::get_instance_() const{
@@ -126,6 +127,8 @@ const std::wstring &winp::control::object::get_text_() const{
 	return text_;
 }
 
+void winp::control::object::padding_changed_(){}
+
 void winp::control::object::update_size_(){
 	set_size_(get_computed_size_());
 }
@@ -153,4 +156,8 @@ winp::ui::surface::m_size_type winp::control::object::compute_size_() const{
 
 winp::ui::surface::m_size_type winp::control::object::compute_additional_size_(const m_size_type &size) const{
 	return m_size_type{};
+}
+
+bool winp::control::object::is_uniform_padding_() const{
+	return (padding_.left == padding_.right && padding_.top == padding_.bottom);
 }

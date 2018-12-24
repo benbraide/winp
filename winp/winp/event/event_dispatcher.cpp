@@ -1,4 +1,5 @@
 #include "../app/app_object.h"
+#include "../control/button_control.h"
 
 void winp::event::dispatcher::dispatch_(object &e){
 	auto handler = dynamic_cast<unhandled_handler *>(e.get_context());
@@ -163,12 +164,17 @@ void winp::event::draw_item_dispatcher::draw_item_(ui::object &item, DRAWITEMSTR
 		theme = created_theme;
 	}
 
-	auto menu_item = dynamic_cast<menu::item_component *>(&item);
-	if (menu_item != nullptr){
+	if (auto menu_item = dynamic_cast<menu::item_component *>(&item); menu_item != nullptr){
 		if (theme == nullptr)
 			draw_unthemed_menu_item_(*menu_item, info, handle);
 		else//No theme
 			draw_themed_menu_item_(*menu_item, info, handle, theme);
+	}
+	else if (auto button_item = dynamic_cast<control::button *>(&item); button_item != nullptr){
+		if (theme == nullptr)
+			draw_unthemed_button_item_(*button_item, info, handle);
+		else//No theme
+			draw_themed_button_item_(*button_item, info, handle, theme);
 	}
 
 	if (created_theme != nullptr)
@@ -307,6 +313,31 @@ void winp::event::draw_item_dispatcher::draw_unthemed_menu_item_(menu::item_comp
 				DeleteObject(bold_font);
 		}
 	}
+}
+
+void winp::event::draw_item_dispatcher::draw_themed_button_item_(control::button &item, DRAWITEMSTRUCT &info, HWND handle, HTHEME theme){
+	int item_state_id = 0;
+	if ((info.itemState & ODS_DISABLED) == 0u){
+		if ((info.itemState & ODS_SELECTED) == 0u){
+			if ((info.itemState & ODS_HOTLIGHT) == 0u && item.get_thread().surface_manager_.mouse_info_.mouse_target != &item)
+				item_state_id = PBS_NORMAL;
+			else//Highlighted
+				item_state_id = PBS_HOT;
+		}
+		else//Pushed
+			item_state_id = PBS_PRESSED;
+	}
+
+	auto &text = item.get_text_();
+	auto &padding = item.get_padding_();
+	RECT text_rect{ (info.rcItem.left + padding.left), (info.rcItem.top + padding.top), (info.rcItem.right - padding.right), (info.rcItem.bottom - padding.bottom) };
+
+	DrawThemeBackground(theme, info.hDC, BP_PUSHBUTTON, item_state_id, &info.rcItem, nullptr);
+	DrawThemeText(theme, info.hDC, BP_PUSHBUTTON, item_state_id, text.data(), static_cast<int>(text.size()), (DT_VCENTER | DT_EXPANDTABS | DT_SINGLELINE), 0u, &text_rect);
+}
+
+void winp::event::draw_item_dispatcher::draw_unthemed_button_item_(control::button &item, DRAWITEMSTRUCT &info, HWND handle){
+
 }
 
 SIZE winp::event::draw_item_dispatcher::measure_item_(ui::object &item, HWND handle, HDC device, HTHEME theme){

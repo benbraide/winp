@@ -58,6 +58,7 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_sh
 	btn.set_position(10, 10);
 	btn.set_text(L"Button");
 	btn.create();
+	btn.set_padding(20, 10, 10, 5);
 
 	winp::non_window::child nwc(ws);
 	nwc.draw_event += [](winp::event::draw &e){
@@ -70,8 +71,9 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE, LPWSTR cmd_line, int cmd_sh
 		}
 	};
 
-	std::thread([&nwc]{
-		std::this_thread::sleep_for(std::chrono::seconds(3));
+	std::thread([&nwc, &btn]{
+		std::this_thread::sleep_for(std::chrono::seconds(5));
+		btn.set_padding(10, 5, 10, 5);
 		for (auto step = 1, count = 0; ; count += step){
 			if (count == 20)
 				step = -1;

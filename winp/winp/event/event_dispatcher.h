@@ -14,6 +14,10 @@ namespace winp::menu{
 	class item_component;
 }
 
+namespace winp::control{
+	class button;
+}
+
 namespace winp::event{
 	class unhandled_handler;
 	class draw_handler;
@@ -74,6 +78,10 @@ namespace winp::event{
 		static void draw_themed_menu_item_(menu::item_component &item, DRAWITEMSTRUCT &info, HWND handle, HTHEME theme);
 
 		static void draw_unthemed_menu_item_(menu::item_component &item, DRAWITEMSTRUCT &info, HWND handle);
+
+		static void draw_themed_button_item_(control::button &item, DRAWITEMSTRUCT &info, HWND handle, HTHEME theme);
+
+		static void draw_unthemed_button_item_(control::button &item, DRAWITEMSTRUCT &info, HWND handle);
 
 		static SIZE measure_item_(ui::object &item, HWND handle, HDC device, HTHEME theme);
 

@@ -67,6 +67,7 @@ namespace winp::message{
 
 namespace winp::event{
 	class draw;
+	class draw_item_dispatcher;
 }
 
 namespace winp::menu{
@@ -125,6 +126,7 @@ namespace winp::thread{
 		friend class ui::window_surface;
 
 		friend class event::draw;
+		friend class event::draw_item_dispatcher;
 		friend class message::dispatcher;
 
 		friend class menu::item_component;
@@ -190,6 +192,8 @@ namespace winp::thread{
 		LRESULT select_menu_item_(UINT msg, menu::item &item, ui::surface *target, const MSG *info, bool prevent_default, unsigned int &states);
 
 		LRESULT context_menu_(ui::window_surface &target, const MSG &info, bool prevent_default);
+
+		LRESULT update_owner_drawn_item_(ui::window_surface &target, UINT type, UINT states, UINT action = ODA_DRAWENTIRE);
 
 		LRESULT draw_item_(ui::surface &target, const MSG &info, bool prevent_default);
 

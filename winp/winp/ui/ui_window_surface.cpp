@@ -525,25 +525,28 @@ bool winp::ui::window_surface::is_minimized_() const{
 	return (IsIconic(static_cast<HWND>(handle)) != FALSE);
 }
 
+bool winp::ui::window_surface::update_styles_(bool is_extended){
+	auto computed_value = compute_styles_((is_extended ? extended_styles_ : styles_), is_extended);
+	if (computed_value == (is_extended ? extended_styles_ : styles_))
+		return true;//No changes
+
+	(is_extended ? extended_styles_ : styles_) = computed_value;
+	if (auto handle = get_handle_(); handle != nullptr){//Update window
+		SetWindowLongPtrW(static_cast<HWND>(handle), (is_extended ? GWL_EXSTYLE : GWL_STYLE), computed_value);
+		SetWindowPos(static_cast<HWND>(handle), nullptr, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+	}
+
+	return true;
+}
+
 bool winp::ui::window_surface::set_styles_(DWORD value, bool is_extended){
-	DWORD diff;
-	HANDLE handle;
+	auto computed_value = compute_styles_(value, is_extended);
+	if (computed_value == (is_extended ? extended_styles_ : styles_))
+		return true;//No changes
 
-	if (is_extended){
-		diff = extended_styles_;
-		extended_styles_ = (value & ~(get_persistent_extended_styles_() | get_filtered_extended_styles_()));
-		value = (extended_styles_ | get_persistent_extended_styles_());
-		diff ^= extended_styles_;
-	}
-	else{//Basic styles
-		diff = styles_;
-		styles_ = (value & ~(get_persistent_styles_() | get_filtered_styles_()));
-		value = (styles_ | get_persistent_styles_());
-		diff ^= styles_;
-	}
-
-	if (diff != 0u && (handle = get_handle_()) != nullptr){//Update window
-		SetWindowLongPtrW(static_cast<HWND>(handle), (is_extended ? GWL_EXSTYLE : GWL_STYLE), value);
+	(is_extended ? extended_styles_ : styles_) = computed_value;
+	if (auto handle = get_handle_(); handle != nullptr){//Update window
+		SetWindowLongPtrW(static_cast<HWND>(handle), (is_extended ? GWL_EXSTYLE : GWL_STYLE), computed_value);
 		SetWindowPos(static_cast<HWND>(handle), nullptr, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
 	}
 
@@ -551,37 +554,11 @@ bool winp::ui::window_surface::set_styles_(DWORD value, bool is_extended){
 }
 
 bool winp::ui::window_surface::add_styles_(DWORD value, bool is_extended){
-	DWORD *target;
-	if (is_extended){
-		target = &extended_styles_;
-		value &= ~(get_persistent_extended_styles_() | get_filtered_extended_styles_());
-	}
-	else{
-		target = &styles_;
-		value &= ~(get_persistent_styles_() | get_filtered_styles_());
-	}
-
-	if (value != 0u && (*target & value) != value)
-		return set_styles_((*target | value), is_extended);
-
-	return true;
+	return (is_extended ? set_styles_((extended_styles_ | value), true) : set_styles_((styles_ | value), false));
 }
 
 bool winp::ui::window_surface::remove_styles_(DWORD value, bool is_extended){
-	DWORD *target;
-	if (is_extended){
-		target = &extended_styles_;
-		value &= ~(get_persistent_extended_styles_() | get_filtered_extended_styles_());
-	}
-	else{
-		target = &styles_;
-		value &= ~(get_persistent_styles_() | get_filtered_styles_());
-	}
-
-	if (value != 0u && (*target & value) != 0u)
-		return set_styles_((*target & ~value), is_extended);
-
-	return true;
+	return (is_extended ? set_styles_((extended_styles_ & ~value), true) : set_styles_((styles_ & ~value), false));
 }
 
 bool winp::ui::window_surface::has_styles_(DWORD value, bool is_extended, bool has_all) const{
@@ -606,6 +583,10 @@ DWORD winp::ui::window_surface::get_filtered_styles_() const{
 
 DWORD winp::ui::window_surface::get_filtered_extended_styles_() const{
 	return 0u;
+}
+
+DWORD winp::ui::window_surface::compute_styles_(DWORD value, bool is_extended) const{
+	return (is_extended ? ((value & ~get_filtered_extended_styles_()) | get_persistent_extended_styles_()) : ((value & ~get_filtered_styles_()) | get_persistent_styles_()));
 }
 
 HINSTANCE winp::ui::window_surface::get_instance_() const{
